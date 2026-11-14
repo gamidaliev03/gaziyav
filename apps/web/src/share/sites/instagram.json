@@ -1,0 +1,152 @@
+{
+	"id": "instagram",
+	"name": "Instagram",
+	"login": "https://www.instagram.com/accounts/login/",
+	"signedIn": {
+		"url": "https://www.instagram.com/",
+		"cookies": [
+			"sessionid"
+		]
+	},
+	"origins": [
+		"https://www.instagram.com"
+	],
+	"profile": {
+		"url": "https://www.instagram.com/",
+		"name": [
+			{
+				"css": "a[href^=\"/\"][role=link] img[alt$=\"profile picture\"]"
+			},
+			{
+				"css": "img[alt$=\"profile picture\"]"
+			}
+		],
+		"avatar": [
+			{
+				"css": "img[alt$=\"profile picture\"]"
+			}
+		],
+		"strip": "'s profile picture$"
+	},
+	"signedOutUrl": "instagram\\.com/accounts/login",
+	"upload": [
+		{
+			"do": "goto",
+			"url": "https://www.instagram.com/",
+			"label": "Instagram"
+		},
+		{
+			"do": "click",
+			"label": "Not now",
+			"optional": true,
+			"timeout": 4000,
+			"find": [
+				{
+					"text": "^Not now$"
+				}
+			]
+		},
+		{
+			"do": "click",
+			"label": "Create",
+			"find": [
+				{
+					"aria": "^New post$"
+				},
+				{
+					"text": "^Create$"
+				},
+				{
+					"css": "svg[aria-label=\"New post\"]"
+				}
+			]
+		},
+		{
+			"do": "click",
+			"label": "Post",
+			"optional": true,
+			"timeout": 5000,
+			"find": [
+				{
+					"aria": "^Post$"
+				},
+				{
+					"text": "^Post$"
+				}
+			]
+		},
+		{
+			"do": "file",
+			"label": "the video file",
+			"find": [
+				{
+					"css": "div[role=dialog] input[type=file]"
+				},
+				{
+					"css": "form input[type=file][accept*=\"video\"]"
+				},
+				{
+					"css": "input[type=file]"
+				}
+			]
+		},
+		{
+			"do": "click",
+			"label": "OK",
+			"optional": true,
+			"timeout": 8000,
+			"find": [
+				{
+					"text": "^OK$"
+				}
+			]
+		},
+		{
+			"do": "click",
+			"label": "Next",
+			"find": [
+				{
+					"text": "^Next$"
+				}
+			],
+			"timeout": 60000
+		},
+		{
+			"do": "click",
+			"label": "Next",
+			"find": [
+				{
+					"text": "^Next$"
+				}
+			]
+		},
+		{
+			"do": "type",
+			"label": "Caption",
+			"value": "caption",
+			"find": [
+				{
+					"aria": "^Write a caption"
+				},
+				{
+					"css": "div[role=dialog] div[contenteditable=\"true\"]"
+				}
+			]
+		},
+		{
+			"do": "publish",
+			"label": "Share",
+			"find": [
+				{
+					"text": "^Share$"
+				}
+			],
+			"timeout": 900000
+		}
+	],
+	"done": {
+		"text": "Your reel has been shared|Reel shared|Your post has been shared",
+		"fallbackUrl": "https://www.instagram.com/{user}/reels/",
+		"timeout": 900000
+	}
+}

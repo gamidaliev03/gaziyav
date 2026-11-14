@@ -1,0 +1,407 @@
+/*
+  Gaziyav skin «Ember» — warm graphite lit from above, one amber light.
+  The light is spent on three things only: the film (the playhead, the selection on it), the next step
+  (the one filled button of a surface) and the machine (✦, its proposals). Shelves and benches — the library,
+  the inspector — are ink: which tab is open is navigation, a slider's value is not an event.
+  docs/design/CONCEPT.md says why; docs/design/skin/ holds the before / after pairs and the proof.
+
+  Apply:   import this file once, after globals.css (`@import "…/skin.css";` or one <link>).
+  Remove:  delete the import. Nothing else in the app knows about it.
+
+  What it is: values for the app's own variables (section 1) and a few rules on the app's own classes and data
+  attributes (sections 2–10; section 9 is for surfaces the teams are still building). Dark theme only: every rule starts at `.dark`, the light theme is untouched.
+  What it never does: change a size, a padding or a font size (nothing can be cut or pushed off screen by it);
+  animate anything but opacity and transform (≤ 200 ms, off under prefers-reduced-motion); put a transition,
+  a shadow or a gradient on anything inside the timeline's scroll area.
+
+  The light model, so every rule below reads the same way: one lamp above the window.
+    canvas (lowest) → panels (the desk) → keys (raised controls) → floating (menus, sheets)
+    wells (fields, slider tracks, the segmented's track) are pressed in: darker, shaded at the top.
+    A raised thing has a 1 px light edge on top; a pressed thing has a 1 px dark edge on top.
+*/
+
+/* ───────────────────────── 1. Tokens: the app's own variable names, new values ───────────────────────── */
+.dark {
+	--background: #0b0a09;
+	--foreground: #f2efe9;
+	--card: #151412;
+	--card-foreground: #f2efe9;
+	--popover: rgb(27 25 22 / 0.97);
+	--popover-hover: #2a2723;
+	--popover-foreground: #f7f4ee;
+	--primary: #e8a33d;
+	--primary-foreground: #1a1206;
+	/* «secondary» was an amber tint (Share, pressed toolbar toggles, «Изменить»): now an ink key. Amber = the next step only. */
+	--secondary: #1d1b18;
+	--secondary-border: #322e29;
+	--secondary-foreground: #ece8e1;
+	--muted: #2e2b27;
+	--muted-foreground: #bcb5a9; /* APCA Lc ≥ 61 on its panels and menus (T2 secondary ≥ 60; #a49d92 read Lc 47–51) */
+	--accent: #1d1b18;
+	--accent-foreground: #f7f4ee;
+	--destructive: #f4586f;
+	--destructive-foreground: #1a0a0e;
+	--constructive: #3cc7a8;
+	--constructive-foreground: #06140f;
+	--caution: #f2d24b;
+	--caution-foreground: #1a1a1a;
+	--border: #211f1b;
+	--input: #151412;
+	--ring: #e8a33d;
+	--sidebar-background: #151412;
+	--sidebar-foreground: #f2efe9;
+	--sidebar-primary: #f2efe9;
+	--sidebar-primary-foreground: #151412;
+	--sidebar-accent: #262320;
+	--sidebar-accent-foreground: #f2efe9;
+	--sidebar-border: #262320;
+	--sidebar-ring: #e8a33d;
+	--sidebar: #0f0e0c;
+	--pc-card-shadow: inset 0 1px 0 rgb(255 244 230 / 0.05), 0 14px 34px -18px rgb(0 0 0 / 0.85);
+	--pc-card-shadow-hover: inset 0 1px 0 rgb(255 244 230 / 0.08), 0 22px 44px -20px rgb(0 0 0 / 0.9);
+	--pc-glass: rgb(27 25 22 / 0.7);
+	--pc-glass-border: rgb(255 244 230 / 0.08);
+
+	/* the skin's own names (nothing in the app reads them; the rules below do) */
+	--gz-light: 255 244 230; /* the lamp's colour, as r g b */
+	--gz-well: #0d0c0b;
+	--gz-key-top: #37332d;
+	--gz-key: #2b2824;
+	--gz-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.dark .panel {
+	--background: #151412;
+	--foreground: #ece8e1;
+	--card: #151412;
+	--card-foreground: #ece8e1;
+	--secondary: #1f1d1a;
+	--secondary-border: #35312b;
+	--secondary-foreground: #ece8e1;
+	--muted: #2e2b27;
+	--muted-foreground: #bcb5a9; /* APCA Lc ≥ 61 on its panels and menus (T2 secondary ≥ 60; #a49d92 read Lc 47–51) */
+	--accent: #1f1d1a;
+	--accent-foreground: #faf7f2;
+	--border: #26231f;
+	--input: #1c1a17;
+	--ring: #e8a33d;
+}
+
+/* ───────────────────────── 2. The room: canvas and header ───────────────────────── */
+.dark body {
+	-webkit-font-smoothing: antialiased;
+	background-color: #0b0a09;
+}
+/* Home may have atmosphere: no film is judged there. The editor's canvas stays plain. */
+.dark .pc-canvas {
+	background-color: #0b0a09;
+	background-image:
+		radial-gradient(1000px 440px at 62% -150px, rgb(232 163 61 / 0.085), transparent 70%),
+		radial-gradient(760px 520px at -8% 108%, rgb(60 199 168 / 0.045), transparent 70%);
+}
+.dark .pc-header {
+	background-color: transparent;
+	border-bottom-color: transparent;
+}
+
+/* ───────────────────────── 3. Panels: the desk, and the stage ───────────────────────── */
+.dark .panel.rounded-sm.border {
+	border-radius: 14px;
+	border-color: rgb(var(--gz-light) / 0.055);
+	background-image: linear-gradient(180deg, rgb(var(--gz-light) / 0.03), rgb(var(--gz-light) / 0) 120px);
+	box-shadow: inset 0 1px 0 rgb(var(--gz-light) / 0.05), 0 16px 36px -22px rgb(0 0 0 / 0.95);
+}
+.dark .panel [data-panel-header].bg-background {
+	background-color: transparent;
+}
+/* The player is the stage: the darkest place in the window, the film the brightest thing on it. */
+.dark .panel:has(> div > [data-player-title]) {
+	background-color: #080706;
+	background-image: radial-gradient(120% 70% at 50% 40%, rgb(255 236 210 / 0.04), transparent 70%);
+}
+.dark [data-preview-frame] {
+	border-color: transparent;
+	box-shadow: 0 0 0 1px rgb(var(--gz-light) / 0.07), 0 24px 60px -24px #000;
+}
+
+/* ───────────────────────── 4. Keys: tabs, segments, quiet buttons ───────────────────────── */
+/* The light is for the film, the next step and the machine. Shelves and benches are quiet: which shelf is open
+   and which tab of the inspector is showing are navigation — ink keys and warm-white labels, no amber. */
+.dark [data-tab-group] {
+	border-radius: 9px;
+}
+.dark [data-tab-group][aria-pressed="true"] {
+	color: #f7f4ee;
+	background-image: linear-gradient(180deg, var(--gz-key-top), var(--gz-key));
+	box-shadow: inset 0 1px 0 rgb(var(--gz-light) / 0.1), 0 1px 2px rgb(0 0 0 / 0.5);
+}
+.dark [data-assets-panel] [aria-pressed="true"].text-primary,
+.dark [data-assets-panel] button.min-h-\[26px\].text-primary,
+.dark [data-assets-panel] div.h-\[26px\].text-primary,
+.dark [data-inspector] button[aria-pressed="true"].text-primary {
+	color: #f7f4ee;
+}
+.dark [data-assets-panel] button[aria-pressed="true"].border-primary {
+	border-color: rgb(var(--gz-light) / 0.3);
+	background-color: rgb(var(--gz-light) / 0.09);
+}
+.dark [data-inspector-tabs] [role="tab"][aria-selected="true"] {
+	color: #f7f4ee;
+}
+.dark [data-inspector-tabs] [role="tab"][aria-selected="true"] > span.bg-primary {
+	background-color: #cfc8bc;
+}
+/* a slider's filled part is a quiet line: a value is not an event */
+.dark [data-inspector] .bg-primary.absolute.h-full {
+	background-color: #8a8378;
+}
+/* a switch of any make (Segmented, the header's mode switch, Home's frame switch, the inspector's radio rows):
+   a well with one raised key */
+.dark [role="tablist"].bg-muted,
+.dark [data-section-switch],
+.dark [role="group"].bg-foreground\/\[0\.045\].p-0\.5,
+.dark nav.bg-foreground\/\[0\.05\].p-0\.5,
+.dark [role="radiogroup"].bg-accent.border.p-0\.5 {
+	border-radius: 8px;
+	border-color: transparent;
+	background-color: var(--gz-well);
+	box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.55), 0 1px 0 rgb(var(--gz-light) / 0.04);
+}
+.dark [role="tablist"].bg-muted > [role="tab"],
+.dark [data-section-switch] > [role="tab"],
+.dark [role="group"].bg-foreground\/\[0\.045\].p-0\.5 > button,
+.dark [role="radiogroup"].bg-accent.border.p-0\.5 > [role="radio"] {
+	border-radius: 6px;
+}
+.dark button.bg-background.shadow-sm,
+.dark [role="tablist"].bg-muted > [role="tab"][aria-selected="true"],
+.dark [data-section-switch] > [role="tab"][aria-selected="true"] {
+	background-color: var(--gz-key);
+	background-image: linear-gradient(180deg, var(--gz-key-top), var(--gz-key));
+	box-shadow: inset 0 1px 0 rgb(var(--gz-light) / 0.1), 0 1px 2px rgb(0 0 0 / 0.5);
+	color: #f7f4ee;
+}
+/* quiet buttons (Share, the toolbar's pressed toggles, «Изменить», outline buttons): ink keys with a light edge */
+.dark button.bg-secondary.border,
+.dark button.border.bg-background {
+	box-shadow: inset 0 1px 0 rgb(var(--gz-light) / 0.05);
+}
+
+/* ───────────────────────── 5. The one amber button: a lit thing ───────────────────────── */
+.dark button.bg-primary:is(.h-6, .h-7, .h-8, .h-9, .h-10, .h-\[22px\]):not(:disabled),
+.dark a.bg-primary:is(.h-6, .h-7, .h-8, .h-9, .h-10) {
+	background-image: linear-gradient(180deg, #f4b759, #e0952c);
+	box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.36), inset 0 -1px 0 rgb(120 70 0 / 0.25), 0 6px 16px -6px rgb(232 150 40 / 0.5);
+}
+.dark button.bg-primary:is(.h-6, .h-7, .h-8, .h-9, .h-10, .h-\[22px\]):not(:disabled):hover,
+.dark a.bg-primary:is(.h-6, .h-7, .h-8, .h-9, .h-10):hover {
+	filter: brightness(1.06);
+}
+
+/* ───────────────────────── 6. Wells: fields, sliders, switches ───────────────────────── */
+.dark .bg-input.border,
+.dark .panel .border-border.bg-accent:is(.h-7, .h-8, .h-9),
+.dark .panel [role="combobox"].bg-accent {
+	background-color: #100f0d;
+	border-color: rgb(var(--gz-light) / 0.06);
+	box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.45);
+}
+/* the kit's slider: a track pressed in, a thumb that catches the light (the timeline's ruler is a slider too: not it) */
+.dark .bg-accent.h-1\.5.rounded-full {
+	background-color: var(--gz-well);
+	box-shadow: inset 0 1px 1px rgb(0 0 0 / 0.6);
+}
+.dark .size-4.rounded-full[role="slider"] {
+	background-color: #f4f0e9;
+	border-color: transparent;
+	box-shadow: 0 1px 3px rgb(0 0 0 / 0.6), 0 0 0 1px rgb(0 0 0 / 0.25);
+}
+.dark [role="switch"][data-state="unchecked"] {
+	background-color: #34302b;
+	box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.5);
+}
+
+/* scrollbars: the thumb was the border colour on the panel (1.2:1) — hard to find; a step lighter, and lighter still under the pointer */
+.dark .scrollbar-thin::-webkit-scrollbar-thumb {
+	background: #3a352f;
+}
+.dark .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+	background: #5a544b;
+}
+
+/* ───────────────────────── 7. Floating: menus, popovers, sheets ───────────────────────── */
+/* A floating surface is its own little room: inside it «background» is the surface itself (fades and sticky bars
+   melt into it instead of showing the black canvas), hover is one step lighter, fields are wells. */
+.dark .bg-popover {
+	--background: #1b1916;
+	--accent: #2a2723;
+	--border: #2f2b26;
+	--input: #110f0d;
+	--secondary: #262320;
+	--secondary-border: #3a352f;
+}
+.dark .bg-popover[role="dialog"] {
+	--background: #181613;
+	background-color: rgb(24 22 19 / 0.98);
+	border-radius: 16px;
+}
+.dark .bg-popover.border {
+	border-color: rgb(var(--gz-light) / 0.08);
+	box-shadow: inset 0 1px 0 rgb(var(--gz-light) / 0.06), 0 18px 44px -14px rgb(0 0 0 / 0.85);
+}
+.dark [role="menu"].bg-popover,
+.dark [role="listbox"].bg-popover {
+	border-radius: 10px;
+}
+.dark [role="menu"] [role^="menuitem"],
+.dark [role="listbox"] [role="option"] {
+	border-radius: 6px;
+}
+/* tooltips */
+.dark .bg-popover.rounded-sm.shadow-md {
+	border-radius: 7px;
+}
+/* quiet buttons on a sheet («Отмена»): a key, not a hole */
+.dark .bg-popover button.border.bg-background:not([role]) {
+	background-color: #211f1b;
+	border-color: #343029;
+}
+.dark .bg-popover button.border.bg-background:not([role]):hover {
+	background-color: #2a2723;
+}
+.dark .bg-popover [role="combobox"].bg-accent,
+.dark .bg-popover .border-border.bg-accent:is(.h-7, .h-8, .h-9),
+.dark .bg-popover input.bg-background {
+	background-color: #110f0d;
+	border-color: rgb(var(--gz-light) / 0.07);
+	box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.45);
+}
+/* the veil behind a sheet: the editor steps back */
+.dark .fixed.inset-0.z-250.backdrop-blur-sm {
+	background-color: rgb(8 7 6 / 0.5);
+}
+
+/* ───────────────────────── 8. The timeline: colour only (no transition, shadow or gradient in its scroll area) ───────────────────────── */
+/* Clips: one hue per kind, as editors know them (titles violet, sound teal), deep enough for the white label —
+   white on the old mint was 2.3:1, on the blue 3.3:1; every label here is 4.5:1 or more. */
+.dark .bg-\[\#33404d\], .dark .group-data-\[narrow\]\/clip\:bg-\[\#33404d\] { background-color: #3d3a35; } /* picture: the name bar */
+.dark .bg-\[\#5DBAA0\] { background-color: #7566b5; } /* words: titles, captions */
+.dark .bg-\[\#2E8C84\] { background-color: #2f8279; } /* sound */
+.dark .bg-\[\#BA5D7A\] { background-color: #a3566f; } /* graphics: stickers, shapes, templates */
+.dark .bg-\[\#5d93ba\] { background-color: #46779f; } /* effect and adjustment layers */
+/* the toolbar's dividers: shorter and softer, the groups read by rhythm */
+.dark [data-timeline-toolbar] .bg-border.w-px {
+	height: 14px;
+	opacity: 0.8;
+}
+
+/* ───────────────────────── 9. The teams' new surfaces ─────────────────────────
+   Written from the build sheets (docs/design/for-*.md) against the attributes the teams use, so Assemble, Text,
+   Scenes and «Claude at work» inherit the look when they are merged. NOT seen on a built surface: the build this
+   skin was proven on has none of them, and none of these selectors matches anything there. Look before shipping. */
+/* the machine's card (Assemble's «Что сделано», Claude at work): one floating card, the radius of a panel's child */
+.dark [data-assemble-strip],
+.dark [data-agent-card] {
+	border-radius: 12px;
+}
+.dark [data-agent-pill] {
+	border-radius: 999px;
+}
+/* ✦ is the machine's mark: amber on the quiet header button (the filled buttons keep their ink) */
+.dark [data-assemble-button] svg {
+	color: var(--primary);
+}
+/* the seal's tick is teal wherever it stands */
+.dark [data-assemble-price] svg,
+.dark [data-agent-seal] svg,
+.dark [data-assemble-strip] .text-emerald-500,
+.dark [data-assemble-sheet] .text-emerald-500 {
+	color: var(--constructive);
+}
+.dark [data-assemble-kind] {
+	border-radius: 8px;
+}
+/* Text: one look per meaning (for-text.md §2) — the word being spoken is an amber line, not a field */
+.dark [data-text-doc] [data-para] > span:first-child {
+	color: var(--muted-foreground);
+}
+.dark [data-text-doc] [data-para]:has([data-now]) > span:first-child {
+	color: var(--primary);
+}
+.dark [data-text-doc] [data-now] {
+	background-color: transparent;
+	color: #f7f4ee;
+	box-shadow: inset 0 -2px 0 0 var(--primary);
+}
+.dark [data-text-doc] .line-through {
+	background-color: rgb(244 88 111 / 0.1);
+	text-decoration-color: var(--destructive);
+}
+.dark [data-text-doc] [data-text-pause] {
+	background-color: var(--accent);
+	color: var(--muted-foreground);
+}
+.dark [data-text-doc] .bg-amber-400\/25 {
+	background-color: rgb(var(--gz-light) / 0.15);
+}
+.dark [data-text-doc] .outline-primary.bg-primary\/15 {
+	background-color: #ece8e1;
+	color: #151412;
+	outline-color: transparent;
+}
+/* Scenes: a card is an object on the panel (inside a panel `bg-card` is the panel's own colour) */
+.dark [data-chapter-card] {
+	border-radius: 8px;
+	border-color: transparent;
+	background-color: var(--accent);
+}
+.dark [data-chapter-card][data-selected] {
+	border-color: var(--primary);
+}
+.dark [data-chapter-strip] {
+	background-color: rgb(0 0 0 / 0.3);
+}
+.dark [data-chapters-ghost] {
+	border-radius: 8px;
+	border-color: transparent;
+	box-shadow: 0 0 0 1px var(--primary), 0 18px 44px -10px #000;
+}
+
+/* ───────────────────────── 10. Motion: floating things arrive, cards lift, nothing else moves ───────────────────────── */
+@media (prefers-reduced-motion: no-preference) {
+	.dark [role="dialog"].bg-popover[data-state="open"] {
+		animation: gz-sheet 180ms var(--gz-ease) both;
+	}
+	.dark .fixed.inset-0.z-250.backdrop-blur-sm[data-state="open"] {
+		animation: gz-fade 180ms linear both;
+	}
+	.dark [role="menu"][data-state="open"],
+	.dark [role="listbox"][data-state="open"],
+	.dark [data-radix-popper-content-wrapper] > [role="dialog"][data-state="open"] {
+		animation: gz-pop 140ms var(--gz-ease) both;
+	}
+	/* the Text and Scenes views open over the timeline (an overlay, not the timeline's own area) */
+	.dark [data-project-view-open] > .panel.absolute {
+		animation: gz-fade 140ms linear both;
+	}
+	/* Home: a card lifts under the pointer */
+	.dark .pc-canvas button.bg-foreground\/\[0\.045\].rounded-xl,
+	.dark .pc-canvas a.rounded-lg {
+		transition: transform 160ms var(--gz-ease), background-color 150ms linear;
+	}
+	.dark .pc-canvas button.bg-foreground\/\[0\.045\].rounded-xl:hover,
+	.dark .pc-canvas a.rounded-lg:hover {
+		transform: translateY(-2px);
+	}
+}
+@keyframes gz-sheet {
+	from { opacity: 0; transform: scale(0.985); }
+	to { opacity: 1; transform: none; }
+}
+@keyframes gz-pop {
+	from { opacity: 0; transform: translateY(-3px); }
+	to { opacity: 1; transform: none; }
+}
+@keyframes gz-fade {
+	from { opacity: 0; }
+	to { opacity: 1; }
+}

@@ -1,0 +1,623 @@
+@import "tailwindcss";
+
+/* Custom variant for dark mode */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Plugins */
+/* No @tailwindcss/typography: its `.prose :not([class~="not-prose"] *)` rules (79 of them) make
+   Blink re-style the ENTIRE subtree whenever any class or child list changes: ~20 ms per edit on a
+   timeline with 260 clips. Nothing in the app renders `.prose` any more (site routes are gone). */
+@plugin "tailwindcss-animate";
+
+/* Gaziyav brand tokens (docs/GAZIYAV.md): night-slate surfaces like a Caucasus sky after dusk, snow-white type,
+   saffron gold #E8A33D as the one interactive colour, glacier teal #2BB3A6 as its rare partner. The logo is three
+   mountains (gold, teal, snow). Light is the same system on paper. */
+:root {
+  --background: #ffffff;
+  --foreground: #121214;
+  --card: #ffffff;
+  --card-foreground: #121214;
+  --popover: #ffffff;
+  --popover-hover: #f2f2f5;
+  --popover-foreground: #0b0b0d;
+  --primary: #b8741a;
+  --primary-foreground: #ffffff;
+  --secondary: #fdf4e4;
+  --secondary-border: #f3dfba;
+  --secondary-foreground: #8a5a0e;
+  --muted: #d9d9de;
+  --muted-foreground: #6b6b75;
+  --accent: #f2f2f5;
+  --accent-foreground: #0b0b0d;
+  --destructive: #e5263f;
+  --destructive-foreground: #ffffff;
+  --constructive: #16a34a;
+  --constructive-foreground: #ffffff;
+  --caution: #f59e0b;
+  --caution-foreground: #1a1a1a;
+  --border: #e8e8ec;
+  --input: #ffffff;
+  --ring: #c98a1e;
+  --brand-violet: #e8a33d;
+  --brand-pink: #2bb3a6;
+  --chart-1: #5b80f5;
+  --chart-2: #2bb3a6;
+  --chart-3: #f57830;
+  --chart-4: #f01e68;
+  --chart-5: #14b8a6;
+  --sidebar-background: #f5f5f7;
+  --sidebar-foreground: #0b0b0d;
+  --sidebar-primary: #0b0b0d;
+  --sidebar-primary-foreground: #f5f5f7;
+  --sidebar-accent: #e4e4e8;
+  --sidebar-accent-foreground: #0b0b0d;
+  --sidebar-border: #e4e4e8;
+  --sidebar-ring: #c98a1e;
+  --sidebar: #fafafb;
+}
+
+.panel {
+  --background: #f7f7f9;
+  --foreground: #16161a;
+  --card: #f7f7f9;
+  --card-foreground: #16161a;
+  --primary-foreground: #ffffff;
+  --secondary: #fdf4e4;
+  --secondary-border: #f3dfba;
+  --secondary-foreground: #a86d12;
+  --muted: #d4d4da;
+  --muted-foreground: #696973;
+  --accent: #ececf0;
+  --accent-foreground: #0b0b0d;
+  --destructive-foreground: #ffffff;
+  --constructive-foreground: #ffffff;
+  --border: #e2e2e7;
+  --input: #ececf0;
+  --ring: #e8a33d;
+}
+
+.dark {
+  --background: #07090c;
+  --foreground: #eceef2;
+  --card: #0e1116;
+  --card-foreground: #eceef2;
+  --popover: #13171d;
+  --popover-hover: #1f252e;
+  --popover-foreground: #f7f8fa;
+  --primary: #e8a33d;
+  --primary-foreground: #1a1206;
+  --secondary: #221a0e;
+  --secondary-border: #3a2c14;
+  --secondary-foreground: #f2c47a;
+  --muted: #262c35;
+  --muted-foreground: #b0b9c6; /* APCA Lc ≥ 61 on the panels, the menus and their hover (T2 secondary ≥ 60; #8a93a0 read Lc 40–45) */
+  --accent: #171c23;
+  --accent-foreground: #f7f8fa;
+  --destructive: #f0365a;
+  --destructive-foreground: #ffffff;
+  --border: #1a1f27;
+  --input: #0e1116;
+  --ring: #e8a33d;
+  --caution: #fbbf24;
+  --caution-foreground: #1a1a1a;
+  --sidebar-background: #0e1116;
+  --sidebar-foreground: #fafafa;
+  --sidebar-primary: #fafafa;
+  --sidebar-primary-foreground: #121214;
+  --sidebar-accent: #1f252e;
+  --sidebar-accent-foreground: #fafafa;
+  --sidebar-border: #1f252e;
+  --sidebar-ring: #e8a33d;
+  --sidebar: #0a0d11;
+}
+
+.dark .panel {
+  --background: #0f1217;
+  --foreground: #e4e7ec;
+  --card: #0f1217;
+  --card-foreground: #e4e7ec;
+  --secondary: #241b0f;
+  --secondary-border: #3d2e16;
+  --secondary-foreground: #f2c47a;
+  --muted: #262c35;
+  --muted-foreground: #b0b9c6; /* APCA Lc ≥ 61 on the panels, the menus and their hover (T2 secondary ≥ 60; #8a93a0 read Lc 40–45) */
+  --accent: #1a1f27;
+  --accent-foreground: #fafafa;
+  --border: #1e242c;
+  --input: #171c23;
+  --ring: #e8a33d;
+}
+
+@layer base {
+  /*
+    The default border color has changed to `currentcolor` in Tailwind CSS v4,
+    so we've added these compatibility styles to make sure everything still
+    looks the same as it did with Tailwind CSS v3.
+
+    If we ever want to remove these styles, we need to add an explicit border
+    color utility to any element that depends on these defaults.
+  */
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+  /* Other default base styles */
+  * {
+    @apply border-border;
+  }
+  /* In the browser build a hand over everything that clicks (Tailwind 4 dropped v3's pointer on buttons). The Mac app
+     keeps the arrow over its controls, as native Mac apps do (design review 05.11: the hand read as a web page). Both
+     rules weigh nothing (:where) and sit in the base layer: a cursor-* utility (grab, ew-resize…) or an inline cursor
+     always wins. */
+  :where(html:not(.studio-desktop))
+    :where(
+      button:not(:disabled),
+      [role="button"]:not([aria-disabled="true"]),
+      select:not(:disabled),
+      input[type="checkbox"]:not(:disabled),
+      input[type="radio"]:not(:disabled)
+    ) {
+    cursor: pointer;
+  }
+  :where(html.studio-desktop)
+    :where(
+      button,
+      [role="button"],
+      [role="tab"],
+      [role="menuitem"],
+      [role="menuitemcheckbox"],
+      [role="menuitemradio"],
+      [role="option"],
+      select,
+      input[type="checkbox"],
+      input[type="radio"]
+    ) {
+    cursor: default;
+  }
+  body {
+    @apply bg-background text-foreground;
+    /* Prevent back/forward swipe */
+    overscroll-behavior-x: contain;
+  }
+  ::selection {
+    @apply bg-primary/35 selection:text-primary-foreground;
+  }
+}
+
+@theme inline {
+  /* Responsive breakpoints */
+  --breakpoint-xs: 30rem;
+
+  /* Typography: Golos Text for the interface, Unbounded for display moments (wordmark, hero, empty states). */
+  --font-sans: var(--font-golos), "SF Pro Text", system-ui, sans-serif;
+  --font-display: var(--font-unbounded), var(--font-golos), system-ui, sans-serif;
+
+  /* Font sizes: a desktop editor's scale, 11 / 12 / 13 px (10 px only for captions under thumbnails and micro labels). */
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-base: 13px;
+  --text-base--line-height: calc(1.5 / 0.95);
+  --text-xs--line-height: calc(1 / 0.8);
+
+  /* Border radius: a native editor's small corners, 4 / 6 / 8 px for controls and menus; cards up to 16–20 px. */
+  --radius-lg: 8px;
+  --radius-md: 6px;
+  --radius-sm: 4px;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.25rem;
+
+  /* Brand */
+  --color-brand-violet: var(--brand-violet);
+  --color-brand-pink: var(--brand-pink);
+
+  /* Palette mapped to root design tokens */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  --color-popover: var(--popover);
+  --color-popover-hover: var(--popover-hover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-border: var(--secondary-border);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-constructive: var(--constructive);
+  --color-constructive-foreground: var(--constructive-foreground);
+
+  --color-caution: var(--caution);
+  --color-caution-foreground: var(--caution-foreground);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Chart colors */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  /* Sidebar */
+  --color-sidebar: var(--sidebar-background);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Animations */
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+
+  @keyframes accordion-down {
+    from {
+      height: 0;
+    }
+    to {
+      height: var(--radix-accordion-content-height);
+    }
+  }
+
+  @keyframes accordion-up {
+    from {
+      height: var(--radix-accordion-content-height);
+    }
+    to {
+      height: 0;
+    }
+  }
+}
+
+@utility scrollbar-hidden {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@utility scrollbar-x-hidden {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar:horizontal {
+    display: none;
+  }
+}
+
+@utility scrollbar-y-hidden {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar:vertical {
+    display: none;
+  }
+}
+
+@utility scrollbar-thin {
+  &::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 4px;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: var(--muted-foreground);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* A desktop editor, not a web page: the controls' labels (buttons, tabs, menus, the timeline, tiles) never highlight
+   as text under a click or a drag, pictures of the interface don't lift off as drag images, and the window never
+   rubber-bands. Text meant to be read and copied (descriptions, the agent's answers, fields) stays selectable. */
+html,
+body {
+  overscroll-behavior: none;
+}
+button,
+[role="button"],
+[role="tab"],
+[role="menuitem"],
+[role="menuitemcheckbox"],
+[role="menuitemradio"],
+[role="option"],
+[role="slider"],
+[role="radio"],
+label,
+[draggable="true"],
+[data-timeline-element-id],
+[data-timeline-track-row],
+[data-timeline-toolbar],
+.studio-titlebar {
+  -webkit-user-select: none;
+  user-select: none;
+}
+img,
+svg,
+a {
+  -webkit-user-drag: none;
+}
+
+/* Mac app: the window's traffic lights sit over the header; keep them clear and let the header drag the window. */
+html.studio-desktop .studio-titlebar { padding-left: 84px; -webkit-app-region: drag; }
+/* macOS full screen (green button, ⌃⌘F): no traffic lights, so no gap for them. */
+html.studio-desktop[data-fullscreen] .studio-titlebar { padding-left: 1rem; }
+html.studio-desktop .studio-titlebar button,
+html.studio-desktop .studio-titlebar a,
+html.studio-desktop .studio-titlebar input,
+html.studio-desktop .studio-titlebar [role="button"] { -webkit-app-region: no-drag; }
+
+/* The Mac app's arrow wins over a component's own cursor-pointer too (unlayered, so it beats the utility); links keep
+   their hand. */
+html.studio-desktop .cursor-pointer:not(a) {
+	cursor: default;
+}
+
+/* Native feel inside the Mac app: interface text is not selectable like a web page and the
+   window never rubber-bands; text fields and editable text stay selectable. */
+html.studio-desktop,
+html.studio-desktop body {
+	overscroll-behavior: none;
+}
+html.studio-desktop body {
+	-webkit-user-select: none;
+	user-select: none;
+}
+html.studio-desktop input,
+html.studio-desktop textarea,
+html.studio-desktop [contenteditable="true"],
+html.studio-desktop .select-text {
+	-webkit-user-select: text;
+	user-select: text;
+}
+
+/* ---------- Gaziyav surfaces (W/docs/brand.md) ----------
+   Flat ink, like a native editor (design review 05.11: the glows and the film grain read as a landing page). */
+:root {
+  --pc-card-shadow: 0 1px 2px rgb(16 16 24 / 0.06), 0 8px 24px -12px rgb(16 16 24 / 0.18);
+  --pc-card-shadow-hover: 0 2px 4px rgb(16 16 24 / 0.08), 0 22px 44px -18px rgb(76 29 149 / 0.32);
+  --pc-glass: rgb(255 255 255 / 0.72);
+  --pc-glass-border: rgb(16 16 24 / 0.08);
+  /* Menus and popovers: a hint of glass, but a bright clip under a menu no longer glows through its items. */
+  --popover: rgb(255 255 255 / 0.96);
+}
+.dark {
+  --pc-card-shadow: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 10px 30px -14px rgb(0 0 0 / 0.8);
+  --pc-card-shadow-hover: 0 1px 0 rgb(255 255 255 / 0.06) inset, 0 26px 50px -20px rgb(232 163 61 / 0.35);
+  --pc-glass: rgb(22 22 26 / 0.62);
+  --pc-glass-border: rgb(255 255 255 / 0.08);
+  --popover: rgb(22 22 25 / 0.95);
+}
+
+/* The start page: one flat surface. */
+.pc-canvas { background-color: #f6f6f8; }
+.dark .pc-canvas { background-color: #0b0b0d; }
+
+/* The editor's header: a flat toolbar with one hairline under it (it used to carry a glow from above). */
+.pc-header {
+  background-color: #ececef;
+  border-bottom: 1px solid rgb(0 0 0 / 0.07);
+}
+.dark .pc-header {
+  background-color: #141417;
+  border-bottom-color: rgb(255 255 255 / 0.06);
+}
+
+/* Editor panels: 12 px corners, a hairline of light on the top edge, a soft drop. */
+.panel.rounded-sm.border {
+  border-radius: 0.75rem;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.6), 0 1px 2px rgb(16 16 24 / 0.05);
+}
+.dark .panel.rounded-sm.border {
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.035), 0 8px 24px -16px rgb(0 0 0 / 0.9);
+}
+
+/* Floating surfaces (menus, popovers, tooltips, dialogs) are frosted glass. */
+.bg-popover {
+  -webkit-backdrop-filter: blur(22px) saturate(1.1);
+  backdrop-filter: blur(22px) saturate(1.1);
+}
+
+/* Dialogs stay readable over a colourful video: nearly opaque, still a touch of depth. */
+.bg-popover[role="dialog"] { background-color: rgb(255 255 255 / 0.97); }
+.dark .bg-popover[role="dialog"] { background-color: rgb(18 18 21 / 0.96); }
+
+/* Glass chip / bar used on the start page and over video. */
+.pc-glass {
+  background: var(--pc-glass);
+  border: 1px solid var(--pc-glass-border);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  backdrop-filter: blur(18px) saturate(1.4);
+}
+
+/* Press feedback for buttons everywhere: a 2 % squeeze, no layout shift.
+   Not on the timeline: clips and markers sit at their time, and the squeeze (towards the middle of a
+   long button) slid them out from under the pointer, so a click on a marker landed on the strip and did
+   nothing, and a long clip's thumbnails jumped while it was held. Opt out with data-no-press; everything
+   inside the tracks area is exempt (the second rule has the same weight and comes later, so it wins). */
+@media (prefers-reduced-motion: no-preference) {
+  button:not(:disabled):not([draggable="true"]):not([role="slider"]):not([data-no-press]):active { transform: scale(0.98); }
+  [data-timeline-tracks-scroll] button:not(:disabled):not([draggable="true"]):not([role="slider"]):active { transform: none; }
+  .pc-rise { animation: pc-rise 520ms cubic-bezier(0.2, 0.8, 0.2, 1) both; animation-delay: var(--pc-delay, 0ms); }
+  /* something you click (Home's tiles): it fades in where it stays — it never slides under the pointer (R5) */
+  .pc-appear { animation: pc-appear 320ms ease-out both; animation-delay: var(--pc-delay, 0ms); }
+}
+@keyframes pc-appear {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes pc-rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Gaziyav AI's face: a blink every few seconds, eyes looking around while it works, the chat popping open.
+   The blink is started from script (AgentFace): an infinite CSS animation on an SVG element made the browser
+   render a full editor frame 60–120 times a second while the app sat idle. */
+.pa-blink { transform-box: view-box; }
+@keyframes pa-look {
+  0%, 100% { transform: translate(-2px, 0); }
+  50% { transform: translate(2px, -0.5px); }
+}
+.pa-eyes-busy { animation: pa-look 1.4s ease-in-out infinite; }
+@keyframes pa-pop {
+  from { opacity: 0; transform: translateY(10px) scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+.pa-pop { animation: pa-pop 0.2s cubic-bezier(0.2, 0.9, 0.3, 1.1); transform-origin: bottom right; }
+@keyframes pa-ring {
+  0% { box-shadow: 0 0 0 0 rgb(232 163 61 / 0.45); }
+  100% { box-shadow: 0 0 0 10px rgb(232 163 61 / 0); }
+}
+.pa-ring { animation: pa-ring 1.6s ease-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .pa-blink, .pa-eyes-busy, .pa-pop, .pa-ring { animation: none; }
+}
+
+/* A notice with no button of its own (a plain «Effect applied») never takes the click meant for what it covers: it sits
+   over the player's top edge and a click through it lands on the player, the way the toast is not there. One with Undo,
+   Cancel or ✕ stays clickable. */
+[data-sonner-toast]:not(:has([data-button], [data-close-button])) { pointer-events: none; }
+
+/*
+   clip keeps both edge zones. Sizes are percentages of the clip (the handle's containing block is the clip wrapper):
+   inside 9.5 px, at most a third of the clip (the middle third stays «move»), none under 9 px; outside 2.5 px on a wide
+   clip, growing to 6 px as the clip narrows (18 px → 32 px), so a clip a few pixels wide is still grabbed by its edges.
+   The bar on the edge shows the handle: on a selected clip, on the edge under the pointer, while it is dragged. */
+.tl-trim {
+	--tl-out: clamp(2.5px, calc(6px - (100% - 18px) / 4), 6px);
+	--tl-in: min(9.5px, calc(100% / 3), max(0px, calc((100% - 9px) * 1000)));
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	width: calc(var(--tl-in) + var(--tl-out));
+	padding: 0;
+	border: 0;
+	background: transparent;
+}
+.tl-trim[data-trim-handle="left"] { left: calc(-1 * var(--tl-out)); cursor: w-resize; }
+.tl-trim[data-trim-handle="right"] { right: calc(-1 * var(--tl-out)); cursor: e-resize; }
+/* An edge on a cut (the wrapper's data-touch, timeline/trim/touching.ts): with the Select tool the cut IS the boundary —
+   left of it the outgoing clip's tail, right of it the incoming clip's head, never a strip of both (no roll: roll
+   belongs to the Trim tool, T). The edge keeps its width, all of it inside its clip, at most 40 % of the clip. */
+[data-touch*="l"] .tl-trim[data-trim-handle="left"],
+[data-touch*="r"] .tl-trim[data-trim-handle="right"] { width: min(calc(var(--tl-in) + var(--tl-out)), 40%); }
+[data-touch*="l"] .tl-trim[data-trim-handle="left"] { left: 0; }
+[data-touch*="r"] .tl-trim[data-trim-handle="right"] { right: 0; }
+.tl-trim-bar {
+	position: absolute;
+	top: 22%;
+	bottom: 22%;
+	width: clamp(1px, calc(100% / 4), 3px);
+	border-radius: 2px;
+	background: var(--primary);
+	/* the accent on a ring of the page's own background: it reads on any clip colour, light or dark */
+	box-shadow: 0 0 0 1.5px var(--background), 0 0 0 2.5px rgb(0 0 0 / 0.3);
+	opacity: 0;
+	pointer-events: none;
+	z-index: 3;
+}
+.tl-trim-bar[data-trim-bar="left"] { left: 1.5px; }
+.tl-trim-bar[data-trim-bar="right"] { right: 1.5px; }
+.tl-trim-bar[data-selected],
+.tl-trim-bar[data-hover],
+.tl-trim:hover + .tl-trim-bar,
+.tl-trim[data-dragging] + .tl-trim-bar { opacity: 1; }
+
+/* The language of processes (docs/CRAFT.md §8): three durations, one easing; only transform, opacity and filter move. */
+:root {
+  --gz-t1: 120ms;
+  --gz-t2: 200ms;
+  --gz-t3: 320ms;
+  --gz-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+/* Completion is one quiet moment (CRAFT.md §4): one soft highlight sweeps the object once. */
+@keyframes gz-sweep {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+.gz-landed [draggable="true"]::after,
+.gz-sweep::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(100deg, transparent 35%, rgb(255 255 255 / 0.22) 50%, transparent 65%);
+  transform: translateX(-100%);
+  animation: gz-sweep var(--gz-t3) var(--gz-ease) 1 forwards;
+}
+
+/* The activity icon's one tick when something finishes (src/jobs/components/activity.tsx). */
+@keyframes gz-tick {
+  0% { opacity: 0; transform: scale(0.6); }
+  25% { opacity: 1; transform: scale(1); }
+  75% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1); }
+}
+
+/* A job that is waiting with nothing measured: its placeholder breathes (src/jobs/components/pending-media.tsx);
+   a clip a job is reading fills from the left (src/jobs/components/clip-progress.tsx). */
+@keyframes gz-breathe {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.9; }
+}
+/* A result that arrives settles in from grey (the AI card, src/cloud/components/point-view.tsx). */
+@keyframes gz-colour-in {
+  from { filter: grayscale(1); opacity: 0.6; }
+  to { filter: none; opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  [class*="gz-breathe"], [class*="gz-colour-in"] { animation: none !important; }
+  /* Reduce Motion: cross-fades only — no sweep, no scale. */
+  .gz-landed [draggable="true"]::after, .gz-sweep::after { display: none; }
+  .gz-landed { --tw-enter-scale: 1 !important; }
+}
+
+/*
+   the window's: under 1000 px the centred project name joins the row between the two sides and is shortened there
+   («…», full name on hover) instead of lying under them; the left side keeps its own width. */
+@media (max-width: 999px) {
+  .pc-header > [data-project-title] {
+    position: static;
+    --tw-translate-x: 0;
+    --tw-translate-y: 0;
+    translate: none;
+    transform: none;
+    max-width: none;
+    flex: 1 1 0;
+    justify-content: center;
+  }
+  .pc-header > div:first-child { flex-shrink: 0; }
+}

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security issue · Уязвимость
+    url: https://github.com/gamidaliev03/gaziyav/security/advisories/new
+    about: Please report security problems privately. · Об уязвимостях — пожалуйста, приватно.
+  - name: Documentation · Документация
+    url: https://github.com/gamidaliev03/gaziyav/blob/main/docs/en/README.md
+    about: Install, lipsync, AI prices, privacy, FAQ. · Установка, липсинк, цены ИИ, приватность, вопросы.

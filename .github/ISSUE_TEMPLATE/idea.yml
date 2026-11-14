@@ -1,0 +1,21 @@
+name: Idea · Идея
+description: Something Gaziyav should do, or do better. · Что Gaziyav должен уметь или делать лучше.
+labels: ["idea"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: The situation · Ситуация
+      description: What are you making, and where does the editor get in the way? Describe the task, not the button. · Что вы монтируете и где редактор мешает? Опишите задачу, а не кнопку.
+    validations:
+      required: true
+  - type: textarea
+    id: wish
+    attributes:
+      label: What would help · Что помогло бы
+    validations:
+      required: true
+  - type: textarea
+    id: elsewhere
+    attributes:
+      label: How other editors do it (optional) · Как это сделано в других редакторах (необязательно)

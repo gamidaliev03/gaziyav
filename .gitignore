@@ -1,0 +1,22 @@
+# dependencies
+node_modules/
+# build output
+.next/
+out/
+dist/
+.turbo/
+target/
+*.tsbuildinfo
+next-env.d.ts
+desktop/vendor/
+desktop/dist/
+apps/web/public/montage-bundle/
+# local settings and secrets
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*-key.bin
+# macOS
+.DS_Store

@@ -1,0 +1,66 @@
+name: Bug report · Ошибка
+description: Something does not work as it should. · Что-то работает не так.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you. A bug with steps that repeat becomes an automated test, so it never comes back.
+        Спасибо. Ошибка с повторимыми шагами становится автоматическим тестом — и больше не возвращается.
+        **Never paste API keys.** · **Не вставляйте API-ключи.**
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps · Шаги
+      description: From opening the app to the problem, one action per line. · От запуска до проблемы, по действию на строку.
+      placeholder: |
+        1. New project, import a 9:16 clip
+        2. Select the clip, press ⌥L
+        3. …
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected · Что ожидали
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened · Что произошло
+      description: The exact message if there was one; a screenshot or a short screen recording helps. · Точный текст сообщения, если было; скриншот или короткая запись экрана помогут.
+    validations:
+      required: true
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where · Где
+      options:
+        - macOS app
+        - Browser edition · В браузере
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Gaziyav version · Версия Gaziyav
+      description: Gaziyav → About · Gaziyav → О программе
+      placeholder: "1.0.42"
+    validations:
+      required: true
+  - type: input
+    id: system
+    attributes:
+      label: System · Система
+      placeholder: "macOS 15.4, MacBook Air M2 16 GB"
+    validations:
+      required: true
+  - type: dropdown
+    id: repeat
+    attributes:
+      label: Does it repeat? · Повторяется?
+      options:
+        - Every time · Каждый раз
+        - Sometimes · Иногда
+        - Once · Один раз

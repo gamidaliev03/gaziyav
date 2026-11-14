@@ -1,0 +1,13 @@
+# Build-time tool: GLSL 450 fragment (wrapped GL Transition) → validated WGSL.
+# Not part of the app or the wasm build (own workspace).
+[package]
+name = "gl2wgsl"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+
+[workspace]
+
+[dependencies]
+naga = { version = "29.0.1", features = ["glsl-in", "wgsl-out"] }

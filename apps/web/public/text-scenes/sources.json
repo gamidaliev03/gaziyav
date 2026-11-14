@@ -1,0 +1,165 @@
+{
+	"_about": "Backdrops of the Text tab's preset tiles (text/theme-scenes.ts): one photo per theme or group scene, 480 px square crops from Unsplash.",
+	"photos": [
+		{
+			"file": "nightCity.jpg",
+			"scene": "nightCity",
+			"about": "highrise lighted buildings during night time",
+			"source": "https://images.unsplash.com/photo-1545158828-4e222fdb1d5a",
+			"license": "Unsplash License (free to use, no attribution required)",
+			"testOnly": false
+		},
+		{
+			"file": "film.jpg",
+			"scene": "film",
+			"about": "man standing near beach at sunset",
+			"source": "https://images.unsplash.com/photo-1500389723459-ca24a5564899",
+			"license": "Unsplash License (free to use, no attribution required)",
+			"testOnly": false
+		},
+		{
+			"file": "product.jpg",
+			"scene": "product",
+			"about": "a dropper releases a drop of serum into a bottle",
+			"source": "https://images.unsplash.com/photo-1764694187667-f28a05a52c0e",
+			"license": "Unsplash License (free to use, no attribution required)",
+			"testOnly": false
+		},
+		{
+			"file": "stories.jpg",
+			"scene": "stories",
+			"about": "friends taking a selfie outdoors",
+			"source": "https://images.unsplash.com/photo-1758275557354-00904e39c6da",
+			"license": "Unsplash License (free to use, no attribution required)",
+			"testOnly": false
+		},
+		{
+			"file": "interview.jpg",
+			"scene": "interview",
+			"about": "two men recording a podcast",
+			"source": "https://images.unsplash.com/photo-1559523161-0fc0d8b38a7a",
+			"license": "Unsplash License (free to use, no attribution required)",
+			"testOnly": false
+		},
+		{
+			"file": "wedding.jpg",
+			"scene": "wedding",
+			"about": "groom beside bride holding bouquet",
+			"source": "https://images.unsplash.com/photo-1519741497674-611481863552",
+			"license": "Unsplash License (free to use, no attribution required)",
+			"testOnly": false
+		},
+		{
+			"file": "gaming.jpg",
+			"scene": "gaming",
+			"about": "a screen with a video game on it",
+			"source": "https://images.unsplash.com/photo-1593305841991-05c297ba4575",
+			"license": "Unsplash License (free to use, no attribution required)",
+			"testOnly": false
+		},
+		{
+			"file": "travel.jpg",
+			"scene": "travel",
+			"about": "mountains during sunset",
+			"source": "https://images.unsplash.com/photo-1500534623283-312aade485b7",
+			"license": "Unsplash License (free to use, no attribution required)",
+			"testOnly": false
+		},
+		{
+			"file": "food.jpg",
+			"scene": "food",
+			"about": "variety of sliced fruits",
+			"source": "https://images.unsplash.com/photo-1490818387583-1baba5e638af",
+			"license": "Unsplash License (free to use, no attribution required)",
+			"testOnly": false
+		},
+		{
+			"file": "fitness.jpg",
+			"scene": "fitness",
+			"about": "person about to lift the barbell",
+			"source": "https://images.unsplash.com/photo-1517836357463-d25dfeac3438",
+			"license": "Unsplash License (free to use, no attribution required)",
+			"testOnly": false
+		},
+		{
+			"file": "business.jpg",
+			"scene": "business",
+			"about": "people in a meeting",
+			"source": "https://images.unsplash.com/photo-1517048676732-d65bc937f952",
+			"license": "Unsplash License (free to use, no attribution required)",
+			"testOnly": false
+		},
+		{
+			"file": "music.jpg",
+			"scene": "music",
+			"about": "stage light in front of an audience",
+			"source": "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3",
+			"license": "Unsplash License (free to use, no attribution required)",
+			"testOnly": false
+		},
+		{
+			"file": "beauty.jpg",
+			"scene": "beauty",
+			"about": "makeup brush set",
+			"source": "https://images.unsplash.com/photo-1596462502278-27bfdc403348",
+			"license": "Unsplash License (free to use, no attribution required)",
+			"testOnly": false
+		},
+		{
+			"file": "tech.jpg",
+			"scene": "tech",
+			"about": "macro photo of a circuit board",
+			"source": "https://images.unsplash.com/photo-1518770660439-4636190af475",
+			"license": "Unsplash License (free to use, no attribution required)",
+			"testOnly": false
+		},
+		{
+			"file": "kids.jpg",
+			"scene": "kids",
+			"about": "children playing with a colourful parachute",
+			"source": "https://images.unsplash.com/photo-1606092195730-5d7b9af1efc5",
+			"license": "Unsplash License (free to use, no attribution required)",
+			"testOnly": false
+		},
+		{
+			"file": "education.jpg",
+			"scene": "education",
+			"about": "students in front of a chalkboard",
+			"source": "https://images.unsplash.com/photo-1561089489-f13d5e730d72",
+			"license": "Unsplash License (free to use, no attribution required)",
+			"testOnly": false
+		},
+		{
+			"file": "news.jpg",
+			"scene": "news",
+			"about": "professional video camera on a tripod",
+			"source": "https://images.unsplash.com/photo-1763775439832-b7e05d9a4065",
+			"license": "Unsplash License (free to use, no attribution required)",
+			"testOnly": false
+		},
+		{
+			"file": "sports.jpg",
+			"scene": "sports",
+			"about": "a soccer match in a stadium at night",
+			"source": "https://images.unsplash.com/photo-1706675780107-7c43cc487928",
+			"license": "Unsplash License (free to use, no attribution required)",
+			"testOnly": false
+		},
+		{
+			"file": "fashion.jpg",
+			"scene": "fashion",
+			"about": "a model walks the runway under spotlights",
+			"source": "https://images.unsplash.com/photo-1784850126110-ab8d5106d50b",
+			"license": "Unsplash License (free to use, no attribution required)",
+			"testOnly": false
+		},
+		{
+			"file": "realEstate.jpg",
+			"scene": "realEstate",
+			"about": "a modern house under a blue sky",
+			"source": "https://images.unsplash.com/photo-1580587771525-78b9dba3b914",
+			"license": "Unsplash License (free to use, no attribution required)",
+			"testOnly": false
+		}
+	]
+}

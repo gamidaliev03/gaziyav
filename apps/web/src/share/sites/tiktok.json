@@ -1,0 +1,84 @@
+{
+	"id": "tiktok",
+	"name": "TikTok",
+	"login": "https://www.tiktok.com/login",
+	"signedIn": {
+		"url": "https://www.tiktok.com/",
+		"cookies": [
+			"sessionid",
+			"sessionid_ss"
+		]
+	},
+	"origins": [
+		"https://www.tiktok.com"
+	],
+	"profile": {
+		"url": "https://www.tiktok.com/tiktokstudio",
+		"name": [],
+		"json": {
+			"url": "https://www.tiktok.com/passport/web/account/info/",
+			"name": "data.username",
+			"avatar": "data.avatar_url"
+		}
+	},
+	"signedOutUrl": "tiktok\\.com/login",
+	"upload": [
+		{
+			"do": "goto",
+			"url": "https://www.tiktok.com/tiktokstudio/upload",
+			"label": "TikTok Studio"
+		},
+		{
+			"do": "file",
+			"label": "the video file",
+			"find": [
+				{
+					"css": "input[type=file][accept*=\"video\"]"
+				},
+				{
+					"css": "input[type=file]"
+				}
+			],
+			"timeout": 30000
+		},
+		{
+			"do": "type",
+			"label": "Caption",
+			"value": "caption",
+			"find": [
+				{
+					"css": ".public-DraftEditor-content"
+				},
+				{
+					"css": "div[contenteditable=\"true\"]"
+				}
+			],
+			"timeout": 60000
+		},
+		{
+			"do": "wait",
+			"label": "the upload to finish",
+			"text": "Uploaded|Upload complete|100%",
+			"timeout": 120000,
+			"optional": true
+		},
+		{
+			"do": "publish",
+			"label": "Post",
+			"find": [
+				{
+					"css": "button[data-e2e=\"post_video_button\"]"
+				},
+				{
+					"text": "^Post$"
+				}
+			],
+			"timeout": 900000
+		}
+	],
+	"done": {
+		"text": "Your video has been uploaded|Your video is being uploaded|Manage your posts|Video published",
+		"fallbackUrl": "https://www.tiktok.com/@{user}",
+		"timeout": 900000
+	}
+}

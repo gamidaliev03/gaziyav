@@ -1,0 +1,28 @@
+{
+  "about": "Trending looks and voices (aicontent9). Every asset was made on this Mac by Gaziyav's own on-device tools; no real person's face or voice is used or imitated.",
+  "looks": {
+    "source": "local-faceswap.py --look <id> (shaders inside the face parser outline; no generative model) applied to the app's made-up faces public/faces/idol.jpg and public/faces/diva.jpg (made with the app's image generator)",
+    "license": "Gaziyav's own work",
+    "files": {
+      "looks/zombie.jpg": "Zombie on idol (made-up face)",
+      "looks/vampire.jpg": "Vampire on diva (made-up face)",
+      "looks/marble.jpg": "Marble statue on diva (made-up face)",
+      "looks/gold.jpg": "Gold statue on idol (made-up face)"
+    }
+  },
+  "voices": {
+    "source": "Qwen3-TTS 1.7B (Apache-2.0) speaking from the app's ready-voice recordings (Resources/voices: the model's built-in made-up speakers), then ffmpeg treatment (studio/server/voice-fx.ts)",
+    "license": "Apache-2.0 model output; samples are Gaziyav's own work",
+    "text": { "en": "Wait for it… this changes everything.", "ru": "Стоп, смотри что дальше. Это меняет всё." },
+    "files": {
+      "voices/narrator.{en,ru}.m4a": "Viral narrator — ready voice vivian (made-up), energetic",
+      "voices/ugc.{en,ru}.m4a": "UGC ad — ready voice aiden (made-up), energetic",
+      "voices/trailer.{en,ru}.m4a": "Movie trailer — ready voice uncle_fu (made-up), serious, −3 semitones + hall",
+      "voices/news.{en,ru}.m4a": "News anchor — ready voice ryan (made-up), serious",
+      "voices/asmr.{en,ru}.m4a": "ASMR whisper — ready voice serena (made-up), calm, whispered",
+      "voices/chipmunk.{en,ru}.m4a": "Chipmunk — ready voice dylan (made-up), +7 semitones",
+      "voices/robot.{en,ru}.m4a": "Robot AI — ready voice ryan (made-up), robotized",
+      "voices/demon.{en,ru}.m4a": "Halloween demon — ready voice uncle_fu (made-up), −7 semitones + hall"
+    }
+  }
+}

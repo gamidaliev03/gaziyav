@@ -1,0 +1,122 @@
+{
+ "gaming": {
+  "file": "gaming.jpg",
+  "title": "Let's Play! (Unsplash).jpg",
+  "author": "Glenn Carstens-Peters glenncarstenspeters",
+  "license": "CC0",
+  "source": "https://commons.wikimedia.org/wiki/File:Let%27s_Play!_(Unsplash).jpg",
+  "testOnly": false
+ },
+ "wedding": {
+  "file": "wedding.jpg",
+  "title": "Wedding couple hug on cliff (Unsplash).jpg",
+  "author": "Brian Hartley mrbrianhartley",
+  "license": "CC0",
+  "source": "https://commons.wikimedia.org/wiki/File:Wedding_couple_hug_on_cliff_(Unsplash).jpg",
+  "testOnly": false
+ },
+ "travel": {
+  "file": "travel.jpg",
+  "title": "Backpacker over a lake (Unsplash).jpg",
+  "author": "Jeremy Yap jeremyyappy",
+  "license": "CC0",
+  "source": "https://commons.wikimedia.org/wiki/File:Backpacker_over_a_lake_(Unsplash).jpg",
+  "testOnly": false
+ },
+ "food": {
+  "file": "food.jpg",
+  "title": "The temptress (Unsplash).jpg",
+  "author": "Izzy Boscawen ib1994",
+  "license": "CC0",
+  "source": "https://commons.wikimedia.org/wiki/File:The_temptress_(Unsplash).jpg",
+  "testOnly": false
+ },
+ "fitness": {
+  "file": "fitness.jpg",
+  "title": "Gym workout session focusing on strength training with a female athlete using gym equipment in a fitness studio.jpg",
+  "author": "Shixart1985",
+  "license": "CC BY 2.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Gym_workout_session_focusing_on_strength_training_with_a_female_athlete_using_gym_equipment_in_a_fitness_studio.jpg",
+  "testOnly": false
+ },
+ "business": {
+  "file": "business.jpg",
+  "title": "Man at a laptop in an office (Unsplash).jpg",
+  "author": "Bench Accounting benchaccounting",
+  "license": "CC0",
+  "source": "https://commons.wikimedia.org/wiki/File:Man_at_a_laptop_in_an_office_(Unsplash).jpg",
+  "testOnly": false
+ },
+ "music": {
+  "file": "music.jpg",
+  "title": "Beach-Please-2022-crowd-stage-lights-night-performance.jpg",
+  "author": "PinkBeachPlanet",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Beach-Please-2022-crowd-stage-lights-night-performance.jpg",
+  "testOnly": false
+ },
+ "beauty": {
+  "file": "beauty.jpg",
+  "title": "Red nail polish (4149676692).jpg",
+  "author": "Kate Brady from McMurdo, Antarctica, United States",
+  "license": "CC BY 2.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Red_nail_polish_(4149676692).jpg",
+  "testOnly": false
+ },
+ "tech": {
+  "file": "tech.jpg",
+  "title": "Spotify on smartphone (Unsplash).jpg",
+  "author": "NeONBRAND neonbrand",
+  "license": "CC0",
+  "source": "https://commons.wikimedia.org/wiki/File:Spotify_on_smartphone_(Unsplash).jpg",
+  "testOnly": false
+ },
+ "kids": {
+  "file": "kids.jpg",
+  "title": "Onikişubat Belediyesi, Turkey (Unsplash).jpg",
+  "author": "Cengizhan Konuş cengizhan",
+  "license": "CC0",
+  "source": "https://commons.wikimedia.org/wiki/File:Oniki%C5%9Fubat_Belediyesi,_Turkey_(Unsplash).jpg",
+  "testOnly": false
+ },
+ "education": {
+  "file": "education.jpg",
+  "title": "A college professor teaching in a university classroom full of students in Tennessee, United States 07.jpg",
+  "author": "Harrison Keely",
+  "license": "CC BY 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:A_college_professor_teaching_in_a_university_classroom_full_of_students_in_Tennessee,_United_States_07.jpg",
+  "testOnly": false
+ },
+ "news": {
+  "file": "news.jpg",
+  "title": "Outside the Television Centre (geograph 5766769).jpg",
+  "author": "Des Blenkinsopp",
+  "license": "CC BY-SA 2.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Outside_the_Television_Centre_(geograph_5766769).jpg",
+  "testOnly": false
+ },
+ "sports": {
+  "file": "sports.jpg",
+  "title": "Soccer Ball (27181880724).jpg",
+  "author": "USARJ NCO CORPS",
+  "license": "CC BY 2.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Soccer_Ball_(27181880724).jpg",
+  "testOnly": false
+ },
+ "fashion": {
+  "file": "fashion.jpg",
+  "title": "Faux Fur Fashion (Unsplash).jpg",
+  "author": "Pete Bellis petebellis",
+  "license": "CC0",
+  "source": "https://commons.wikimedia.org/wiki/File:Faux_Fur_Fashion_(Unsplash).jpg",
+  "testOnly": false
+ },
+ "real-estate": {
+  "file": "real-estate.jpg",
+  "title": "Modern house exterior with red roof and landscaped garden under clear blue sky.jpg",
+  "author": "Shixart1985",
+  "license": "CC BY 2.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Modern_house_exterior_with_red_roof_and_landscaped_garden_under_clear_blue_sky.jpg",
+  "testOnly": false
+ }
+}

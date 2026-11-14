@@ -1,0 +1,10 @@
+{
+  "name": "gaziyav",
+  "productName": "Gaziyav",
+  "private": true,
+  "version": "1.0.42",
+  "main": "main.js",
+  "devDependencies": {
+    "electron": "^44.9.1"
+  }
+}

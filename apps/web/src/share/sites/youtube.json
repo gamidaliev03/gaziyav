@@ -1,0 +1,235 @@
+{
+	"id": "youtube",
+	"name": "YouTube",
+	"login": "https://accounts.google.com/ServiceLogin?service=youtube&continue=https%3A%2F%2Fstudio.youtube.com%2F",
+	"signedIn": {
+		"url": "https://www.youtube.com/",
+		"cookies": [
+			"SAPISID",
+			"__Secure-3PAPISID",
+			"LOGIN_INFO"
+		]
+	},
+	"origins": [
+		"https://www.youtube.com",
+		"https://studio.youtube.com",
+		"https://accounts.google.com",
+		"https://www.google.com"
+	],
+	"profile": {
+		"url": "https://studio.youtube.com/",
+		"name": [
+			{
+				"css": "#entity-name"
+			},
+			{
+				"css": "ytcp-navigation-drawer #channel-title"
+			},
+			{
+				"css": "#account-name"
+			}
+		],
+		"avatar": [
+			{
+				"css": "ytcp-navigation-drawer img#img"
+			},
+			{
+				"css": "#avatar-btn img"
+			},
+			{
+				"css": "img.ytcp-entity-avatar"
+			}
+		]
+	},
+	"signedOutUrl": "accounts\\.google\\.com/(v3/)?signin|ServiceLogin",
+	"upload": [
+		{
+			"do": "goto",
+			"url": "https://studio.youtube.com/",
+			"label": "YouTube Studio"
+		},
+		{
+			"do": "click",
+			"label": "Create",
+			"find": [
+				{
+					"css": "#create-icon"
+				},
+				{
+					"css": "ytcp-button#create-icon"
+				},
+				{
+					"aria": "^Create$"
+				}
+			]
+		},
+		{
+			"do": "click",
+			"label": "Upload videos",
+			"find": [
+				{
+					"css": "#text-item-0"
+				},
+				{
+					"text": "^Upload videos?$"
+				}
+			]
+		},
+		{
+			"do": "file",
+			"label": "the video file",
+			"find": [
+				{
+					"css": "ytcp-uploads-file-picker input[type=file]"
+				},
+				{
+					"css": "input[type=file][name=Filedata]"
+				},
+				{
+					"css": "input[type=file]"
+				}
+			],
+			"timeout": 30000
+		},
+		{
+			"do": "type",
+			"label": "Title",
+			"value": "title",
+			"find": [
+				{
+					"css": "#title-textarea #textbox"
+				},
+				{
+					"aria": "Add a title"
+				}
+			],
+			"timeout": 60000
+		},
+		{
+			"do": "type",
+			"label": "Description",
+			"value": "caption",
+			"find": [
+				{
+					"css": "#description-textarea #textbox"
+				},
+				{
+					"aria": "Tell viewers about your video"
+				}
+			]
+		},
+		{
+			"do": "click",
+			"label": "No, it's not made for kids",
+			"find": [
+				{
+					"css": "tp-yt-paper-radio-button[name=\"VIDEO_MADE_FOR_KIDS_NOT_MFK\"]"
+				},
+				{
+					"text": "No, it's not made for kids"
+				}
+			]
+		},
+		{
+			"do": "click",
+			"label": "Next",
+			"find": [
+				{
+					"css": "#next-button"
+				},
+				{
+					"text": "^Next$"
+				}
+			]
+		},
+		{
+			"do": "click",
+			"label": "Next",
+			"find": [
+				{
+					"css": "#next-button"
+				},
+				{
+					"text": "^Next$"
+				}
+			]
+		},
+		{
+			"do": "click",
+			"label": "Next",
+			"find": [
+				{
+					"css": "#next-button"
+				},
+				{
+					"text": "^Next$"
+				}
+			]
+		},
+		{
+			"do": "privacy",
+			"label": "Visibility",
+			"options": {
+				"public": [
+					{
+						"css": "tp-yt-paper-radio-button[name=\"PUBLIC\"]"
+					},
+					{
+						"text": "^Public$"
+					}
+				],
+				"unlisted": [
+					{
+						"css": "tp-yt-paper-radio-button[name=\"UNLISTED\"]"
+					},
+					{
+						"text": "^Unlisted$"
+					}
+				],
+				"private": [
+					{
+						"css": "tp-yt-paper-radio-button[name=\"PRIVATE\"]"
+					},
+					{
+						"text": "^Private$"
+					}
+				]
+			}
+		},
+		{
+			"do": "wait",
+			"label": "the upload to finish",
+			"text": "Upload complete|Checks complete|Processing (HD|SD)|Video uploaded",
+			"timeout": 2700000
+		},
+		{
+			"do": "publish",
+			"label": "Publish",
+			"find": [
+				{
+					"css": "#done-button"
+				},
+				{
+					"text": "^(Publish|Save)$"
+				}
+			],
+			"timeout": 900000
+		}
+	],
+	"done": {
+		"text": "Video published|Video saved|Video processing|Share a link to your video",
+		"link": [
+			{
+				"css": "a.ytcp-video-info[href]"
+			},
+			{
+				"css": "a[href*=\"youtu.be/\"]"
+			},
+			{
+				"css": "a[href*=\"/shorts/\"]"
+			}
+		],
+		"fallbackUrl": "https://studio.youtube.com/",
+		"timeout": 120000
+	}
+}

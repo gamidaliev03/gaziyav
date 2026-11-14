@@ -1,0 +1,10 @@
+Gaziyav basic sound effects
+=================================
+
+All files in this folder were synthesized from scratch by apps/web/scripts/generate-sfx.mjs
+(oscillators, seeded noise and filters; no recordings or third-party samples were used).
+
+To the extent possible under law, the authors have waived all copyright and related or
+neighboring rights to these sound effects, releasing them under
+Creative Commons CC0 1.0 Universal (https://creativecommons.org/publicdomain/zero/1.0/).
+You may use them in any project, including commercial advertising, without attribution.

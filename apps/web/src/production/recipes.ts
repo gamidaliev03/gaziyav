@@ -1,0 +1,401 @@
+// Structures Claude's edits follow (docs/CLAUDE-PRODUCTION.md §5): how a reel, a YouTube video, podcast clips, an AI
+// short and a promo are put together. apply_plan turns a recipe + the material brief + the taste profile into beats;
+// review checks the edit against the recipe's numbers. Pure data.
+import type { PlatformId } from "@/platforms/table";
+import type { PresetId } from "./presets";
+
+export type RecipeId =
+	| "reel-talking-head"
+	| "youtube-video"
+	| "podcast-clips"
+	| "ai-short"
+	| "promo"
+	| "talking-ad"
+	| "music-video"
+	| "monologue-lipsync"
+	| "dialogue"
+	| "cartoon"
+	| "explainer"
+	| "documentary"
+	| "photo-story"
+	| "trailer"
+	| "screen-tutorial";
+
+export interface Recipe {
+	id: RecipeId;
+	name: string;
+	suits: string;
+	platform: PlatformId;
+	preset: PresetId;
+	/** Length in seconds: shortest, default, longest. */
+	seconds: [number, number, number];
+	/** The hook gets to the point within this many seconds. */
+	hookSeconds: number;
+	/** Story beats after the hook. */
+	beats: [number, number];
+	/** A cutaway (B-roll or a punch-in) at least every this many seconds of a talking head. */
+	coverEvery: number;
+	captions: "words" | "lines" | "off";
+	/** The best moment first (cold open), then the title. */
+	coldOpen: boolean;
+	titleCard: boolean;
+	chapters: boolean;
+	lowerThirds: boolean;
+	stats: boolean;
+	music: "bed" | "sections" | "intro-outro" | "off";
+	ending: "cta-loop" | "end-screen" | "cta";
+	/** Section order a model fills (promo, AI short). */
+	sections?: string[];
+	/** What it is built from: speech (a talking clip), pictures (stills / clips), music, a script (generation). */
+	from: Array<"speech" | "pictures" | "music" | "script" | "cast" | "product" | "screen">;
+	/** Free sources only, free first then paid where it lifts most, or generation-led (priced first, within the budget). */
+	mix: "free" | "free-first" | "generated";
+	/** The tools in order (the skill prints it; apply_plan does the editing part in one call). */
+	tools: string[];
+	/** Cuts land on the music's beats (bars for the strong moments). */
+	onBeat?: boolean;
+}
+
+export const RECIPES: Recipe[] = [
+	{
+		id: "reel-talking-head",
+		name: "Reel from a talking head",
+		suits: "one person speaking → 15–45 s vertical: best line first, punch-ins and B-roll every 2–3 s, word captions, loop end",
+		platform: "reels",
+		preset: "clean-premium",
+		seconds: [15, 30, 45],
+		hookSeconds: 1.5,
+		beats: [3, 5],
+		coverEvery: 2.5,
+		captions: "words",
+		coldOpen: true,
+		titleCard: false,
+		chapters: false,
+		lowerThirds: false,
+		stats: false,
+		music: "bed",
+		ending: "cta-loop",
+		from: ["speech", "pictures"],
+		mix: "free",
+		tools: ["analyze_material", "apply_plan", "review {fix}", "look", "export {platform}"],
+	},
+	{
+		id: "youtube-video",
+		name: "YouTube video",
+		suits: "talk, tutorial, review → 16:9: cold open ≤ 15 s, title ≤ 3 s, chapters, B-roll 30–60 %, music per section, end screen",
+		platform: "youtube",
+		preset: "clean-premium",
+		seconds: [60, 480, 1800],
+		hookSeconds: 5,
+		beats: [3, 12],
+		coverEvery: 6,
+		captions: "off",
+		coldOpen: true,
+		titleCard: true,
+		chapters: true,
+		lowerThirds: true,
+		stats: true,
+		music: "sections",
+		ending: "end-screen",
+		from: ["speech", "pictures", "screen"],
+		mix: "free-first",
+		tools: ["analyze_material", "find_content stock/image for missing B-roll", "apply_plan", "review {fix}", "look", "export {platform:youtube}"],
+	},
+	{
+		id: "podcast-clips",
+		name: "Podcast → clips",
+		suits: "a long conversation → the best quotes as vertical clips, speaker framed, two-line captions",
+		platform: "reels",
+		preset: "podcast",
+		seconds: [20, 40, 60],
+		hookSeconds: 1.5,
+		beats: [1, 3],
+		coverEvery: 4,
+		captions: "words",
+		coldOpen: true,
+		titleCard: false,
+		chapters: false,
+		lowerThirds: true,
+		stats: false,
+		music: "off",
+		ending: "cta",
+		from: ["speech"],
+		mix: "free",
+		tools: ["analyze_material (best quotes)", "apply_plan {beats:[{quote:n}]} per clip, one project each", "make_vertical (face follow)", "review {fix}", "export"],
+	},
+	{
+		id: "ai-short",
+		name: "AI short from a script",
+		suits: "a script → voice, a picture or clip per line (generated where it lifts the video most), captions, music",
+		platform: "shorts",
+		preset: "energetic-reel",
+		seconds: [15, 30, 60],
+		hookSeconds: 1.5,
+		beats: [4, 10],
+		coverEvery: 3,
+		captions: "words",
+		coldOpen: false,
+		titleCard: false,
+		chapters: false,
+		lowerThirds: false,
+		stats: false,
+		music: "bed",
+		ending: "cta-loop",
+		sections: ["hook", "line", "line", "line", "payoff", "cta"],
+		from: ["script", "cast"],
+		mix: "generated",
+		tools: ["apply_plan {brief} → the production script (cast sheet, shot list, prices)", "price_plan", "generate (cast sheet once, then each shot with the references and the previous last frame)", "generate voice", "lipsync where a face speaks", "apply_plan (assembles)", "review {fix}", "export"],
+	},
+	{
+		id: "promo",
+		name: "Promo / ad",
+		suits: "a product → problem, product, proof, offer, CTA in 15–30 s; product shots with motion, the offer as text",
+		platform: "reels",
+		preset: "clean-premium",
+		seconds: [15, 20, 30],
+		hookSeconds: 1.5,
+		beats: [4, 5],
+		coverEvery: 2,
+		captions: "words",
+		coldOpen: false,
+		titleCard: false,
+		chapters: false,
+		lowerThirds: false,
+		stats: true,
+		music: "bed",
+		ending: "cta",
+		sections: ["problem", "product", "proof", "offer", "cta"],
+		from: ["product", "pictures", "music"],
+		mix: "free-first",
+		tools: ["analyze_material", "apply_plan", "review {fix}", "export"],
+		onBeat: true,
+	},
+	{
+		id: "talking-ad",
+		name: "Talking ad (UGC)",
+		suits: "script → voice → an avatar from a photo (or lipsync on real footage) → captions, product shots, CTA; ≈ $2–3 of generation per 30 s",
+		platform: "reels",
+		preset: "clean-premium",
+		seconds: [15, 30, 45],
+		hookSeconds: 1.5,
+		beats: [3, 5],
+		coverEvery: 2.5,
+		captions: "words",
+		coldOpen: false,
+		titleCard: false,
+		chapters: false,
+		lowerThirds: false,
+		stats: true,
+		music: "bed",
+		ending: "cta",
+		sections: ["hook", "problem", "product", "proof", "cta"],
+		from: ["script", "cast", "product"],
+		mix: "generated",
+		tools: ["price_plan", "generate voice", "generate video {avatar from the photo + the voice}", "apply_plan (assembles with product shots)", "review {fix}", "export"],
+	},
+	{
+		id: "music-video",
+		name: "Music video",
+		suits: "a song → cuts on the beat, lyrics as captions, performance shots (lipsync to the song), AI shots with the cast",
+		platform: "reels",
+		preset: "energetic-reel",
+		seconds: [15, 60, 240],
+		hookSeconds: 1.5,
+		beats: [6, 40],
+		coverEvery: 2,
+		captions: "words",
+		coldOpen: false,
+		titleCard: false,
+		chapters: false,
+		lowerThirds: false,
+		stats: false,
+		music: "bed",
+		ending: "cta-loop",
+		from: ["music", "pictures", "cast"],
+		mix: "free-first",
+		tools: ["analyze_material (bpm, bars, lyrics)", "generate shots for the empty bars (cast references)", "lipsync performance shots", "apply_plan (cuts on downbeats)", "review {fix}", "export"],
+		onBeat: true,
+	},
+	{
+		id: "monologue-lipsync",
+		name: "Monologue with lipsync",
+		suits: "a photo or a cast member speaks a text: cloned or ready voice, lipsync, captions",
+		platform: "reels",
+		preset: "clean-premium",
+		seconds: [10, 30, 90],
+		hookSeconds: 1.5,
+		beats: [1, 4],
+		coverEvery: 4,
+		captions: "words",
+		coldOpen: false,
+		titleCard: false,
+		chapters: false,
+		lowerThirds: false,
+		stats: false,
+		music: "bed",
+		ending: "cta",
+		from: ["script", "cast"],
+		mix: "generated",
+		tools: ["price_plan", "generate voice", "generate lipsync {id, text} on the photo/clip", "apply_plan (captions, music, punch-ins)", "review {fix}", "export"],
+	},
+	{
+		id: "dialogue",
+		name: "Dialogue scene",
+		suits: "two characters: shot / reverse shot, a voice each, lipsync per shot, the 180° rule kept",
+		platform: "reels",
+		preset: "documentary",
+		seconds: [15, 40, 120],
+		hookSeconds: 2,
+		beats: [4, 16],
+		coverEvery: 3,
+		captions: "words",
+		coldOpen: false,
+		titleCard: false,
+		chapters: false,
+		lowerThirds: false,
+		stats: false,
+		music: "bed",
+		ending: "cta",
+		from: ["script", "cast"],
+		mix: "generated",
+		tools: ["apply_plan {brief} → cast sheets + shot list (establishing, A over-shoulder, B over-shoulder…)", "price_plan", "generate each shot (references, eyelines left/right kept)", "generate voice per line", "lipsync per shot", "apply_plan (assembles)", "review {fix}", "export"],
+	},
+	{
+		id: "cartoon",
+		name: "Cartoon",
+		suits: "one illustrated style for characters and backgrounds: pictures → animated (image to video), motion, voices, music",
+		platform: "shorts",
+		preset: "energetic-reel",
+		seconds: [15, 45, 120],
+		hookSeconds: 1.5,
+		beats: [4, 12],
+		coverEvery: 3,
+		captions: "words",
+		coldOpen: false,
+		titleCard: false,
+		chapters: false,
+		lowerThirds: false,
+		stats: false,
+		music: "bed",
+		ending: "cta-loop",
+		from: ["script", "cast"],
+		mix: "generated",
+		tools: ["generate a style + cast sheet (one model, one style line in every prompt)", "price_plan", "generate pictures per shot → animate the chosen ones", "generate voice", "apply_plan (assembles)", "review {fix}", "export"],
+	},
+	{
+		id: "explainer",
+		name: "Infographic / explainer",
+		suits: "facts and numbers → animated charts, counters, kinetic text over a voice-over; free",
+		platform: "youtube",
+		preset: "tech-review",
+		seconds: [30, 120, 600],
+		hookSeconds: 3,
+		beats: [4, 12],
+		coverEvery: 4,
+		captions: "lines",
+		coldOpen: false,
+		titleCard: true,
+		chapters: true,
+		lowerThirds: false,
+		stats: true,
+		music: "bed",
+		ending: "end-screen",
+		from: ["script", "pictures"],
+		mix: "free",
+		tools: ["web_search (facts)", "generate voice (free, on this Mac)", "apply_plan (charts and counters from the numbers said)", "motion_layer for custom charts", "review {fix}", "export"],
+	},
+	{
+		id: "documentary",
+		name: "Documentary / commentary",
+		suits: "a voice over archive: YouTube excerpts (only the needed seconds), lower thirds naming the source, slow pace",
+		platform: "youtube",
+		preset: "documentary",
+		seconds: [60, 300, 1800],
+		hookSeconds: 5,
+		beats: [4, 20],
+		coverEvery: 6,
+		captions: "off",
+		coldOpen: true,
+		titleCard: true,
+		chapters: true,
+		lowerThirds: true,
+		stats: false,
+		music: "sections",
+		ending: "end-screen",
+		from: ["speech", "pictures"],
+		mix: "free-first",
+		tools: ["analyze_material", "youtube {query|url, from, to} for each excerpt (marked: may be claimed)", "apply_plan", "review {fix}", "export"],
+	},
+	{
+		id: "photo-story",
+		name: "Photo story / slideshow",
+		suits: "photos → a story on the beat: slow push-ins, one dissolve style, titles, music",
+		platform: "reels",
+		preset: "documentary",
+		seconds: [10, 30, 180],
+		hookSeconds: 2,
+		beats: [4, 40],
+		coverEvery: 3,
+		captions: "off",
+		coldOpen: false,
+		titleCard: true,
+		chapters: false,
+		lowerThirds: false,
+		stats: false,
+		music: "bed",
+		ending: "cta",
+		from: ["pictures", "music"],
+		mix: "free",
+		tools: ["analyze_material (the best photos first)", "apply_plan", "review {fix}", "export"],
+		onBeat: true,
+	},
+	{
+		id: "trailer",
+		name: "Trailer",
+		suits: "the strongest moments, fast, risers and hits at the turns, big titles, music that builds",
+		platform: "youtube",
+		preset: "documentary",
+		seconds: [20, 60, 150],
+		hookSeconds: 2,
+		beats: [8, 30],
+		coverEvery: 2,
+		captions: "off",
+		coldOpen: true,
+		titleCard: true,
+		chapters: false,
+		lowerThirds: false,
+		stats: false,
+		music: "bed",
+		ending: "end-screen",
+		from: ["pictures", "speech", "music"],
+		mix: "free",
+		tools: ["analyze_material (best frames + lines)", "apply_plan", "review {fix}", "export"],
+		onBeat: true,
+	},
+	{
+		id: "screen-tutorial",
+		name: "Screen-recording tutorial",
+		suits: "a screen recording + voice → zoom-ins on what is clicked, cursor emphasis, chapters per step",
+		platform: "youtube",
+		preset: "tech-review",
+		seconds: [60, 300, 1800],
+		hookSeconds: 5,
+		beats: [3, 15],
+		coverEvery: 8,
+		captions: "lines",
+		coldOpen: false,
+		titleCard: true,
+		chapters: true,
+		lowerThirds: false,
+		stats: false,
+		music: "intro-outro",
+		ending: "end-screen",
+		from: ["screen", "speech"],
+		mix: "free",
+		tools: ["analyze_material", "apply_plan (zoom on motion, chapters per step)", "track {kind:object} for cursor emphasis", "review {fix}", "export"],
+	},
+];
+
+export const RECIPE_IDS = RECIPES.map((r) => r.id);
+
+export const recipeOf = (id: string | null | undefined): Recipe => RECIPES.find((r) => r.id === id) ?? RECIPES[0];

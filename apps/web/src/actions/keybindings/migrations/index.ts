@@ -1,0 +1,54 @@
+import { v2ToV3 } from "./v2-to-v3";
+import { v3ToV4 } from "./v3-to-v4";
+import { v4ToV5 } from "./v4-to-v5";
+import { v5ToV6 } from "./v5-to-v6";
+import { v6ToV7 } from "./v6-to-v7";
+import { v7ToV8 } from "./v7-to-v8";
+import { v8ToV9 } from "./v8-to-v9";
+import { v9ToV10 } from "./v9-to-v10";
+import { v12ToV13 } from "./v12-to-v13";
+import { v14ToV15 } from "./v14-to-v15";
+import { v15ToV16 } from "./v15-to-v16";
+import { v13ToV14 } from "./v13-to-v14";
+import { v16ToV17 } from "./v16-to-v17";
+import { v17ToV18 } from "./v17-to-v18";
+
+type MigrationFn = ({ state }: { state: unknown }) => unknown;
+
+const migrations: Record<number, MigrationFn> = {
+	2: v2ToV3,
+	3: v3ToV4,
+	4: v4ToV5,
+	5: v5ToV6,
+	6: v6ToV7,
+	7: v7ToV8,
+	8: v8ToV9,
+	9: v9ToV10,
+	// v10 → v11: the same step again for the keys added since (⌥⌫, ⌥⇧⌫, ⌥⇧R); it only fills free keys of unbound actions.
+	10: v9ToV10,
+	// v11 → v12: ⌥V Paste over.
+	11: v9ToV10,
+	12: v12ToV13,
+	13: v13ToV14,
+	14: v14ToV15,
+	15: v15ToV16,
+	16: v16ToV17,
+	17: v17ToV18,
+};
+
+export const CURRENT_VERSION = 18;
+
+export function runMigrations({
+	state,
+	fromVersion,
+}: {
+	state: unknown;
+	fromVersion: number;
+}): unknown {
+	let current = state;
+	for (let version = fromVersion; version < CURRENT_VERSION; version++) {
+		const migrate = migrations[version];
+		if (migrate) current = migrate({ state: current });
+	}
+	return current;
+}

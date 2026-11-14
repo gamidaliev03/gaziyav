@@ -1,0 +1,24 @@
+{
+	"_about": "Licences for content catalogs that do not name one per piece (content-licenses.mjs). Key: <root>/<path> (root = public | src | library). testOnly: a piece that may not be redistributed; PUBLIC_RELEASE builds (the default of this tree) leave it out. _dropOnPublic: folders of Resources a public build does not carry.",
+	"library/Music/library.json": {
+		"source": "per row (MEDIA_CATALOG; bun scripts/media-catalog.ts)",
+		"license": "per piece"
+	},
+	"library/Sound Effects/library.json": {
+		"source": "per row (MEDIA_CATALOG; bun scripts/media-catalog.ts)",
+		"license": "per piece"
+	},
+	"library/Graphics": {
+		"source": "GRAPHICS_LIBRARY (your own folder of Lottie graphics, optional)",
+		"license": "yours: check before you redistribute a build",
+		"dropDir": "library/Graphics"
+	},
+	"src/transitions/gl/gl-pack.json": {
+		"source": "https://github.com/gl-transitions/gl-transitions"
+	},
+	"public/trending/manifest.json": {
+		"source": "made with Gaziyav's own tools",
+		"license": "Gaziyav own work"
+	},
+	"_dropOnPublic": ["library/Graphics"]
+}

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="340" height="262" viewBox="0 0 340 262"><svg x="0" y="0" width="340" height="262" viewBox="92 118 340 262">
+	<defs><linearGradient id="mf0" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#585c66"/><stop offset="1" stop-color="#8b909b"/></linearGradient><linearGradient id="mf1" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#cfc9bd"/><stop offset="1" stop-color="#f6f3ec"/></linearGradient><linearGradient id="mf2" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ff6f2c"/><stop offset="1" stop-color="#ffd98a"/></linearGradient>
+		<linearGradient id="mgl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".38"/><stop offset=".55" stop-color="#fff" stop-opacity="0"/></linearGradient>
+		<radialGradient id="mgw" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ff8a2b" stop-opacity=".32"/><stop offset="1" stop-color="#ff8a2b" stop-opacity="0"/></radialGradient>
+	</defs>
+	<ellipse cx="262" cy="318" rx="170" ry="70" fill="url(#mgw)"/>
+	<g stroke="#15171b" stroke-width="9" paint-order="stroke"><rect x="116" y="294" width="168" height="50" rx="25" fill="url(#mf0)" transform="rotate(-68 141 319)"/><rect x="116" y="294" width="214" height="50" rx="25" fill="url(#mf1)" transform="rotate(-37 141 319)"/><rect x="116" y="294" width="262" height="50" rx="25" fill="url(#mf2)" transform="rotate(-6 141 319)"/>
+		<rect x="124" y="299" width="246" height="20" rx="10" fill="url(#mgl)" stroke="none" transform="rotate(-6 141 319)"/>
+	</g></svg></svg>

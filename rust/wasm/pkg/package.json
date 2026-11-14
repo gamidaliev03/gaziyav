@@ -1,0 +1,11 @@
+{
+  "name": "opencut-wasm",
+  "type": "module",
+  "description": "Gaziyav build of opencut-wasm (generic effect engine, runtime WGSL shaders, transitions)",
+  "version": "0.2.10-studio.1",
+  "license": "MIT",
+  "files": ["opencut_wasm_bg.wasm", "opencut_wasm.js", "opencut_wasm_bg.js", "opencut_wasm.d.ts"],
+  "main": "opencut_wasm.js",
+  "types": "opencut_wasm.d.ts",
+  "sideEffects": ["./opencut_wasm.js", "./snippets/*"]
+}

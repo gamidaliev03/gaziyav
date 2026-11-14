@@ -1,0 +1,871 @@
+/*
+  Gaziyav themes (night 11–12.11): «Минимал» (the default), «Жидкое стекло», «Матовое стекло», «Строгая», «Полночь»,
+  «Песок», «Высокий контраст» — and «Как было», the look before this night, which is simply the absence of every rule here.
+
+  How it works: the boot script (./boot.ts) puts `data-gz-theme="<look>"` and `data-gz-material="<material>"` on <html>
+  before the first paint, and a <style id="gz-theme"> with the look's variables (./engine.ts: the app's own token names,
+  every text colour checked for AA). The rules below only READ those variables. «Как было» removes the attributes and the
+  style: then nothing below matches and the window is byte for byte today's.
+
+  Never here: a size, a padding or a border width that differs between two new looks (switching never moves anything);
+  a transition, shadow, gradient or blur inside the timeline's scroll area or over the player (glass is chrome only:
+  the shelves, the header, menus, popovers, sheets — the player and the timeline are always opaque); motion other than
+  150–200 ms ease-out.
+*/
+
+/* ───────────────────────── 0. Type, icons, motion, rhythm: every new look ───────────────────────── */
+html[data-gz-theme] {
+	/* the Mac's own type: SF Pro Text / Display chosen by size (system-ui), hierarchy by weight */
+	--font-golos: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", system-ui, sans-serif;
+	--font-unbounded: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", system-ui, sans-serif;
+	/* one motion: 160 ms, ease-out */
+	--default-transition-duration: 160ms;
+	--default-transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
+	--gz-ease: cubic-bezier(0, 0, 0.2, 1);
+	-webkit-font-smoothing: antialiased;
+}
+/* three sizes in the editor's chrome — 11 (secondary), 12 (body), 13 (titles, values) — instead of eight */
+html[data-gz-theme] :is(.pc-header, .panel, .bg-popover, .pc-canvas, [data-settings]) :is(.text-\[10px\], .text-\[10\.5px\], .text-\[0\.65rem\], .text-\[11\.5px\]) {
+	font-size: 11px;
+}
+html[data-gz-theme] :is(.pc-header, .panel, .bg-popover, .pc-canvas, [data-settings]) .text-\[12\.5px\] {
+	font-size: 12px;
+}
+html[data-gz-theme] :is(.pc-header, .panel, .bg-popover, .pc-canvas, [data-settings]) .text-\[0\.8rem\] {
+	font-size: 13px;
+}
+/* one icon family: thin line icons at 16 px in every bar, tab and menu (chevrons, empty-state pictures and icons
+   inside fields keep their size) */
+html[data-gz-theme] svg.lucide {
+	stroke-width: var(--gz-icon-stroke, 1.5);
+}
+html[data-gz-theme] :is(.pc-header, [data-timeline-toolbar], [data-assets-panel], [data-inspector], [role="menu"], [data-player-toolbar])
+	:is(button, [role="tab"], [role="menuitem"], [role="button"])
+	svg:not(.size-2, .size-2\.5, .size-3, .size-5, .size-6, .size-8, .size-10, .size-12, .absolute, .animate-spin) {
+	width: 16px;
+	height: 16px;
+}
+/* the machine's ✦ and the other decorative marks are ink like every icon: the one accent is for the next step */
+html[data-gz-theme] [data-assemble-button] svg {
+	color: inherit;
+}
+/* the focus ring is drawn whole (the base rule drew it at 50 %): 3:1 on every surface (engine.ts) */
+html[data-gz-theme] :focus-visible:not(.focus-visible\:outline-hidden, .outline-hidden, .outline-none, .focus-visible\:outline-none, .focus\:outline-none) {
+	outline-color: var(--ring);
+}
+/* Settings' tab row holds eight tabs in Russian at the dialog's 42 rem: a little less air beside each label */
+html[data-gz-theme] [data-settings] nav > button {
+	padding-left: 6px;
+	padding-right: 6px;
+}
+/* the 8-point rhythm between the panels: 3.5 + the 1 px handle + 3.5 = 8 px, the window's edge is 8 px too */
+html[data-gz-theme] [data-layout-group] {
+	gap: 3.5px;
+}
+
+/* ───────────────────────── 1. The room: canvas and header ───────────────────────── */
+html[data-gz-theme] body {
+	background-color: var(--gz-room);
+}
+html[data-gz-theme] .pc-canvas {
+	background-color: var(--gz-room);
+	background-image: var(--gz-room-image);
+}
+html[data-gz-theme] .pc-header {
+	background-color: transparent;
+	border-bottom-color: transparent;
+}
+/* the editor's window behind its panels */
+html[data-gz-theme] .bg-background.h-screen.w-screen {
+	background-color: var(--gz-room);
+	background-image: var(--gz-room-image);
+}
+
+/* ───────────────────────── 2. Panels: shelves, the stage, the timeline ───────────────────────── */
+html[data-gz-theme] .panel.rounded-sm.border {
+	border-radius: var(--gz-r-panel);
+	border-color: var(--gz-panel-edge);
+	background-image: var(--gz-panel-sheen);
+	box-shadow: var(--gz-panel-shadow);
+}
+html[data-gz-theme] .panel [data-panel-header].bg-background {
+	background-color: transparent;
+}
+/* the player: opaque in every look, no sheen over the film */
+html[data-gz-theme] .panel:has(> div > [data-player-title]) {
+	background-color: var(--gz-stage);
+	background-image: none;
+}
+html[data-gz-theme] [data-preview-frame] {
+	border-color: transparent;
+	box-shadow: 0 0 0 1px rgb(var(--gz-light) / 0.06);
+}
+/* the timeline: opaque in every look, nothing translucent over its tracks */
+html[data-gz-theme] section.panel[aria-label="Timeline"] {
+	background-color: var(--gz-timeline);
+	background-image: none;
+}
+/* clips: one hue per kind, deep enough for the white label in both modes (the skin's colours, which the light look
+   never had: white on its mint was 2.3:1) — colour only, nothing that animates or paints more inside the tracks */
+/* (the clip skin's tokens of ./skin.ts; a look without a skin keeps these colours) */
+html[data-gz-theme] .bg-\[\#33404d\], html[data-gz-theme] .group-data-\[narrow\]\/clip\:bg-\[\#33404d\] { background-color: var(--gz-clip-video, #3d3a35); }
+html[data-gz-theme] .bg-\[\#5DBAA0\] { background-color: var(--gz-clip-text, #7566b5); }
+html[data-gz-theme] .bg-\[\#2E8C84\] { background-color: var(--gz-clip-audio, #2f8279); }
+html[data-gz-theme] .bg-\[\#BA5D7A\] { background-color: var(--gz-clip-graphic, #a3566f); }
+html[data-gz-theme] .bg-\[\#5d93ba\] { background-color: var(--gz-clip-effect, #46779f); }
+/* Text and Scenes open over the timeline: opaque too */
+html[data-gz-theme] [data-project-view-open] > .panel.absolute {
+	background-color: var(--gz-timeline);
+	background-image: none;
+}
+
+/* ───────────────────────── 3. Glass: the shelves (library, inspector) and Home's cards ───────────────────────── */
+html[data-gz-material="glass"] :is([data-assets-panel], [data-inspector]).panel,
+html[data-gz-material="frost"] :is([data-assets-panel], [data-inspector]).panel {
+	background-color: var(--gz-panel-fill);
+}
+html[data-gz-material="glass"] .pc-canvas button.bg-foreground\/\[0\.045\].rounded-xl,
+html[data-gz-material="frost"] .pc-canvas button.bg-foreground\/\[0\.045\].rounded-xl {
+	background-color: var(--gz-panel-fill);
+	background-image: var(--gz-panel-sheen);
+	box-shadow: var(--gz-panel-shadow), inset 0 0 0 1px var(--gz-panel-edge);
+}
+
+/* ───────────────────────── 4. Keys: tabs, segments, quiet buttons ───────────────────────── */
+html[data-gz-theme] [data-tab-group][aria-pressed="true"],
+html[data-gz-theme] button.bg-background.shadow-sm,
+html[data-gz-theme] [role="tablist"].bg-muted > [role="tab"][aria-selected="true"],
+html[data-gz-theme] [data-section-switch] > [role="tab"][aria-selected="true"] {
+	color: var(--gz-key-fg);
+	background-color: var(--gz-key);
+	background-image: linear-gradient(180deg, var(--gz-key-top), var(--gz-key));
+	box-shadow: var(--gz-key-shadow);
+}
+html[data-gz-theme] [data-assets-panel] [aria-pressed="true"].text-primary,
+html[data-gz-theme] [data-assets-panel] button.min-h-\[26px\].text-primary,
+html[data-gz-theme] [data-assets-panel] div.h-\[26px\].text-primary,
+html[data-gz-theme] [data-inspector] button[aria-pressed="true"].text-primary,
+html[data-gz-theme] [data-inspector-tabs] [role="tab"][aria-selected="true"] {
+	color: var(--foreground);
+}
+html[data-gz-theme] [data-assets-panel] button[aria-pressed="true"].border-primary {
+	border-color: var(--gz-hairline);
+	background-color: var(--accent);
+}
+html[data-gz-theme] [data-inspector-tabs] [role="tab"][aria-selected="true"] > span.bg-primary {
+	background-color: var(--foreground);
+}
+html[data-gz-theme] [data-inspector] .bg-primary.absolute.h-full {
+	background-color: var(--gz-slider-fill);
+}
+/* a switch of any make: a well with one key */
+html[data-gz-theme] [role="tablist"].bg-muted,
+html[data-gz-theme] [data-section-switch],
+html[data-gz-theme] [role="group"].bg-foreground\/\[0\.045\].p-0\.5,
+html[data-gz-theme] nav.bg-foreground\/\[0\.05\].p-0\.5,
+html[data-gz-theme] [role="radiogroup"].bg-accent.border.p-0\.5 {
+	border-color: transparent;
+	background-color: var(--gz-well);
+	box-shadow: none;
+}
+html[data-gz-theme] button.bg-secondary.border,
+html[data-gz-theme] button.border.bg-background {
+	box-shadow: none;
+}
+
+/* ───────────────────────── 5. The one filled button: the accent ───────────────────────── */
+html[data-gz-theme] .bg-primary {
+	background-color: var(--gz-accent-fill);
+}
+/* T4: a disabled filled button goes grey (the button's own `disabled:bg-muted`), never the accent with dim words —
+   «Сохранить ключ» with no key read as the one action to press (des2 D6) */
+html[data-gz-theme] button.bg-primary:disabled {
+	background-color: var(--muted);
+}
+html[data-gz-theme] button.bg-primary:is(.h-6, .h-7, .h-8, .h-9, .h-10, .h-\[22px\]):not(:disabled),
+html[data-gz-theme] a.bg-primary:is(.h-6, .h-7, .h-8, .h-9, .h-10) {
+	background-image: none;
+	box-shadow: var(--gz-accent-glow);
+}
+html[data-gz-theme] button.bg-primary:is(.h-6, .h-7, .h-8, .h-9, .h-10, .h-\[22px\]):not(:disabled):hover,
+html[data-gz-theme] a.bg-primary:is(.h-6, .h-7, .h-8, .h-9, .h-10):hover {
+	filter: brightness(1.08);
+}
+
+/* ───────────────────────── 6. Wells: fields, sliders, switches, scrollbars ───────────────────────── */
+html[data-gz-theme] .bg-input.border,
+html[data-gz-theme] .panel .border-border.bg-accent:is(.h-7, .h-8, .h-9),
+html[data-gz-theme] .panel [role="combobox"].bg-accent {
+	background-color: var(--gz-well);
+	border-color: transparent;
+	box-shadow: none;
+}
+html[data-gz-theme] .bg-accent.h-1\.5.rounded-full {
+	background-color: var(--gz-well);
+	box-shadow: none;
+}
+html[data-gz-theme] .size-4.rounded-full[role="slider"] {
+	background-color: var(--gz-thumb);
+	border-color: transparent;
+	box-shadow: 0 1px 3px rgb(0 0 0 / 0.3), 0 0 0 1px var(--gz-thumb-ring);
+}
+html[data-gz-theme] [role="switch"][data-state="unchecked"] {
+	background-color: var(--gz-switch-off);
+	box-shadow: none;
+}
+html[data-gz-theme] [role="switch"][data-state="checked"] {
+	background-color: var(--gz-accent-fill);
+}
+html[data-gz-theme] .scrollbar-thin::-webkit-scrollbar-thumb {
+	background: var(--gz-scroll);
+}
+html[data-gz-theme] .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+	background: var(--gz-scroll-hover);
+}
+
+/* ───────────────────────── 7. Floating: menus, popovers, sheets ───────────────────────── */
+html[data-gz-theme] .bg-popover {
+	-webkit-backdrop-filter: var(--gz-float-filter);
+	backdrop-filter: var(--gz-float-filter);
+}
+html[data-gz-theme] .bg-popover[role="dialog"] {
+	--background: var(--gz-float-matte);
+	background-color: var(--gz-dialog);
+	border-radius: var(--gz-r-dialog);
+}
+html[data-gz-theme] .bg-popover.border {
+	border-color: var(--gz-panel-edge);
+	box-shadow: 0 18px 44px -14px rgb(0 0 0 / 0.5), 0 0 0 0.5px rgb(0 0 0 / 0.2);
+}
+html[data-gz-theme] [role="menu"].bg-popover,
+html[data-gz-theme] [role="listbox"].bg-popover {
+	border-radius: var(--gz-r-menu);
+}
+html[data-gz-theme] .bg-popover button.border.bg-background:not([role]) {
+	background-color: var(--accent);
+	border-color: transparent;
+}
+html[data-gz-theme] .bg-popover button.border.bg-background:not([role]):hover {
+	background-color: var(--popover-hover);
+}
+html[data-gz-theme] .bg-popover [role="combobox"].bg-accent,
+html[data-gz-theme] .bg-popover .border-border.bg-accent:is(.h-7, .h-8, .h-9),
+html[data-gz-theme] .bg-popover input.bg-background {
+	background-color: var(--input);
+	border-color: transparent;
+	box-shadow: none;
+}
+html[data-gz-theme] .fixed.inset-0.z-250.backdrop-blur-sm {
+	background-color: var(--gz-veil);
+	-webkit-backdrop-filter: var(--gz-veil-filter);
+	backdrop-filter: var(--gz-veil-filter);
+}
+html[data-gz-theme] .pc-glass {
+	-webkit-backdrop-filter: var(--gz-float-filter);
+	backdrop-filter: var(--gz-float-filter);
+}
+
+/* ───────────────────────── 8. «Минимал»: no lines, quiet chrome ───────────────────────── */
+/* spacing carries the structure: the dividers inside the chrome are gone (fields and cards keep their own shape) */
+html[data-gz-material="minimal"] :is(.pc-header, [data-assets-panel], [data-inspector], section[aria-label="Timeline"] > :not(.relative)) :is(.border-b, .border-t, .border-r, .border-l):not(input, [role="combobox"], .bg-input, .bg-accent) {
+	border-color: transparent;
+}
+html[data-gz-material="minimal"] :is(.pc-header, [data-timeline-toolbar], [data-assets-panel], [data-inspector]) :is(.bg-border.w-px, .bg-border.h-px, .bg-border.h-4, .bg-border.w-full) {
+	background-color: transparent;
+}
+/* quiet buttons in the header are text and an icon until the pointer is over them */
+html[data-gz-material="minimal"] .pc-header button:is(.bg-secondary, .bg-foreground\/\[0\.06\]) {
+	background-color: transparent;
+	border-color: transparent;
+	box-shadow: none;
+}
+html[data-gz-material="minimal"] .pc-header button:is(.bg-secondary, .bg-foreground\/\[0\.06\]):hover {
+	background-color: var(--accent);
+}
+html[data-gz-material="minimal"] .pc-header [data-section-switch] {
+	background-color: transparent;
+}
+/* a quiet button in a panel or a sheet is a soft grey key, not an outline */
+html[data-gz-material="minimal"] :is(.panel, .bg-popover) button.border:is(.bg-background, .bg-transparent):not([role]) {
+	background-color: var(--muted);
+	border-color: transparent;
+}
+html[data-gz-material="minimal"] :is(.panel, .bg-popover) button.border:is(.bg-background, .bg-transparent):not([role]):hover {
+	background-color: var(--gz-key);
+}
+
+/* ───────────────────────── 9. «Строгая» and «Высокий контраст»: flat, no blur anywhere (the cheapest) ───────────────────────── */
+html:is([data-gz-material="strict"], [data-gz-material="contrast"]) .bg-popover,
+html:is([data-gz-material="strict"], [data-gz-material="contrast"]) .pc-glass,
+html:is([data-gz-material="strict"], [data-gz-material="contrast"]) .fixed.inset-0.z-250.backdrop-blur-sm {
+	-webkit-backdrop-filter: none;
+	backdrop-filter: none;
+}
+html:is([data-gz-material="strict"], [data-gz-material="contrast"]) .bg-popover.border {
+	border-color: var(--gz-hairline);
+	box-shadow: none;
+}
+html[data-gz-material="contrast"] .bg-popover.border,
+html[data-gz-material="contrast"] .panel.rounded-sm.border {
+	border-color: var(--gz-hairline);
+}
+html[data-gz-material="contrast"] :focus-visible:not(.focus-visible\:outline-hidden, .outline-hidden, .outline-none, .focus-visible\:outline-none, .focus\:outline-none) {
+	outline-width: 2px;
+	outline-style: solid;
+}
+
+/* ───────────────────────── 10. macOS «Reduce transparency»: glass becomes matte ───────────────────────── */
+@media (prefers-reduced-transparency: reduce) {
+	html[data-gz-theme] :is([data-assets-panel], [data-inspector]).panel,
+	html[data-gz-theme] .pc-canvas button.bg-foreground\/\[0\.045\].rounded-xl {
+		background-color: var(--gz-panel-matte);
+	}
+	html[data-gz-theme] .bg-popover,
+	html[data-gz-theme] .bg-popover[role="dialog"] {
+		background-color: var(--gz-float-matte);
+		-webkit-backdrop-filter: none;
+		backdrop-filter: none;
+	}
+	html[data-gz-theme] .pc-glass,
+	html[data-gz-theme] .fixed.inset-0.z-250.backdrop-blur-sm {
+		-webkit-backdrop-filter: none;
+		backdrop-filter: none;
+	}
+}
+
+/* ───────────────────────── 11. Motion: 150–200 ms, ease-out, opacity and transform only ───────────────────────── */
+html[data-gz-theme] :is(.duration-300, .duration-500, .duration-700, .duration-1000) {
+	--tw-duration: 200ms;
+	transition-duration: 200ms;
+}
+html[data-gz-theme] :is(.ease-in, .ease-in-out) {
+	--tw-ease: cubic-bezier(0, 0, 0.2, 1);
+	transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
+}
+@media (prefers-reduced-motion: no-preference) {
+	html[data-gz-theme] [role="dialog"].bg-popover[data-state="open"] {
+		animation: gz-sheet 180ms cubic-bezier(0, 0, 0.2, 1) both;
+	}
+	html[data-gz-theme] [role="menu"][data-state="open"],
+	html[data-gz-theme] [role="listbox"][data-state="open"],
+	html[data-gz-theme] [data-radix-popper-content-wrapper] > [role="dialog"][data-state="open"] {
+		animation: gz-pop 160ms cubic-bezier(0, 0, 0.2, 1) both;
+	}
+	html[data-gz-theme] .pc-canvas button.bg-foreground\/\[0\.045\].rounded-xl,
+	html[data-gz-theme] .pc-canvas a.rounded-lg {
+		transition: transform 160ms cubic-bezier(0, 0, 0.2, 1), background-color 160ms cubic-bezier(0, 0, 0.2, 1);
+	}
+	html[data-gz-theme] .pc-canvas button.bg-foreground\/\[0\.045\].rounded-xl:hover,
+	html[data-gz-theme] .pc-canvas a.rounded-lg:hover {
+		transform: translateY(-2px);
+	}
+}
+/* «Строгая» does not animate at all */
+html[data-gz-material="strict"] :is([role="dialog"], [role="menu"], [role="listbox"]).bg-popover[data-state="open"],
+html[data-gz-material="strict"] [data-radix-popper-content-wrapper] > [role="dialog"][data-state="open"] {
+	animation: none;
+}
+
+/* ───────────────────────── 12. The gallery's own tiles (Settings → Appearance) ───────────────────────── */
+[data-theme-tile] .gz-tile-room {
+	contain: strict;
+}
+
+/* ───────────────────────── 13. Surfaces: five levels that never merge (docs/DESIGN.md §1, S1–S5) ─────────────────────────
+   L0 frame (--gz-s0) · L1 panel (--gz-s1) · L2 object (--gz-s2) · L3 floating (--gz-s3) · L4 modal (--gz-s4) + scrim;
+   hairlines --gz-line (L0/L1/L2), --gz-line-float (the edge of L3/L4), --gz-line-in (inside a sheet); shadows
+   --gz-shadow-float and --gz-shadow-modal. The engine moves a level only where a look missed a number, by the smallest
+   step; these rules only say which level each thing is. */
+
+/* L3: menus, popovers, tooltips — a hairline and a shadow in every look (the flat looks get a quiet one) */
+html[data-gz-theme] .bg-popover.border:not([role="dialog"]) {
+	border-color: var(--gz-line-float);
+	box-shadow: var(--gz-shadow-float);
+}
+/* S5: a menu's rows nest in its radius (row radius = menu radius − the menu's 4 px padding) */
+html[data-gz-theme] :is([role="menu"], [role="listbox"]).bg-popover.p-1 :is([role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"], [role="option"]) {
+	border-radius: max(2px, calc(var(--gz-r-menu) - 4px));
+}
+
+/* L4: a sheet (Settings, Export…) — its edge, its shadow; the scrim under it is --gz-veil (= --gz-scrim, ≥ 35 % dimmer) */
+html[data-gz-theme] .bg-popover[role="dialog"].border,
+html[data-gz-theme] [data-settings].bg-popover {
+	border-color: var(--gz-line-float);
+	box-shadow: var(--gz-shadow-modal);
+}
+
+/* Settings: the tab strip is a control on its own track; the body is the sheet with a hairline under the strip and
+   over the footer; the cards in it are objects (a fill one level off the sheet + a hairline) */
+html[data-gz-theme] [data-settings] > nav[data-settings-tabs] {
+	background-color: var(--gz-s4-track);
+	box-shadow: none;
+}
+html[data-gz-theme] [data-settings] [data-settings-body] {
+	--border: var(--gz-line-in);
+	--secondary-border: var(--gz-line-in);
+	border-top: 1px solid var(--gz-line-in);
+}
+html[data-gz-theme] [data-settings] [data-settings-footer] {
+	border-top-color: var(--gz-line-in);
+}
+html[data-gz-theme] [data-settings-body] [data-settings-card],
+html[data-gz-theme] [data-settings-body] :is(.rounded-lg, .rounded-xl):is(.border, .ring-1, .bg-foreground\/\[0\.03\], .bg-foreground\/\[0\.04\]):not([data-theme-tile], [data-theme-tile] *, button, input, [role="radiogroup"]) {
+	background-color: var(--gz-s4-card);
+	border-color: var(--gz-line-in);
+	--tw-ring-color: var(--gz-line-in);
+}
+/* a card drawn by a fill alone gets its hairline as an inset outline (no border to colour) */
+html[data-gz-theme] [data-settings-body] :is(.rounded-lg, .rounded-xl):is(.bg-foreground\/\[0\.03\], .bg-foreground\/\[0\.04\]):not(.border, .ring-1, [data-theme-tile], [data-theme-tile] *, button, input, [role="radiogroup"]) {
+	outline: 1px solid var(--gz-line-in);
+	outline-offset: -1px;
+}
+
+/* L2 on L1: a library tile (Media, Text, Audio, Effects, AI…) and Home's project tile lie ON the panel — a fill one
+   level up and a hairline drawn over the picture's edge (outline, so the thumbnail cannot cover it) */
+html[data-gz-theme] [data-asset-tile]:not(.h-8),
+html[data-gz-theme] [data-gz-tile] {
+	background-color: var(--gz-s2);
+}
+/* a tile made as a button is the box its hairline layer is drawn in */
+html[data-gz-theme] button[data-asset-tile]:not(.h-8, .absolute, .fixed) {
+	position: relative;
+}
+/* the hairline as a layer over the thumbnail (an outline or an inset shadow is covered by the picture's own layer) */
+/* (a list row — DraggableItem's other variant, an h-8 button — is not a tile and stays as it was) */
+html[data-gz-theme] :is([data-asset-tile]:not(.h-8), [data-gz-tile])::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	border-radius: inherit;
+	box-shadow: inset 0 0 0 1px var(--gz-line);
+	pointer-events: none;
+	z-index: 1;
+}
+/* Home has no panels: its tiles lie on the frame, so they are one level up from it (the panel's colour) */
+html[data-gz-theme] .group:not(:hover) > [data-project-card] > .aspect-square.ring-1 {
+	background-color: var(--gz-s1);
+	/* the floating things' line (≥ 1.35 : 1 over the room too): the panel line read 1.25 against «Песок»'s frame */
+	--tw-ring-color: var(--gz-line-float);
+}
+/* dark looks whose panels sit under 4 L* off the frame (glass and frost over the room's glows — frost dark measured
+   ΔL 0.9 —, «Строгая», «Полночь» at 3.3–3.6, des2 D1): Home's tile takes the object level, a step above the panel */
+html.dark:is([data-gz-theme="glass"], [data-gz-theme="frost"], [data-gz-theme="strict"], [data-gz-theme="midnight"])
+	.group:not(:hover) > [data-project-card] > .aspect-square.ring-1 {
+	background-color: var(--gz-s2);
+}
+html[data-gz-theme] [data-project-card] > .aspect-square {
+	background-color: var(--gz-s1);
+}
+
+/* ───────────────────────── 14. The skin layer: a look is a whole skin (WISHES 56, DESIGN §8a; ./skin.ts) ─────────────────────────
+   On <html data-gz-skin> (a look of the pack: «95», «Терминал», «Пиксель», «Неон»…) these rules draw the look's
+   geometry, type, icon voice, motion, cursor, clip skin and texture — ONLY from the tokens of ./skin.ts (`skinVars`).
+   No rule here names a look. Never here: a size, a padding, a border width, a position (nothing moves between looks); a
+   blur or filter inside the timeline's scroll or over the player; an animation at rest; one over 320 ms. The body face
+   stays the system's in every look (no box changes its width): the look's faces are for headings, digits, clip names. */
+
+/* type: headings, digits, clip names in the look's faces */
+html[data-gz-skin] :is(h1, h2, h3, h4, [role="heading"], [data-settings-body] h3) {
+	font-family: var(--gz-font-head);
+	font-weight: var(--gz-head-weight);
+	letter-spacing: var(--gz-head-tracking);
+	text-transform: var(--gz-head-case);
+	font-stretch: var(--gz-head-stretch);
+	-webkit-font-smoothing: var(--gz-smoothing);
+}
+html[data-gz-skin] :is(.tabular-nums, .font-mono):not(button, button *, input, [role="slider"]) {
+	font-family: var(--gz-font-digits);
+	font-variant-numeric: var(--gz-numeric);
+	-webkit-font-smoothing: var(--gz-smoothing);
+}
+html[data-gz-skin] [data-clip-box] .truncate {
+	font-family: var(--gz-font-label);
+	-webkit-font-smoothing: var(--gz-smoothing);
+}
+
+/* the icon voice: stroke weight, caps, joins, grid snapping — the tokens the icon wrapper reads (--gz-icon-*) */
+html[data-gz-skin] svg:is(.lucide, [data-icon], [data-hugeicon]),
+html[data-gz-skin] :is(.pc-header, [data-timeline-toolbar], [data-assets-panel], [data-inspector], [role="menu"], [data-player-toolbar], [data-settings]) :is(button, [role="tab"], [role="menuitem"]) svg {
+	stroke-linecap: var(--gz-icon-cap);
+	stroke-linejoin: var(--gz-icon-join);
+	shape-rendering: var(--gz-icon-render);
+}
+html[data-gz-skin] :is(.pc-header, [data-timeline-toolbar], [data-assets-panel], [data-inspector], [role="menu"], [data-player-toolbar], [data-settings]) :is(button, [role="tab"], [role="menuitem"]) svg [stroke-width] {
+	stroke-width: var(--gz-icon-stroke);
+}
+/* an icon lights only when it answers: pressed, chosen (never at rest; never in the timeline panel — C5) */
+html[data-gz-skin] :is(.pc-header, [data-assets-panel], [data-inspector], [data-player-toolbar]) :is([aria-pressed="true"], [aria-selected="true"], [data-state="on"], :active) > svg {
+	filter: var(--gz-icon-active);
+}
+
+/* controls: a raised key, a key that goes in, an inset field, the one filled button */
+html[data-gz-skin] :is(.panel, .bg-popover, .pc-header, [data-settings]) button:is(.border, .bg-secondary):not([role="radio"], [role="switch"], [role="slider"], [data-theme-tile], [data-accent-swatch], [data-tint-swatch]) {
+	border-radius: var(--gz-r-control);
+	box-shadow: var(--gz-raise);
+}
+html[data-gz-skin] :is(.panel, .bg-popover, .pc-header, [data-settings]) button:is(.border, .bg-secondary):not([role="radio"], [role="switch"], [role="slider"], [data-theme-tile], [data-accent-swatch], [data-tint-swatch]):active,
+html[data-gz-skin] [data-tab-group][aria-pressed="true"],
+html[data-gz-skin] [role="tablist"].bg-muted > [role="tab"][aria-selected="true"],
+html[data-gz-skin] [data-section-switch] > [role="tab"][aria-selected="true"] {
+	border-radius: var(--gz-r-control);
+	background-image: none;
+	box-shadow: var(--gz-sink);
+}
+html[data-gz-skin] :is(.panel, .bg-popover, .pc-header, [data-settings]) button:active:not(:disabled, [role="slider"]) {
+	transform: var(--gz-press-shift);
+}
+html[data-gz-skin] :is(.bg-input.border, input.bg-background, input.bg-transparent.border, .panel [role="combobox"].bg-accent, .panel .border-border.bg-accent:is(.h-7, .h-8, .h-9), textarea.border) {
+	border-radius: var(--gz-r-control);
+	box-shadow: var(--gz-field);
+	caret-color: var(--gz-caret);
+	caret-shape: var(--gz-caret-shape);
+}
+html[data-gz-skin] button.bg-primary:is(.h-6, .h-7, .h-8, .h-9, .h-10, .h-\[22px\]):not(:disabled),
+html[data-gz-skin] a.bg-primary:is(.h-6, .h-7, .h-8, .h-9, .h-10) {
+	border-radius: var(--gz-r-control);
+	box-shadow: var(--gz-raise-fill);
+}
+html[data-gz-skin] :is(button, [role="tab"], [role="menuitem"], [role="option"], [role="radio"], a[href]):not(:disabled) {
+	cursor: var(--gz-cursor-action);
+}
+html[data-gz-skin] :is(input:not([type="range"], [type="color"], [type="checkbox"]), textarea, [contenteditable="true"]) {
+	cursor: var(--gz-cursor-text);
+	caret-color: var(--gz-caret);
+}
+/* tiles and cards take the look's corner */
+html[data-gz-skin] :is([data-asset-tile]:not(.h-8), [data-gz-tile], [data-project-card] > .aspect-square, [data-settings-card]),
+html[data-gz-skin] [data-settings-body] :is(.rounded-lg, .rounded-xl):is(.border, .ring-1, .bg-foreground\/\[0\.03\], .bg-foreground\/\[0\.04\]):not([data-theme-tile], [data-theme-tile] *, button, input, [role="radiogroup"]) {
+	border-radius: var(--gz-r-tile);
+}
+/* S5: a menu's rows nest in the look's menu radius (a square menu has square rows) */
+html[data-gz-skin] :is([role="menu"], [role="listbox"]).bg-popover.p-1 :is([role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"], [role="option"]) {
+	border-radius: max(0px, calc(var(--gz-r-menu) - 4px));
+}
+/* the focus ring: the look's width, offset, style, and its glow (a filter on the focused control in the chrome only) */
+html[data-gz-skin] :focus-visible:not(.focus-visible\:outline-hidden, .outline-hidden, .outline-none, .focus-visible\:outline-none, .focus\:outline-none) {
+	outline-style: var(--gz-ring-style);
+	outline-width: var(--gz-ring-w);
+	outline-offset: var(--gz-ring-off);
+}
+html[data-gz-skin] :is(.pc-header, [data-settings], .bg-popover, [data-assets-panel], [data-inspector]) :focus-visible {
+	filter: var(--gz-ring-filter);
+}
+
+/* the timeline's own things: the clip's corner and colour, its name, the selection (two rings: one against the clip, one
+   against the track), the playhead (a core and a 1 px edge), the waveform. Colour and box-shadow only — no blur, no
+   filter, nothing that animates in the scroll (C5). */
+html[data-gz-skin] [data-clip-box] {
+	border-radius: var(--gz-clip-r);
+}
+/* the selection (looksfix): outside the clip a 1.5 px line in the edge colour (the room the clip keeps for its ring), and
+   INSIDE, over the film strip / waveform / colour, the bright ring between two edge lines: edge | ring | edge reads on
+   any picture and any clip colour. Only the selected clip gets the layer (one box). The name bar takes the tint. */
+html[data-gz-skin] [data-clip-box][style*="box-shadow"] {
+	box-shadow: 0 0 0 1.5px var(--gz-clip-sel-edge) !important;
+}
+html[data-gz-skin] [data-clip-box][style*="box-shadow"]::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: 3;
+	border-radius: inherit;
+	pointer-events: none;
+	box-shadow: inset 0 0 0 var(--gz-clip-sel-w) var(--gz-clip-sel), inset 0 0 0 calc(var(--gz-clip-sel-w) + 1px) var(--gz-clip-sel-edge);
+}
+html[data-gz-skin] [data-clip-box][style*="box-shadow"] [data-clip-name-bar] {
+	background-color: var(--gz-clip-sel-bar);
+}
+html[data-gz-skin] [data-clip-box] :is(.text-white, .text-white\/80) {
+	color: var(--gz-clip-label);
+}
+html[data-gz-skin] [data-clip-box] svg.absolute.bottom-0[aria-hidden="true"] > path:first-child {
+	fill: var(--gz-wave);
+}
+/* (by its shape, never by its label: «Timeline playhead» is translated, and in Russian the rule missed — the playhead
+   came back in the accent after a reload: looksfix) */
+html[data-gz-skin] [role="group"]:has(> button[role="slider"].cursor-col-resize) > .bg-primary.h-full {
+	background-color: var(--gz-playhead);
+	box-shadow: 0 0 0 1px var(--gz-playhead-edge);
+}
+html[data-gz-skin] [role="group"]:has(> button[role="slider"].cursor-col-resize) > button[role="slider"] {
+	border-radius: var(--gz-clip-r);
+	background-color: var(--gz-playhead);
+	border-color: var(--gz-playhead-edge);
+}
+
+/* motion: the look's durations and easing; menus, popovers and sheets arrive in the look's way */
+html[data-gz-skin] {
+	--default-transition-duration: var(--gz-dur-land);
+	--default-transition-timing-function: var(--gz-ease);
+}
+html[data-gz-skin] :is(.duration-75, .duration-100, .duration-150, .duration-200, .duration-300, .duration-500, .duration-700, .duration-1000) {
+	--tw-duration: var(--gz-dur-land);
+	transition-duration: var(--gz-dur-land);
+}
+html[data-gz-skin] :is(.ease-in, .ease-in-out, .ease-out, .ease-linear) {
+	--tw-ease: var(--gz-ease);
+	transition-timing-function: var(--gz-ease);
+}
+html[data-gz-skin] button:is(.transition, .transition-colors, .transition-all, .transition-shadow) {
+	transition-duration: var(--gz-dur-press);
+}
+@media (prefers-reduced-motion: no-preference) {
+	html[data-gz-skin] :is([role="dialog"], [role="menu"], [role="listbox"]).bg-popover[data-state="open"],
+	html[data-gz-skin] [data-radix-popper-content-wrapper] > [role="dialog"][data-state="open"] {
+		animation: var(--gz-anim-appear) var(--gz-dur-appear) var(--gz-ease-appear) both;
+		transform-origin: top center;
+	}
+	html[data-gz-skin] .pc-canvas button.bg-foreground\/\[0\.045\].rounded-xl,
+	html[data-gz-skin] .pc-canvas a.rounded-lg {
+		transition: transform var(--gz-dur-land) var(--gz-ease), background-color var(--gz-dur-land) var(--gz-ease);
+	}
+}
+/* Reduce Motion: a plain cross-fade, the same in every look */
+@media (prefers-reduced-motion: reduce) {
+	html[data-gz-skin] :is([role="dialog"], [role="menu"], [role="listbox"]).bg-popover[data-state="open"],
+	html[data-gz-skin] [data-radix-popper-content-wrapper] > [role="dialog"][data-state="open"] {
+		animation: gz-fade 120ms linear both;
+	}
+	html[data-gz-skin] :is(.panel, .bg-popover, .pc-header, [data-settings]) button:active {
+		transform: none;
+	}
+}
+/* the looks' arrivals: transform / opacity / filter only */
+@keyframes gz-scan {
+	from { opacity: 0.4; transform: scaleY(0.04); }
+	to { opacity: 1; transform: none; }
+}
+@keyframes gz-step {
+	from { opacity: 0; transform: translateY(6px); }
+	to { opacity: 1; transform: none; }
+}
+@keyframes gz-glow {
+	from { opacity: 0; filter: brightness(1.7); }
+	to { opacity: 1; filter: none; }
+}
+
+/* knobs, checkboxes, toasts, progress, scrollbars, the text selection — the rest of the checklist (./skin.ts LOOK_KINDS) */
+html[data-gz-skin] [role="switch"],
+html[data-gz-skin] [role="switch"] > span {
+	border-radius: var(--gz-r-knob);
+}
+html[data-gz-skin] :is([role="checkbox"], button[role="checkbox"]) {
+	border-radius: var(--gz-r-control);
+}
+html[data-gz-skin] [data-sonner-toast] {
+	border-radius: var(--gz-r-menu);
+	box-shadow: var(--gz-shadow-float);
+}
+html[data-gz-skin] [role="progressbar"],
+html[data-gz-skin] [role="progressbar"] > * {
+	border-radius: var(--gz-r-control);
+}
+html[data-gz-skin] .scrollbar-thin::-webkit-scrollbar-thumb {
+	border-radius: var(--gz-r-control);
+}
+html[data-gz-skin] ::selection {
+	background-color: var(--gz-select-bg);
+	color: var(--gz-select-fg);
+}
+
+/* ───────────────────────── 15. The skin's own controls (looksfix, 14.11; the optional parts of ./skin.ts) ─────────────────────────
+   Every rule reads a token with a default that draws the default look's way, so a look that sets none is unchanged.
+   Never here either: a size, a padding, a position; a filter or clip-path in the timeline's scroll or over the picture. */
+
+/* the filled key: its fill and its label in every state (the label floored on its fill: --gz-on-fill / the look's own) */
+html[data-gz-skin] :is(button, a).bg-primary:not(:disabled, [role="slider"], [role="switch"]) {
+	background-color: var(--gz-fill-bg);
+	color: var(--gz-fill-fg);
+}
+html[data-gz-skin] :is(button, a).bg-primary:not(:disabled, [role="slider"], [role="switch"]) :is(svg, span, kbd) {
+	color: inherit;
+}
+html[data-gz-skin] button.bg-primary:is(.h-6, .h-7, .h-8, .h-9, .h-10, .h-\[22px\]):not(:disabled):hover,
+html[data-gz-skin] a.bg-primary:is(.h-6, .h-7, .h-8, .h-9, .h-10):hover {
+	background-color: var(--gz-fill-bg-hover);
+	color: var(--gz-fill-fg-hover);
+	box-shadow: var(--gz-fill-shadow-hover);
+	filter: var(--gz-fill-hover-filter);
+}
+html[data-gz-skin] button.bg-primary:is(.h-6, .h-7, .h-8, .h-9, .h-10, .h-\[22px\]):not(:disabled):active,
+html[data-gz-skin] a.bg-primary:is(.h-6, .h-7, .h-8, .h-9, .h-10):active {
+	background-color: var(--gz-fill-bg-press);
+	color: var(--gz-fill-fg-press);
+	box-shadow: var(--gz-fill-shadow-press);
+	filter: none;
+}
+
+/* the slider's thumb (a SPAN[role=slider] in the inspector, the zoom, every Slider) */
+/* (!important: the thumbs carry their own utility shadow and the §6 rule of every look outranks a plain selector) */
+html[data-gz-skin] span[role="slider"] {
+	border-radius: var(--gz-r-knob) !important;
+	border-color: transparent !important;
+	background-color: var(--gz-thumb-bg) !important;
+	box-shadow: var(--gz-thumb-shadow) !important;
+	clip-path: var(--gz-thumb-clip);
+}
+
+/* tooltips (Radix: delayed-open / instant-open) */
+/* (!important: the L3 rule of §13 and the tooltip's own utilities outrank a plain selector here) */
+html[data-gz-skin] .bg-popover:is([data-state="delayed-open"], [data-state="instant-open"]) {
+	border-radius: var(--gz-r-menu) !important;
+	border-color: transparent !important;
+	background-color: var(--gz-tip-bg) !important;
+	color: var(--gz-tip-fg) !important;
+	box-shadow: var(--gz-tip-shadow) !important;
+}
+html[data-gz-skin] .bg-popover:is([data-state="delayed-open"], [data-state="instant-open"]) kbd {
+	color: inherit;
+	opacity: 0.8;
+}
+
+/* segmented keys and tab strips: the track and the chosen key take the control's corner (S5: square in a square look;
+   !important: the dark skin's switch rules are six classes deep) */
+html[data-gz-skin] :is([role="tablist"].bg-muted, [data-section-switch], [role="group"].bg-foreground\/\[0\.045\].p-0\.5, nav.bg-foreground\/\[0\.05\].p-0\.5, [role="radiogroup"].bg-accent.border.p-0\.5) {
+	border-radius: var(--gz-r-control) !important;
+}
+html[data-gz-skin] :is([role="tablist"], [data-section-switch], [role="radiogroup"], [role="group"], nav) > :is([role="tab"], [role="radio"], button) {
+	border-radius: var(--gz-r-control) !important;
+}
+html[data-gz-skin] :is([role="tablist"], [data-section-switch], [role="radiogroup"], nav) > :is([role="tab"][aria-selected="true"], [role="radio"][aria-checked="true"], [aria-pressed="true"], [data-state="on"], [data-state="active"]):not([data-theme-tile]) {
+	clip-path: var(--gz-chamfer);
+}
+/* a disabled filled key: grey with the muted label (T4), never the look's fill with a dim word */
+html[data-gz-skin] :is(button, a).bg-primary:disabled {
+	background-color: var(--muted);
+	color: var(--muted-foreground);
+	box-shadow: none;
+	filter: none;
+}
+html[data-gz-skin] :is(button, a).bg-primary:disabled :is(svg, span, kbd) {
+	color: inherit;
+}
+/* the close key on a title band takes the band's ink */
+html[data-gz-skin] :is([role="dialog"].bg-popover, [data-settings]) > button.absolute {
+	color: var(--gz-titlebar-fg);
+}
+
+/* the keyboard focus ring: the look's width, offset, style AND colour, on every control — the Tailwind ring that some
+   controls draw instead (a 1 px box-shadow at the default radius) gives way to it */
+html[data-gz-skin] :focus-visible {
+	--tw-ring-shadow: 0 0 #0000;
+	--tw-ring-offset-shadow: 0 0 #0000;
+	outline: var(--gz-ring-w) var(--gz-ring-style) var(--gz-ring-color) !important;
+	outline-offset: var(--gz-ring-off) !important;
+}
+
+/* menu and list rows under the pointer or the keyboard */
+html[data-gz-skin] :is([role="menu"], [role="listbox"]) :is([role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"], [role="option"]):is([data-highlighted], :hover):not([data-disabled]) {
+	background-color: var(--gz-row-hover-bg);
+	color: var(--gz-row-hover-fg);
+}
+html[data-gz-skin] :is([role="menu"], [role="listbox"]) :is([role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"], [role="option"]):is([data-highlighted], :hover):not([data-disabled]) :is(svg, span, kbd) {
+	color: inherit;
+}
+
+/* title rows: a dialog's title and a panel's titled header become the look's band ("transparent" = none) */
+html[data-gz-skin] :is([role="dialog"].bg-popover, [data-settings]) > h2:first-child,
+html[data-gz-skin] :is([role="dialog"].bg-popover, [data-settings]) > :first-child:has(> h2),
+html[data-gz-skin] .panel [data-panel-header]:has(> div > span.truncate) {
+	/* the band sits inside the window's own edge (the bevel / hairline stays the sheet's outer line, S2) */
+	background-image: linear-gradient(var(--gz-titlebar-bg), var(--gz-titlebar-bg));
+	background-repeat: no-repeat;
+	background-position: var(--gz-titlebar-inset) var(--gz-titlebar-inset);
+	background-size: calc(100% - 2 * var(--gz-titlebar-inset)) calc(100% - var(--gz-titlebar-inset));
+	color: var(--gz-titlebar-fg);
+}
+html[data-gz-skin] .panel [data-panel-header]:has(> div > span.truncate) > div > :is(span, span svg) {
+	color: inherit;
+}
+
+/* chamfered keys, menus and dialogs (a look with --gz-chamfer; never in the timeline: none of these scroll there) */
+html[data-gz-skin] :is(.panel, .bg-popover, .pc-header, [data-settings]) button:is(.border, .bg-secondary, .bg-primary):not([role="radio"], [role="switch"], [role="slider"], [data-theme-tile], [data-accent-swatch], [data-tint-swatch]),
+html[data-gz-skin] .pc-header :is(button, a).bg-primary {
+	clip-path: var(--gz-chamfer);
+}
+
+/* checkboxes on */
+html[data-gz-skin] button[role="checkbox"][data-state="checked"] {
+	background-color: var(--gz-check-bg);
+	color: var(--gz-check-mark);
+	border-color: transparent;
+	box-shadow: var(--gz-field);
+}
+
+/* scrollbars: the look's thumb and track */
+html[data-gz-skin] .scrollbar-thin::-webkit-scrollbar-thumb,
+html[data-gz-skin] ::-webkit-scrollbar-thumb {
+	background: var(--gz-scroll-thumb);
+	border-radius: var(--gz-r-control);
+}
+html[data-gz-skin] .scrollbar-thin::-webkit-scrollbar-track,
+html[data-gz-skin] ::-webkit-scrollbar-track {
+	background: var(--gz-scroll-track);
+}
+
+/* digits in fields: a value that is a number takes the look's digits face (P7) */
+html[data-gz-skin] :is([data-inspector], [data-settings], .bg-popover) input:is([inputmode="decimal"], [inputmode="numeric"], [type="number"]) {
+	font-family: var(--gz-font-digits);
+	font-variant-numeric: var(--gz-numeric);
+}
+/* body rows in the look's body face where the box does not change width (menus grow to their rows anyway) */
+html[data-gz-skin] :is([role="menu"], [role="listbox"]) :is([role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"], [role="option"]),
+/* (not the header's title: its key sizes to its text and moved 27 px in mono — themes-app, looksfix) */
+html[data-gz-skin] .bg-popover:is([data-state="delayed-open"], [data-state="instant-open"]) {
+	font-family: var(--gz-font-body);
+}
+
+/* progress in the look's shape (blocks…) */
+html[data-gz-skin] [role="progressbar"] > * {
+	background-image: var(--gz-progress-image);
+}
+
+/* C1: the player's surround is the same neutral in every look of the pack, with its own neutral text and accent */
+html[data-gz-skin] .panel:has(> div > [data-player-title]) {
+	--foreground: var(--gz-stage-fg);
+	--muted-foreground: var(--gz-stage-fg-muted);
+	--muted: var(--gz-stage-muted);
+	--primary: var(--gz-stage-accent);
+	color: var(--gz-stage-fg);
+	box-shadow: none;
+	border-color: transparent;
+}
+
+/* the corner mark of menus and dialogs (a lit chamfer: drawn, not clipped — their shadow stays, S4) */
+html[data-gz-skin] :is([role="menu"], [role="listbox"], [role="dialog"]).bg-popover,
+html[data-gz-skin] [data-settings].bg-popover {
+	background-image: var(--gz-corner);
+}
+/* Home: its own texture; the project tile's frame (the picture untouched) */
+html[data-gz-skin] .pc-canvas {
+	background-image: var(--gz-tex-home);
+}
+html[data-gz-skin] [data-project-card] > .aspect-square.ring-1 {
+	box-shadow: var(--gz-tile-frame);
+}
+/* the header's own edge */
+html[data-gz-skin] .pc-header {
+	box-shadow: var(--gz-header-shadow);
+}
+/* the inspector's tabs: the chosen one reads as chosen (the look's sunk key) */
+html[data-gz-skin] [data-inspector-tabs] [role="tab"][aria-selected="true"] {
+	border-radius: var(--gz-r-control);
+	box-shadow: var(--gz-sink);
+	clip-path: var(--gz-chamfer);
+}
+/* Settings' selects are fields like the number fields beside them (P12) */
+html[data-gz-skin] [data-settings] :is([role="combobox"], button[aria-haspopup="listbox"]) {
+	border-radius: var(--gz-r-control);
+	box-shadow: var(--gz-field);
+}
+/* the gallery's chosen tile: its ring takes the look's corner (a square ring round a square swatch) */
+html[data-gz-skin] [data-theme-tile] {
+	border-radius: var(--gz-r-tile);
+}
+
+/* the close key's glyph carries its own muted colour class, so the band's ink above never reached it (themes-app on
+   the release build: 1.06 : 1 on «95»'s navy band, 1.49 : 1 in «Пиксель») — the glyph takes the key's ink (the lead,
+   14.11; the rule was written by looks4 and lives here, where it belongs) */
+html[data-gz-skin] :is([role="dialog"].bg-popover, [data-settings]) > button.absolute > svg {
+	color: inherit;
+}
