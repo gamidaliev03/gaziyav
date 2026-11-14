@@ -6,6 +6,7 @@
 // the sound renders again once the setting stops (media/audio.ts), the old one playing until then («Applying…»).
 // The equalizer draws its curve with a point per band (drag: frequency ↔, gain ↕); the compressor its transfer curve.
 import { Cancel01Icon, Add01Icon, ArrowTurnBackwardIcon } from "@hugeicons/core-free-icons";
+import { DEMO } from "@/demo/flag";
 import { HugeiconsIcon } from "@/components/ui/icon";
 import { useRef, useState } from "react";
 import { InspectorGroup, InspectorRow, InspectorSlider, Split } from "@/components/editor/panels/properties/components/inspector-ui";
@@ -96,6 +97,8 @@ export function AudioEffectsAdd({ element, trackId }: { element: TimelineElement
 	const t = useT();
 	const { params, write } = useFxWriter(element, trackId);
 	const free = AUDIO_FX.filter((def) => !isCleanup(def) && !isApplied(def, params));
+	// the browser edition renders no audio effects (they are the app's job; its inspector hides audio.effects too)
+	if (DEMO) return null;
 	if (free.length === 0) return null;
 	return (
 		<DropdownMenu>

@@ -148,3 +148,46 @@
 .gz-mobile[data-device="phone"] [data-volume-line] {
 	pointer-events: none !important;
 }
+
+/* A finger's target inside the sheets (the sweep of 15.11 measured the desktop panel's 18–28-px controls there): the
+   segment (Text | Captions, Effects | … | Generators), the side list and the effect categories at least 40 px tall; the
+   small icon buttons on a tile keep their look and get an invisible 40-px hit zone around them. */
+.gz-mobile .gz-sheet [data-segment],
+.gz-mobile .gz-sheet [data-nav-item],
+.gz-mobile .gz-sheet [data-nav-group],
+.gz-mobile .gz-sheet [data-fx-category],
+.gz-mobile .gz-sheet button.rounded-full.h-6 {
+	min-height: 40px;
+}
+.gz-mobile .gz-sheet [data-tile-add]:not(.absolute),
+.gz-mobile .gz-sheet [data-media-view-menu],
+.gz-mobile .gz-sheet [data-testid="media-add"] {
+	position: relative;
+}
+.gz-mobile .gz-sheet [data-tile-add]::after,
+.gz-mobile .gz-sheet [data-source-open]::after,
+.gz-mobile .gz-sheet [data-media-view-menu]::after,
+.gz-mobile .gz-sheet [data-testid="media-add"]::after {
+	content: "";
+	position: absolute;
+	inset: -8px;
+}
+.gz-mobile .gz-sheet [data-tile-add]::after {
+	inset: -11px;
+}
+/* (Media's «+» stands right beside «View and sort»: 6 px each way is the 40 px, and the two zones barely overlap) */
+.gz-mobile .gz-sheet [data-testid="media-add"]::after {
+	inset: -6px;
+}
+
+/* The Export window on a phone (it is portalled outside .gz-mobile, hence :has): its two columns left 12 px for the
+   Name, Export to, Resolution and Format fields at 390 px — the cover goes over the settings, one column. */
+html:has(.gz-mobile[data-device="phone"]) [data-testid="export-dialog"] > div:has(canvas[data-export-first-frame]) {
+	flex-direction: column;
+	overflow-y: auto;
+}
+html:has(.gz-mobile[data-device="phone"]) [data-testid="export-dialog"] > div:has(canvas[data-export-first-frame]) > div:first-child {
+	width: 100%;
+	max-width: 240px;
+	align-self: center;
+}

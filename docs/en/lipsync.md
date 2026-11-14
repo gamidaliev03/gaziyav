@@ -10,7 +10,7 @@ You need a [fal.ai key](ai.md) in **Settings → AI**. Everything below is bille
 
 You have a guest's clip and want them to say something else — a correction, a call to action, a line in another language.
 
-1. **Select the clip** on the timeline. Press <kbd>⌥L</kbd> — or the clip's right-click menu → **Lipsync…**, or <kbd>⌘K</kbd> → «lipsync». Lipsync is one of the AI tools in the inspector's tools block; all three ways reveal it with the cursor in the words field.
+1. **Select the clip** on the timeline. Press <kbd>⌥L</kbd> — or the clip's right-click menu → **Lipsync…**, or <kbd>⌘K</kbd> → «lipsync». Lipsync is one of the tools in the inspector's **AI** tab; all three ways reveal it with the cursor in the words field.
 2. **Type the new words.** By default the voice is cloned from the clip itself.
 3. **Press <kbd>⌘</kbd><kbd>↵</kbd>** (or the button). The button already says the total — for example «Voice and lipsync ≈ 21 ¢».
 

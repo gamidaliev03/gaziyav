@@ -26,7 +26,7 @@ Other models for each task, with their prices, are in the model menus and in [AI
 
 ## Lipsync, step by step
 
-1. Select the clip with a face → <kbd>⌥L</kbd> (or the clip menu's «Lipsync…», or <kbd>⌘K</kbd> «Lipsync»). Lipsync is one of the AI tools in the inspector's tools block; each of these opens it.
+1. Select the clip with a face → <kbd>⌥L</kbd> (or the clip menu's «Lipsync…», or <kbd>⌘K</kbd> «Lipsync»). Lipsync is one of the tools in the inspector's **AI** tab; each of these opens it.
 2. Type what they should say. The voice is cloned from the clip itself.
 3. <kbd>⌘</kbd><kbd>↵</kbd>. The price was on the button.
 

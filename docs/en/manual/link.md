@@ -6,7 +6,7 @@
 
 **How.**
 1. In Media, open the link window (<kbd>⇧⌘Y</kbd>, or the menu item **Import from Link (YouTube)…**) and paste a link — YouTube, TikTok, Instagram and the other sites yt-dlp supports — or type words to search YouTube.
-2. Mark the piece: <kbd>I</kbd> for its start, <kbd>O</kbd> for its end, or drag the yellow ends on the bar.
+2. Mark the piece: <kbd>I</kbd> for its start, <kbd>O</kbd> for its end, or drag the yellow ends on the bar; press the middle of the marked piece and drag to slide it whole.
 3. Add it. Only that piece is downloaded; its tile appears in Media at once and fills as it downloads; it is one drag from the timeline. Ask [Claude](claude.md) and it places the piece on the timeline itself.
 
 **Rules that surprise people.**

@@ -21,7 +21,8 @@ const json = (data: unknown, status = 200) => new Response(JSON.stringify(data),
 export function answer(path: string, method = "GET", search = ""): Response {
 	const [, , area = "", head = ""] = path.split("/");
 	const params = new URLSearchParams(search);
-	if (area === "version") return json({ version: process.env.NEXT_PUBLIC_APP_VERSION ?? "demo", demo: true });
+	// no build number on the site: Settings → About then says just «Gaziyav» (it said «Gaziyav demo» — the site never says demo)
+	if (area === "version") return json({ version: process.env.NEXT_PUBLIC_APP_VERSION ?? "", demo: true });
 	if (area === "hardware") return json({ tier: "standard" });
 	if (area === "transcribe" && head === "status") return json({ available: false, reason: NOT_IN_DEMO });
 	if (area === "text" && head === "graphics") return json({ available: false, items: [] });

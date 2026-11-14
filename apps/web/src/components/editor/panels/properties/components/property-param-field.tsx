@@ -532,15 +532,21 @@ export function OptionSelect({
 }) {
 	const [open, setOpen] = useState(false);
 	const picked = options.find((option) => option.value === value);
+	// An option may stand for «nothing» with the value "" (a title's Design «None», its Icon «Design's own»). The
+	// list's items cannot carry an empty value (the menu refuses to draw and the whole section fell: «Design couldn't
+	// be shown», found 15.11), so inside the menu that option goes by a name of its own and comes back as "".
+	const wire = (option: string) => (option === "" ? NO_OPTION : option);
+	// (the value "" with no such option is «several clips that differ»: the placeholder shows, nothing is picked)
+	const shown = picked ? wire(value) : value;
 	return (
-		<Select value={value} open={open} onOpenChange={setOpen} onValueChange={onChange}>
+		<Select value={shown} open={open} onOpenChange={setOpen} onValueChange={(selected) => onChange(selected === NO_OPTION ? "" : selected)}>
 			<SelectTrigger className="h-7 w-full text-xs" aria-label={label}>
 				<SelectValue placeholder={placeholder}>{picked?.label}</SelectValue>
 			</SelectTrigger>
 			{open && (
 				<SelectContent>
 					{options.map((option) => (
-						<SelectItem key={option.value} value={option.value}>
+						<SelectItem key={option.value} value={wire(option.value)}>
 							{option.label}
 						</SelectItem>
 					))}
@@ -549,6 +555,9 @@ export function OptionSelect({
 		</Select>
 	);
 }
+
+/** How the option whose value is "" is named inside the menu (see OptionSelect). */
+const NO_OPTION = "__none__";
 
 /**
  * The field's left edge as a drag zone with nothing drawn in it (design I1: the label and the field's first 16 px

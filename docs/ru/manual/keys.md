@@ -29,11 +29,11 @@
 
 | Команда | CapCut | Final Cut Pro |
 |---|---|---|
-| Отметить начало | <kbd>I</kbd> | <kbd>I</kbd> |
-| Отметить конец | <kbd>O</kbd> | <kbd>O</kbd> |
-| Сбросить начало и конец | <kbd>⌥X</kbd> | <kbd>⌥X</kbd> |
-| Сбросить начало | <kbd>⌥I</kbd> | <kbd>⌥I</kbd> |
-| Сбросить конец | <kbd>⌥O</kbd> | <kbd>⌥O</kbd> |
+| Отметить вход | <kbd>I</kbd> | <kbd>I</kbd> |
+| Отметить выход | <kbd>O</kbd> | <kbd>O</kbd> |
+| Сбросить вход и выход | <kbd>⌥X</kbd> | <kbd>⌥X</kbd> |
+| Сбросить вход | <kbd>⌥I</kbd> | <kbd>⌥I</kbd> |
+| Сбросить выход | <kbd>⌥O</kbd> | <kbd>⌥O</kbd> |
 | К входу | <kbd>⇧I</kbd> | <kbd>⇧I</kbd> |
 | К выходу | <kbd>⇧O</kbd> | <kbd>⇧O</kbd> |
 | Отметить отрезок клипа | <kbd>⇧X</kbd> | <kbd>X</kbd> |

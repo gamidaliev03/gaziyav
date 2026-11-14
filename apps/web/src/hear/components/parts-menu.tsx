@@ -2,6 +2,7 @@
 // «Split into parts» in a song clip's right-click menu and in its inspector (Audio tab, under «Separate voice and
 // music»); on a part clip: «Solo · drums» and «Full mix». Each is one ⌘Z (hear/parts.ts).
 import { VolumeHighIcon, SplitIcon } from "@hugeicons/core-free-icons";
+import { DEMO } from "@/demo/flag";
 import { HugeiconsIcon } from "@/components/ui/icon";
 import { toast } from "sonner";
 import { registerInspectorSection } from "@/components/editor/panels/properties/slots";
@@ -36,6 +37,8 @@ function solo(element: TimelineElement, all: boolean) {
 export function PartsMenuItems({ trackId, element }: { trackId: string; element: TimelineElement | null }) {
 	const t = useT();
 	if (!element) return null;
+	// the browser edition cannot split a sound into parts (a job of the app)
+	if (DEMO) return null;
 	const part = partOf(element)?.part;
 	if (part)
 		return (

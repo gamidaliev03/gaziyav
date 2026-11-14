@@ -115,7 +115,7 @@ A look changes every surface, icon and motion of the interface — never the lay
 <details>
 <summary><b>Everything else in the box</b></summary>
 
-- **Titles and text designs**, **effects**, **transitions**, **filters** and **colour** controls, **speed** and speed curves, **freeze frame**, **reverse**, **keyframes** with easing, **markers**.
+- **Titles and text designs**, **effects**, **transitions**, **filters**, **[generators](docs/en/manual/generators.md)** (solids, 382 gradients, moving backgrounds, overlays) and **colour** controls — each clip's settings in the [inspector's tabs](docs/en/manual/inspector.md), **speed** and speed curves, **freeze frame**, **reverse**, **keyframes** with easing, **markers**.
 - **Guides in the player**: the social frame for TikTok, Reels, Shorts and VK Clips, TV action / title safe, text zones, thirds — never in the export. <kbd>⇧⌘;</kbd>
 - **Two keymaps**, every key rebindable, <kbd>⌘K</kbd> finds every command and runs it.
 - **A Russian interface written as Russian**, and English.
@@ -144,9 +144,10 @@ An honest comparison of what each one asks of you. CapCut is a capable editor; t
 
 <img src="assets/screens/en/t-web.jpg" width="100%" alt="Gaziyav in a browser tab: the sample project on the timeline, Media, the player and the inspector">
 
-For every computer that is not a Mac — Windows, Linux, a Chromebook — Gaziyav is the browser edition. [Open the editor in your browser](https://gamidaliev03.github.io/gaziyav/editor/) — no install, no account, no server: it runs on your own hardware, your files never leave the tab, and after the first open it works offline. It has the timeline, titles, effects, transitions, filters, generators, sounds, looks, local import and export — and **captions from speech with pause removal**: the speech model runs right in the page (downloaded once; the sound goes nowhere). [The tour as slides](https://gamidaliev03.github.io/gaziyav/tour/) opens there too.
+For every computer that is not a Mac — Windows, Linux, a Chromebook — and for phones and tablets, Gaziyav is the browser edition. [Open the editor in your browser](https://gamidaliev03.github.io/gaziyav/editor/) — no install, no account, no server: it runs on your own hardware, your files never leave the tab, and after the first open it works offline. It has the timeline, titles, effects, transitions, filters, generators, sounds, looks, local import and export — and **captions from speech with pause removal**: the speech model runs right in the page (downloaded once; the sound goes nowhere). The page picks up a new version of the site by itself. [The tour as slides](https://gamidaliev03.github.io/gaziyav/tour/) opens there too.
 - **Lipsync (beta), AI image and AI video with your own fal.ai key** — the price is shown before anything runs; the key stays in this browser and goes only to fal.ai.
-- **Desktop only:** Claude inside Gaziyav, the rest of the free on-device AI (background removal, voice clean-up, retouch and more), a clip by link, posting, and long, heavy exports.
+- **On a phone or a tablet** it is a layout for a finger: the player, full-width tracks, a bottom bar (Add · Edit · Text · Audio · Filters · Format) and quick actions for the selected clip.
+- **Desktop only:** Claude inside Gaziyav, the rest of the free on-device AI (background removal, voice clean-up, retouch and more), a clip by link, posting, a voice from text, motion graphics, and long, heavy exports. [What the browser edition has →](docs/en/manual/browser.md)
 
 ## Install
 

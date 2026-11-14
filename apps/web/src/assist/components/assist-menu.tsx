@@ -3,6 +3,7 @@
 // Where the Assist tools live: the clip's right-click menu (what applies to that clip) and the timeline toolbar's
 // "⋯" menu (the selection). Translating and dubbing a clip has one place: AI → Video translator.
 import { HugeiconsIcon } from "@/components/ui/icon";
+import { DEMO } from "@/demo/flag";
 import { BookmarkRemove02Icon, FilmRoll01Icon, AiMagicIcon, MoreHorizontalIcon, MusicNote01Icon } from "@hugeicons/core-free-icons";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -32,12 +33,14 @@ export function AssistClipMenuItems({ trackId, element }: { trackId: string; ele
 	const video = isVideoClip(clip);
 	const picture = isPictureClip(clip);
 	const music = element.type === "audio" && isSoundClip(clip);
-	if (!video && !picture && !music) return null;
+	// the browser edition: Split scenes is a job of the app; Auto color and Beat markers are done in the page
+	const scenes = video && !DEMO;
+	if (!scenes && !picture && !music) return null;
 	const stop = (e: React.MouseEvent) => e.stopPropagation();
 	return (
 		<>
 			<ContextMenuSeparator />
-			{video && (
+			{scenes && (
 				<ContextMenuItem icon={icon(FilmRoll01Icon)} onClick={(e: React.MouseEvent) => (stop(e), void splitScenes(ref))} data-assist="split-scenes">
 					Split scenes
 				</ContextMenuItem>

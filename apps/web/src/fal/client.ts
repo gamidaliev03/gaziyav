@@ -2,6 +2,7 @@
 // feature uses and their prices. One store, refreshed when Settings changes something.
 import { create } from "zustand";
 import { openSettings } from "@/settings/settings-store";
+import { DEMO } from "@/demo/flag";
 import { useMemo } from "react";
 import { apiOf, chosenModel, cloneTts, type FalModel, type FalTask, liveUnit, price, usd } from "./models";
 import type { AiApi, Keys } from "./video";
@@ -98,5 +99,14 @@ export const estimate = (m: FalModel, amount: number) => `≈ ${usd(price(m, amo
 
 /** Opens Settings at the AI section (the fal key and the models). */
 export function openFalSettings() {
+	if (DEMO) {
+		// the browser edition keeps the fal.ai key in the AI tab's key panel (web/lipsync): its Settings has no AI section
+		void import("@/components/editor/panels/assets/assets-panel-store").then(({ useAssetsPanelStore }) => {
+			const panel = useAssetsPanelStore.getState();
+			panel.setActiveTab("avatar");
+			panel.setSection("avatar", "photo");
+		});
+		return;
+	}
 	openSettings("ai");
 }

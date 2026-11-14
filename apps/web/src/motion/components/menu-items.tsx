@@ -3,6 +3,7 @@
 // Right-click a video clip: Track face / subject / object, Speed (rates, Freeze frame, Reverse, Optical flow),
 // Make vertical. Tracking opens the clip's Motion tab on the Tracker, Speed its Speed tab (docs/EDITOR-MAP.md).
 import { HugeiconsIcon } from "@/components/ui/icon";
+import { DEMO } from "@/demo/flag";
 import { DashboardSpeed02Icon, SmartPhone01Icon, Target02Icon } from "@hugeicons/core-free-icons";
 import { ContextMenuItem, ContextMenuSeparator, ContextMenuSub, ContextMenuSubContent, ContextMenuSubTrigger } from "@/components/ui/context-menu";
 import { usePropertiesStore } from "@/components/editor/panels/properties/stores/properties-store";
@@ -43,6 +44,8 @@ export function MotionMenuItems({ trackId, element }: { trackId: string; element
 	const stop = (e: React.MouseEvent) => e.stopPropagation();
 	return (
 		<>
+			{/* the browser edition: tracking, reverse, optical flow and reframing are jobs of the app */}
+			{!DEMO && (
 			<ContextMenuSub>
 				<ContextMenuSubTrigger icon={<HugeiconsIcon icon={Target02Icon} />}>Track</ContextMenuSubTrigger>
 				<ContextMenuSubContent>
@@ -78,6 +81,7 @@ export function MotionMenuItems({ trackId, element }: { trackId: string; element
 					</ContextMenuItem>
 				</ContextMenuSubContent>
 			</ContextMenuSub>
+			)}
 			<ContextMenuSub>
 				<ContextMenuSubTrigger icon={<HugeiconsIcon icon={DashboardSpeed02Icon} />}>Speed</ContextMenuSubTrigger>
 				<ContextMenuSubContent>
@@ -103,6 +107,8 @@ export function MotionMenuItems({ trackId, element }: { trackId: string; element
 					>
 						Freeze frame
 					</ContextMenuItem>
+					{!DEMO && (
+						<>
 					<ContextMenuItem
 						data-motion-menu="reverse"
 						onClick={(e: React.MouseEvent) => {
@@ -121,8 +127,11 @@ export function MotionMenuItems({ trackId, element }: { trackId: string; element
 					>
 						{clip.retime?.smooth ? "Optical flow  ✓" : "Optical flow"}
 					</ContextMenuItem>
+						</>
+					)}
 				</ContextMenuSubContent>
 			</ContextMenuSub>
+			{!DEMO && (
 			<ContextMenuSub>
 				<ContextMenuSubTrigger icon={<HugeiconsIcon icon={SmartPhone01Icon} />}>Make vertical</ContextMenuSubTrigger>
 				<ContextMenuSubContent>
@@ -154,6 +163,7 @@ export function MotionMenuItems({ trackId, element }: { trackId: string; element
 					</ContextMenuItem>
 				</ContextMenuSubContent>
 			</ContextMenuSub>
+			)}
 		</>
 	);
 }

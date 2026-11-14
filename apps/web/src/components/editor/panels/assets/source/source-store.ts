@@ -23,7 +23,15 @@ export const useSourceStore = create<SourceState>()((set) => ({
 	assetId: null,
 	time: 0,
 	playing: false,
-	open: (assetId) => set((state) => (state.assetId === assetId ? state : { assetId, time: 0, playing: false })),
+	open: (assetId) =>
+		set((state) => {
+			if (state.assetId === assetId) return state;
+			// One playhead: an item opened with the pointer over its tile's hover line opens AT the line. It did so only
+			// when the click came right after the pointer moved (the hover's own seek caught the open); a click after the
+			// pointer rested opened at zero with the line standing in the middle of the tile.
+			if (skim?.assetId === assetId && !openAt) openAt = { assetId, seconds: skim.seconds };
+			return { assetId, time: 0, playing: false };
+		}),
 	close: () => set({ assetId: null, time: 0, playing: false }),
 	setTime: (time) => set({ time }),
 	setPlaying: (playing) => set({ playing }),
@@ -142,6 +150,22 @@ export function deleteSelectedMedia(): boolean {
 	return mediaDelete.current ? mediaDelete.current() : false;
 }
 
+/** The keys that move the monitor's playhead by themselves. */
+const MOVES_PLAYHEAD: ReadonlySet<string> = new Set([
+	"toggle-play",
+	"shuttle-backward",
+	"shuttle-stop",
+	"shuttle-forward",
+	"goto-in",
+	"goto-out",
+	"goto-start",
+	"goto-end",
+	"frame-step-forward",
+	"frame-step-backward",
+	"frame-step-forward-large",
+	"frame-step-backward-large",
+]);
+
 /** Runs a timeline action on the source instead; false when the source has no such action. */
 export function routeSourceAction(action: TActionWithOptionalArgs): boolean {
 	// the pointer over a tile's hover line: I / O mark that item there
@@ -149,6 +173,11 @@ export function routeSourceAction(action: TActionWithOptionalArgs): boolean {
 	if (action === "mark-out" && markSkim("out")) return true;
 	const controls = sourceControls.current;
 	if (!controls) return false;
+	// One playhead: a key moves it away from the line under a pointer that RESTS on the item's tile, so that line is
+	// no longer where the playhead is. I / O after it mark at the playhead — they used to jump back to the resting
+	// pointer (click a tile, step with the arrows to the frame, I: the mark landed in the middle of the clip; the
+	// gate's «H», 15.11). The next move of the pointer over a tile makes its line the playhead again.
+	if (typeof action === "string" && MOVES_PLAYHEAD.has(action) && skim && skim.assetId === useSourceStore.getState().assetId) skim = null;
 	switch (action) {
 		case "toggle-play":
 			controls.toggle();

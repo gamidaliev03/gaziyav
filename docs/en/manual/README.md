@@ -8,7 +8,7 @@ Every area of the editor, one page each: what it is for, the shortest way with t
 |---|---|
 | **Start** | [Home and projects](home.md) · [Import and the Media panel](media.md) · [A clip by link](link.md) |
 | **Edit** | [The timeline](timeline.md) · [Trimming](trimming.md) · [Compound clips](compound.md) · [Markers](markers.md) · [Speed](speed.md) · [Keyframes](keyframes.md) |
-| **Dress** | [Titles and text](text.md) · [Captions](captions.md) · [Sound](sound.md) · [Effects, transitions, filters](effects.md) · [Colour](colour.md) |
+| **Dress** | [The inspector](inspector.md) · [Titles and text](text.md) · [Captions](captions.md) · [Sound](sound.md) · [Effects, transitions, filters](effects.md) · [Generators](generators.md) · [Colour](colour.md) |
 | **Watch and deliver** | [The player and its guides](player.md) · [Export](export.md) · [Post from the editor](post.md) |
 | **AI** | [Claude inside Gaziyav](claude.md) · [Free on-device AI](ondevice-ai.md) · [Extras with your own key](extras.md) |
 | **Make it yours** | [Looks](looks.md) · [Keys](keys.md) · [Settings](settings.md) |

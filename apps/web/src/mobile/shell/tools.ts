@@ -2,6 +2,7 @@
 // → text → audio → filters → format (9:16) → export. Each tool is an existing action of the editor or a sheet that
 // shows an existing panel; nothing here edits the project itself. Data only (tested in __tests__/device-class.test.ts).
 import type { TActionWithOptionalArgs } from "@/actions";
+import { DEMO } from "@/demo/flag";
 
 export type SheetId = "media" | "edit" | "text" | "audio" | "filters" | "format" | "export";
 
@@ -27,8 +28,9 @@ export const PHONE_TOOLS: readonly PhoneTool[] = [
 	// (Export is the top bar's own button: a seventh tool was cut off on a 375-px phone)
 ];
 
-/** The «Edit» sheet's row when a clip is selected — the actions the desktop's keys run (one undo step each). */
-export const EDIT_ACTIONS: ReadonlyArray<{ action: TActionWithOptionalArgs; label: string; icon: string }> = [
+/** The «Edit» sheet's row when a clip is selected — the actions the desktop's keys run (one undo step each). The browser
+ * edition leaves out Reverse: its reversed copy is a job of the app (it answered nothing there). */
+export const EDIT_ACTIONS: ReadonlyArray<{ action: TActionWithOptionalArgs; label: string; icon: string }> = ([
 	{ action: "split", label: "Split", icon: "ScissorIcon" },
 	{ action: "delete-selected", label: "Delete", icon: "Delete02Icon" },
 	{ action: "duplicate-selected", label: "Duplicate", icon: "Copy01Icon" },
@@ -36,7 +38,7 @@ export const EDIT_ACTIONS: ReadonlyArray<{ action: TActionWithOptionalArgs; labe
 	{ action: "reverse-selected", label: "Reverse", icon: "ArrowReloadHorizontalIcon" },
 	{ action: "freeze-frame", label: "Freeze", icon: "PauseIcon" },
 	{ action: "toggle-elements-muted-selected", label: "Mute", icon: "VolumeOffIcon" },
-];
+] as const).filter((a) => !DEMO || a.action !== "reverse-selected");
 
 /** Always at hand above the timeline (not in a sheet): play, undo, redo — the three a hand needs most. */
 export const TOP_ACTIONS: ReadonlyArray<{ action: TActionWithOptionalArgs; label: string; icon: string }> = [

@@ -140,9 +140,9 @@ Fifteen slides, two minutes. One idea per slide.
 
 <img src="../../assets/screens/en/t-web.jpg" width="100%" alt="Gaziyav in a browser tab: the sample project on the timeline, Media, the player and the inspector">
 
-- For Windows, Linux, a Chromebook — every computer that is not a Mac: the same editor as a page, no install, no account, works offline after the first open.
-- Timeline, titles, effects, transitions, looks, local import and export; lipsync in beta on your own key.
-- Only in the Mac app: Claude, on-device AI, a clip by link, posting.
+- For Windows, Linux, a Chromebook, a phone or a tablet: the same editor as a page, no install, no account, works offline after the first open; on a phone, a layout for a finger.
+- Timeline, titles, effects, transitions, generators, sounds, looks, import and export; captions from speech and remove pauses, the model running in the page; AI image, AI video and lipsync (beta) on your own key.
+- Only in the Mac app: Claude, the other on-device AI tools, a clip by link, posting, voice, motion graphics.
 
 ---
 

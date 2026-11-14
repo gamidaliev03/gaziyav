@@ -21,10 +21,10 @@ Built in, nothing to install: remove or blur the background, enhance, upscale 2�
 **How.**
 - Settings → **AI** lists the features, each with its download size and the memory it needs; **Download** one, or **Download all**.
 - Or just use it: the first time a feature is needed, Gaziyav offers to fetch its model.
-- On a clip: the inspector and the clip's menu; or ask [Claude](claude.md) in words.
+- On a clip: the inspector — most tools are in its **AI** tab, voice tools in **Audio**, auto colour in **Color**, background removal in **Effects** ([The inspector](inspector.md)) — and the clip's menu; or ask [Claude](claude.md) in words. A tool's result is the clip's effect, switched off and on in its section; it is not a separate file in Media.
 
 **Rules that surprise people.**
 - Models come once from Hugging Face (a mirror, hf-mirror.com, when it cannot be reached; a few from the model's original publisher), every file checked by SHA-256. After that they work offline.
 - Your media never leaves the Mac for these.
 
-**Limits.** Apple silicon Macs. The heavy ones want memory; a Mac under 16 GB is not offered the heaviest. Not in the browser edition.
+**Limits.** Apple silicon Macs. The heavy ones want memory; a Mac under 16 GB is not offered the heaviest. The [browser edition](browser.md) has speech recognition (captions, remove pauses) with its own model in the page; the other tools need the Mac app.

@@ -14,6 +14,9 @@
 // env: CAPTURE_LANGS=en,ru (default both) · CAPTURE_SHELL=<shell folder> (default: the current folder)
 //      CAPTURE_TOUR=0 skips the tour / manual pictures (t-*, the «claude» loop) · CAPTURE_README=0 skips the README pass
 //      CAPTURE_ONLY=claude makes only the «Claude edits inside» loop (the connector's own MCP server, driven by this script)
+//      CAPTURE_ONLY=now makes only the pictures of the present interface (1.0.46): Media as one list, the drag, the side
+//      panel's Effects and Generators tabs, the inspector's tabs (a video, its Color with a filter, a generator, a title)
+//      and Settings → Draft → Disk space — no loops, no lipsync, no looks
 // Writes CAPTURE_RAW/<lang>/<nn>-<screen>.png (2× stills), CAPTURE_RAW/<lang>/loop-<name>/f-0000.jpg (loop frames)
 // and CAPTURE_RAW/manifest.json (what was captured, what could not be reached on this build and why).
 // Re-run it on every release build: the pictures must show the build that is offered for download.
@@ -507,6 +510,107 @@ async function tourPass(lang) {
 	try { await p.key("/", { code: "Slash", modifiers: 4 }); await sleep(900); await still(lang, "t-keys"); await esc(); } catch (e) { miss(lang, `⌘/: ${e.message}`); }
 }
 
+// ---------- the present interface (CAPTURE_ONLY=now): the pictures the 1.0.46 manual pages show ----------
+const jsClick = (sel) => p.eval(`(() => { const e = document.querySelector(${JSON.stringify(sel)}); if (!e) return false; e.scrollIntoView({ block: 'nearest' }); e.click(); return true; })()`);
+async function subTab(group, key) {
+	const g = await L.boxOf(p, `[data-tab-group="${group}"]`);
+	if (!g) throw new Error(`no tab group ${group}`);
+	await p.mouse(g.x, g.y);
+	await sleep(400);
+	if (key) {
+		const s = await L.boxOf(p, `[data-sub-tab="${key}"]`);
+		if (!s) throw new Error(`no sub-tab ${key}`);
+		await p.mouse(s.x, s.y);
+		await sleep(900);
+	}
+}
+async function inspectorTab(id) {
+	const b = await L.boxOf(p, `[data-inspector-tab-button="${id}"]`);
+	if (!b) throw new Error(`no inspector tab ${id}`);
+	await p.mouse(b.x, b.y);
+	await sleep(700);
+}
+async function nowPass(lang) {
+	manifest.langs[lang] = { got: [], miss: [], loops: {} };
+	await setLanguage(lang);
+	await buildProject(lang);
+	// 07 Media: one list
+	try { await subTab("media", null); await esc(); await select("dawn.mp4"); await sleep(900); await still(lang, "07-media"); } catch (e) { miss(lang, `07 media: ${e.message}`); }
+	// 08 a tile dragged onto the timeline (the frame at 80 % of the way)
+	try {
+		await p.eval(`(() => { const t = ${tracks}; const all = t.main.elements.filter((e) => ${ED}.media.getAssets().find((a) => a.id === e.mediaId)?.name !== 'dawn.mp4').map((e) => ({ trackId: t.main.id, elementId: e.id })); if (all.length) ${ED}.timeline.deleteElements({ elements: all }); })()`);
+		await sleep(900);
+		const tile = await p.eval(`(() => { const e = [...document.querySelectorAll('[data-assets-panel] [data-asset-tile], [data-assets-panel] [aria-label]')].find((x) => /city\\.mp4/.test(x.getAttribute('aria-label') || x.innerText || '')); const r = e?.getBoundingClientRect(); return r && r.width ? { x: r.x + r.width / 2, y: r.y + r.height / 2 } : null; })()`);
+		const dropAt = await p.eval(`(() => { const t = ${tracks}; const e = t.main.elements[0]; const r = e && document.querySelector('[data-timeline-element-id="' + e.id + '"]')?.getBoundingClientRect(); return r ? { x: r.right + 60, y: r.y + r.height / 2 } : null; })()`);
+		if (!tile || !dropAt) throw new Error(`drag: tile ${!!tile}, drop place ${!!dropAt}`);
+		await p.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: tile.x, y: tile.y });
+		await p.send("Input.dispatchMouseEvent", { type: "mousePressed", x: tile.x, y: tile.y, button: "left", clickCount: 1 });
+		for (let i = 1; i <= 18; i++) {
+			const k = i / 18, e = k < 0.5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2;
+			await p.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: tile.x + (dropAt.x - tile.x) * e, y: tile.y + (dropAt.y - tile.y) * e, button: "left", buttons: 1 });
+			await sleep(40);
+			if (i === 14) { await sleep(400); await still(lang, "08-drag"); }
+		}
+		await p.send("Input.dispatchMouseEvent", { type: "mouseReleased", x: dropAt.x, y: dropAt.y, button: "left", clickCount: 1 });
+		await sleep(900);
+	} catch (e) { miss(lang, `08 drag: ${e.message}`); }
+	await buildProject(lang);
+	// the side panel: Effects, Filters, Generators
+	for (const [key, name] of [["effects", "t-tab-effects"], ["filters", "t-tab-filters"], ["generators", "t-tab-generators"]]) {
+		try { await subTab("effects", key); await sleep(1500); await still(lang, name); } catch (e) { miss(lang, `${name}: ${e.message}`); }
+	}
+	// the inspector of a video: its first tab, then Color with a filter applied from the Filters tab
+	try {
+		await select("dawn.mp4");
+		await sleep(900);
+		await inspectorTab("main").catch(() => {});
+		await still(lang, "t-inspector-video");
+		await subTab("effects", "filters");
+		await select("dawn.mp4");
+		await sleep(600);
+		const ok = await p.eval(`(() => { const tiles = [...document.querySelectorAll('button[aria-label^="Apply look "]')].filter((b) => b.getBoundingClientRect().width > 0); const t = tiles[2] ?? tiles[1]; const add = t?.parentElement?.querySelector('[data-tile-add]'); if (!add) return false; add.click(); return true; })()`);
+		if (!ok) throw new Error("no filter tile to apply");
+		await sleep(1500);
+		await inspectorTab("color").catch(() => {});
+		if (!(await p.eval(`!!document.querySelector('[data-applied-filter]')`))) throw new Error("the applied filter is not shown at the top of Color");
+		await still(lang, "t-inspector-color");
+	} catch (e) { miss(lang, `t-inspector-color: ${e.message}`); }
+	// a generator on the timeline and its own tab
+	try {
+		await buildProject(lang);
+		await subTab("effects", "generators");
+		await sleep(1200);
+		const ok = await p.eval(`(() => { const img = document.querySelector('img[data-gen-tile="gradient.aurora"]'); let n = img; for (let i = 0; i < 6 && n; i++) { n = n.parentElement; const b = n?.querySelector('[data-tile-add], button[aria-label="Add"], button[title="Add"]'); if (b) { b.click(); return true; } } return false; })()`);
+		if (!ok) throw new Error("no add button on the «Aurora drift» tile");
+		await sleep(1500);
+		const id = await p.eval(`(() => { const t = ${tracks}; for (const tr of [t.main, ...(t.overlay || [])]) for (const e of tr.elements) if (e.type === 'graphic') { ${ED}.selection.setSelectedElements({ elements: [{ trackId: tr.id, elementId: e.id }] }); ${ED}.playback.seek({ time: e.startTime + 1.5 * window.__studioBridge.ticksPerSecond() }); return e.id; } return null; })()`);
+		if (!id) throw new Error("no generator clip on the timeline");
+		await sleep(1500);
+		await inspectorTab("main").catch(() => {});
+		await still(lang, "t-inspector-generator");
+	} catch (e) { miss(lang, `t-inspector-generator: ${e.message}`); }
+	// a title
+	try {
+		await buildProject(lang);
+		const tid = await p.eval(`(() => { const t = ${tracks}; for (const tr of t.overlay || []) for (const e of tr.elements) if (e.type === 'text') { ${ED}.selection.setSelectedElements({ elements: [{ trackId: tr.id, elementId: e.id }] }); return e.id; } return null; })()`);
+		if (!tid) throw new Error("no title");
+		await sleep(900);
+		await inspectorTab("main").catch(() => {});
+		await still(lang, "t-inspector-title");
+	} catch (e) { miss(lang, `t-inspector-title: ${e.message}`); }
+	// Settings → Draft → Disk space
+	try {
+		await openSettings("projects");
+		await p.eval(`document.querySelector('[data-settings-group="disk"]')?.scrollIntoView({ block: 'center' })`);
+		// the test profile's folder is a path of the capturing Mac: the picture shows the app's usual place instead
+		await p.eval(`(() => { const w = document.createTreeWalker(document.querySelector('[data-settings-projects]') ?? document.body, NodeFilter.SHOW_TEXT); for (let n; (n = w.nextNode()); ) if (/^\\s*\\/(private|tmp|Users|var)\\//.test(n.nodeValue)) n.nodeValue = '~/Library/Application Support/Gaziyav'; })()`);
+		await sleep(900);
+		await still(lang, "t-settings-projects");
+		await esc();
+	} catch (e) { miss(lang, `t-settings-projects: ${e.message}`); await esc(); }
+	await select("dawn.mp4");
+}
+
 try {
 	await p.send("Emulation.setDeviceMetricsOverride", { width: W, height: H, deviceScaleFactor: 2, mobile: false });
 	await sleep(500);
@@ -528,6 +632,7 @@ try {
 	} catch {}
 	for (const lang of LANGS) {
 		console.log(`pass ${lang}`);
+		if (process.env.CAPTURE_ONLY === "now") { await nowPass(lang); continue; }
 		if (process.env.CAPTURE_TOUR !== "0") { manifest.langs[lang] = { got: [], miss: [], loops: {} }; await setLanguage(lang); await buildProject(lang); await tourPass(lang); }
 		if (process.env.CAPTURE_README !== "0") { const keep = manifest.langs[lang]; await pass(lang); if (keep) { manifest.langs[lang].got.unshift(...keep.got); manifest.langs[lang].miss.unshift(...keep.miss); Object.assign(manifest.langs[lang].loops, keep.loops); if (keep.claude) manifest.langs[lang].claude = keep.claude; } }
 	}

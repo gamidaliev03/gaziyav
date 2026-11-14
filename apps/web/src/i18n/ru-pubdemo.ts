@@ -16,7 +16,7 @@ export const RU_PUBDEMO: Record<string, string> = {
 	"Try it in a minute": "Попробуйте за минуту",
 	"Cut a clip (S or the scissors)": "Разрежьте клип (S или ножницы)",
 	"Add a title (Text)": "Добавьте титр (Текст)",
-	"Switch the look (Themes)": "Смените оформление (Темы)",
+	"Switch the look (Themes)": "Смените тему (Темы)",
 	"Export a video": "Экспортируйте видео",
 	"Keyboard shortcuts": "Сочетания клавиш",
 	"Get the app": "Скачать приложение",
@@ -37,4 +37,5 @@ export const RU_PUBDEMO: Record<string, string> = {
 	"sending the piece to fal.ai": "отправляем кусок на fal.ai",
 	"no word timings in the browser": "без расстановки слов в браузере",
 	"This works in the Gaziyav app for Mac.": "Это работает в приложении Gaziyav для Mac.",
+	"No microphone access: allow the microphone for this site in the browser": "Нет доступа к микрофону: разрешите микрофон для этого сайта в браузере",
 };

@@ -7,6 +7,7 @@
 // run at once. The run / stop / retry bar is pinned to the inspector's own bottom edge, never scrolled away.
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { DEMO } from "@/demo/flag";
 import { createPortal } from "react-dom";
 import { HugeiconsIcon } from "@/components/ui/icon";
 import { PauseIcon, PlayIcon, Settings01Icon } from "@hugeicons/core-free-icons";
@@ -540,7 +541,8 @@ export function LipsyncView({ embedded = false }: { embedded?: boolean }) {
 					<div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
 						<span className="text-muted-foreground min-w-0 flex-1 [overflow-wrap:anywhere]" data-testid="footer-hint">
 							{reasonOnButton ? "" : t(hint)}
-							{noKey && (
+							{/* the browser edition has no Settings → AI: its key goes in the banner above (and the AI tab's panel) */}
+							{noKey && !DEMO && (
 								<button type="button" className="text-foreground ml-1.5 underline underline-offset-2" onClick={openFalSettings} data-ai-open-settings>
 									{t("Settings → AI")}
 								</button>

@@ -17,7 +17,7 @@ import {
 	type ReactNode,
 } from "react";
 import { PanelHeader } from "@/components/ui/panel-header";
-import { useT } from "@/i18n";
+import { useT, t as translate } from "@/i18n";
 import { useEditor } from "@/editor/use-editor";
 import { useElementSelection } from "@/timeline/hooks/element/use-element-selection";
 import type { TimelineElement, TimelineTrack } from "@/timeline";
@@ -286,12 +286,17 @@ const ClipPanel = memo(function ClipPanel({ element, track }: Pair) {
 	);
 });
 
-/** The tabs by sphere (./layout-places.ts): named, few, the same order for every kind of clip. One alone is not drawn. */
+/**
+ * The tabs by sphere (./layout-places.ts): named, few, the same order for every kind of clip. One alone is not drawn.
+ * Every tab is always in sight: six Russian names («Видео Аудио Скорость Цвет Эффекты ИИ») are wider than the panel
+ * at its usual width, and a strip that scrolled sideways with no scrollbar hid «Эффекты» and «ИИ» (the gate's
+ * fit-any-window, 15.11) — so the strip takes a second row when it must, never a sideways scroll.
+ */
 function TabStrip({ blocks, active }: { blocks: InspectorBlockSpec[]; active: BlockId }) {
 	const t = useT();
 	if (blocks.length < 2) return null;
 	return (
-		<div role="tablist" data-inspector-tabs className="bg-background sticky top-0 z-10 flex gap-0.5 overflow-x-auto border-b border-white/[.07] px-2 py-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+		<div role="tablist" data-inspector-tabs className="bg-background sticky top-0 z-10 flex flex-wrap gap-0.5 border-b border-white/[.07] px-2 py-1.5">
 			{blocks.map((block) => {
 				const on = block.id === active;
 				return (
@@ -304,8 +309,8 @@ function TabStrip({ blocks, active }: { blocks: InspectorBlockSpec[]; active: Bl
 						onClick={() => useInspectorTab.getState().setTab(block.id)}
 						className={
 							on
-								? "bg-foreground/[0.1] text-foreground shrink-0 rounded-md px-2.5 py-1 text-xs font-medium whitespace-nowrap"
-								: "text-muted-foreground hover:text-foreground hover:bg-foreground/[0.05] shrink-0 rounded-md px-2.5 py-1 text-xs font-medium whitespace-nowrap"
+								? "bg-foreground/[0.1] text-foreground shrink-0 rounded-md px-2 py-1 text-xs font-medium whitespace-nowrap"
+								: "text-muted-foreground hover:text-foreground hover:bg-foreground/[0.05] shrink-0 rounded-md px-2 py-1 text-xs font-medium whitespace-nowrap"
 						}
 					>
 						{t(block.title)}
@@ -320,7 +325,8 @@ function BlockView({ block, element, trackId }: { block: InspectorBlockSpec; ele
 	const tools = block.id === "tools";
 	const sections = block.sections.map(({ section, folded }) => (
 		<SectionBoundary key={tools ? `${section.id}:${element.id}` : section.id} title={section.title} resetKey={element.id}>
-			<div data-inspector-section={section.id} data-inspector-element={element.id} className="transition-colors duration-500 data-[revealed]:bg-primary/10">
+			{/* scroll-mt: a section brought into view (reveal.ts) stops below the sticky tabs — two rows of them at most —, not behind them */}
+			<div data-inspector-section={section.id} data-inspector-element={element.id} className="scroll-mt-[4.75rem] transition-colors duration-500 data-[revealed]:bg-primary/10">
 				<SectionView section={section} element={element} trackId={trackId} folded={folded} />
 			</div>
 		</SectionBoundary>
@@ -454,7 +460,7 @@ class SectionBoundary extends Component<
 		if (this.state.failed) {
 			return (
 				<p className="text-muted-foreground border-border/70 border-b px-4 py-3 text-xs">
-					{this.props.title} couldn&apos;t be shown. Select the clip again to retry.
+					{translate("{title} couldn't be shown. Select the clip again to retry.", { title: translate(this.props.title) })}
 				</p>
 			);
 		}

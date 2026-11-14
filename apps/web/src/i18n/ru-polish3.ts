@@ -160,7 +160,15 @@ export const RU_POLISH3: Record<string, string> = {
 	"Applying to the clip": "Применяем к клипу",
 	"AI photo…": "ИИ-фото…",
 	"AI video…": "ИИ-видео…",
+	// the lead, 15.11: a section of the inspector that failed says so in Russian too
+	"{title} couldn't be shown. Select the clip again to retry.": "Не удалось показать «{title}». Выберите клип ещё раз.",
 	// the lead, 14.11: the cache keeps itself under a size
 	"Keep the cache under": "Держать кэш в пределах",
 	"When the cache passes this size, what was used longest ago is deleted to make room for the new.": "Когда кэш превышает этот размер, самое давнее удаляется и освобождает место новому.",
+	"{n} GB": "{n} ГБ",
+	"{n}GB": "{n} ГБ",
+	"{n}MB": "{n} МБ",
+	"{n}KB": "{n} КБ",
+	"{n}B": "{n} Б",
+	"No limit": "Без ограничения",
 };

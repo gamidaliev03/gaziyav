@@ -395,9 +395,19 @@ function Credits() {
 
 type StorageReport = { support: string; data: string; total: number };
 
-/** CapCut's sizes: «630.67MB», «0B». */
-const formatSize = (bytes: number) =>
-	bytes === 0 ? "0B" : bytes < 1_000_000 ? `${(bytes / 1000).toFixed(2)}KB` : bytes < 1_000_000_000 ? `${(bytes / 1_000_000).toFixed(2)}MB` : `${(bytes / 1_000_000_000).toFixed(2)}GB`;
+/** CapCut's sizes: «630.67MB», «0B» — the unit in the window's language («630.67 МБ», the glossary's units). */
+const SIZE_UNITS = { B: "{n}B", KB: "{n}KB", MB: "{n}MB", GB: "{n}GB" } as const;
+const formatSize = (bytes: number, t: (text: string, values?: Record<string, string | number>) => string) => {
+	const [n, unit] =
+		bytes === 0
+			? (["0", "B"] as const)
+			: bytes < 1_000_000
+				? ([(bytes / 1000).toFixed(2), "KB"] as const)
+				: bytes < 1_000_000_000
+					? ([(bytes / 1_000_000).toFixed(2), "MB"] as const)
+					: ([(bytes / 1_000_000_000).toFixed(2), "GB"] as const);
+	return t(SIZE_UNITS[unit], { n });
+};
 
 /** The cache sizes from the app (and clearing them). */
 function useStorage() {
@@ -513,7 +523,7 @@ function DraftSection() {
 						<SelectContent>
 							{CACHE_LIMITS_GB.map((gb) => (
 								<SelectItem key={gb} value={String(gb)}>
-									{gb} GB
+									{t("{n} GB", { n: gb })}
 								</SelectItem>
 							))}
 							<SelectItem value="none">{t("No limit")}</SelectItem>
@@ -522,7 +532,7 @@ function DraftSection() {
 				</SettingRow>
 				<SettingRow label="Cache size" help="AI layer and AI effect renders, speech transcripts, unsaved exports. They are made again when needed.">
 					<SizeWithBin
-						size={report ? formatSize(report.total) : "…"}
+						size={report ? formatSize(report.total, t) : "…"}
 						kind="cache"
 						onClear={async () => {
 							await refresh({});
@@ -532,7 +542,7 @@ function DraftSection() {
 				</SettingRow>
 				<SettingRow label="Downloaded media" help="Music, sounds and graphics from the library, kept after their first use. When it is full, the oldest make room; they download again when needed.">
 					<SizeWithBin
-						size={cloud.info ? `${formatSize(cloud.info.bytes)} / ${formatSize(cloud.info.limit)}` : "…"}
+						size={cloud.info ? `${formatSize(cloud.info.bytes, t)} / ${formatSize(cloud.info.limit, t)}` : "…"}
 						kind="media"
 						onClear={async () => {
 							await cloud.refresh(true);
@@ -544,7 +554,7 @@ function DraftSection() {
 				{(buildExportOn() || (exported.info?.bytes ?? 0) > 0) && (
 					<SettingRow label="Export cache" help="Parts of films you exported, kept on this Mac: an interrupted export goes on from where it stopped, and after a small change only what changed is rendered again. When it is full, the parts used longest ago make room. Clearing it loses nothing: the next export renders everything once.">
 						<SizeWithBin
-							size={exported.info ? `${formatSize(exported.info.bytes)} / ${formatSize(exported.info.limit)}` : "…"}
+							size={exported.info ? `${formatSize(exported.info.bytes, t)} / ${formatSize(exported.info.limit, t)}` : "…"}
 							kind="export"
 							onClear={async () => {
 								await exported.refresh(true);

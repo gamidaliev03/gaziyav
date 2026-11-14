@@ -347,17 +347,19 @@ function Monitor({ asset, editor, onClose }: { asset: MediaAsset; editor: Editor
 							{fmt(time)} / {fmt(duration)}
 						</span>
 						<div className="ml-auto flex items-center gap-1">
-							<Button variant="outline" size="sm" className="h-6 px-1.5 text-[10px]" title="Mark In (I)" onClick={() => sourceControls.current?.markIn()}>
-								In
-							</Button>
-							<Button variant="outline" size="sm" className="h-6 px-1.5 text-[10px]" title="Mark Out (O)" onClick={() => sourceControls.current?.markOut()}>
-								Out
-							</Button>
+							{/* «Clear» stands BEFORE In and Out: the row is pressed to the right, so the two never move when it
+							    appears — at the end it took the place of «Out», and a second click there wiped the marks (15.11) */}
 							{range && (
-								<Button variant="ghost" size="sm" className="h-6 px-1 text-[10px]" title="Clear In/Out (⌥X)" onClick={() => clearMarks({ id: asset.id })}>
+								<Button variant="ghost" size="sm" className="h-6 px-1 text-[10px]" title="Clear In/Out (⌥X)" onClick={() => clearMarks({ id: asset.id })} data-source-clear>
 									Clear
 								</Button>
 							)}
+							<Button variant="outline" size="sm" className="h-6 px-1.5 text-[10px]" title="Mark In (I)" onClick={() => sourceControls.current?.markIn()} data-source-mark="in">
+								In
+							</Button>
+							<Button variant="outline" size="sm" className="h-6 px-1.5 text-[10px]" title="Mark Out (O)" onClick={() => sourceControls.current?.markOut()} data-source-mark="out">
+								Out
+							</Button>
 						</div>
 					</div>
 				</>

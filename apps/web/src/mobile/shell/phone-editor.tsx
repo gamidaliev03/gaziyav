@@ -65,6 +65,14 @@ export function PhoneEditor({ tablet = false }: { tablet?: boolean }) {
 		};
 	}, [editor]);
 
+	// Speed shows the clip's Speed section of the inspector, which on a phone lives in the Edit sheet: open it first
+	// (the action alone lit a section that was not on screen — nothing seemed to happen)
+	const runQuick = (action: (typeof EDIT_ACTIONS)[number]["action"]) => {
+		if (action !== "speed-duration") return invokeAction(action);
+		setSheet("edit");
+		setTimeout(() => invokeAction(action), 120);
+	};
+
 	// a sheet showing a materials tab: the tab is the desktop panel's own (one panel, two arrangements)
 	useEffect(() => {
 		const tab = sheet === "media" ? "media" : sheet === "text" ? "text" : sheet === "audio" ? "sounds" : sheet === "filters" ? "filters" : null;
@@ -119,7 +127,7 @@ export function PhoneEditor({ tablet = false }: { tablet?: boolean }) {
 			{hasSelection && !sheet && (
 				<div className="gz-quick border-border bg-background shrink-0 border-t" data-phone-quick>
 					{EDIT_ACTIONS.map((a) => (
-						<button key={a.action} type="button" className="gz-tool" onClick={() => invokeAction(a.action)} data-phone-action={a.action}>
+						<button key={a.action} type="button" className="gz-tool" onClick={() => runQuick(a.action)} data-phone-action={a.action}>
 							<HugeiconsIcon icon={ICONS[a.icon]} className="size-6" />
 							<span>{t(a.label)}</span>
 						</button>

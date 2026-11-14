@@ -40,6 +40,10 @@ const NEEDS_THE_APP: ReadonlySet<string> = new Set([
 	"motion.follow",
 	"motion.make-vertical",
 	"audio.enhanceVoice",
+	// the clean-up and the effects of a clip's sound are rendered by the app (/api/audio/fx): in a page they answered
+	// «This works in the Gaziyav app for Mac.» (the sweep of 15.11)
+	"audio.cleanup",
+	"audio.effects",
 	"audio.voiceChanger",
 	"audio.separate",
 	"audio.parts",

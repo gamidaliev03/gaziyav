@@ -12,4 +12,10 @@ export const RU_PANELS: Record<string, string> = {
 	"Select a clip with sound to mark beats": "Выделите клип со звуком, чтобы отметить биты",
 	"Equalizer curve": "Кривая эквалайзера",
 	"Compressor curve": "Кривая компрессора",
+	// the sweep of 15.11: lines the browser edition shows (its key panel, captions models, the In–Out range)
+	"AI on your own fal.ai key": "ИИ на вашем ключе fal.ai",
+	"Base": "Базовая",
+	"Light: for a phone (half the download of Small)": "Лёгкая: для телефона (вдвое меньше загрузка, чем у Малой)",
+	"Drag to move the marked part": "Перетащите, чтобы сдвинуть отмеченный кусок",
+	"Drag to move the range": "Перетащите, чтобы сдвинуть отрезок",
 };

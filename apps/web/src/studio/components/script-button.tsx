@@ -11,6 +11,7 @@ import { aiScript, type ScriptAction } from "@/studio/client/actions";
 import { resolveKey, useStudioStore } from "@/studio/client/studio-store";
 import { openFalSettings } from "@/fal/client";
 import { useT } from "@/i18n";
+import { DEMO } from "@/demo/flag";
 
 /** DeepSeek writes only the words to speak, sized to the video. */
 export function ScriptButton({ projectId, seconds, context }: { projectId: string; seconds: number; context: string }) {
@@ -49,6 +50,8 @@ export function ScriptButton({ projectId, seconds, context }: { projectId: strin
 		}
 	};
 
+	// the browser edition has no Gaziyav AI (the desktop's assistant): its lipsync view in the AI tab hides this row too
+	if (DEMO) return null;
 	return (
 		<Popover
 			open={open}

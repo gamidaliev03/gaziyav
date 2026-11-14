@@ -53,6 +53,7 @@ export const RU_GEN: Record<string, string> = {
 	"No banding": "Без полос",
 	// ready generators (generators/library.ts): the names that had no Russian line yet
 	"Silk": "Шёлк",
+	"Starry night": "Звёздная ночь",
 	"Ripples": "Круги на воде",
 	"Glass blocks": "Стеклоблоки",
 	"Pixels": "Пиксели",

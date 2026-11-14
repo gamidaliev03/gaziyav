@@ -309,8 +309,21 @@ export interface WhisperOptions {
  * The speech detector's settings. whisper.cpp's defaults (threshold 0.5, a voice from 250 ms, a pause from 100 ms,
  * 0.1 s between the pieces) except the padding: 400 ms around every stretch instead of 30 — a soft first consonant
  * right after loud music is noticed up to 0.4 s late, and with 30 ms the first word of a phrase was lost
+ * And half the engine's overlap between the pieces (-vo 0.05, its own is 0.1 s). With a padding of 0.2 s or more two
+ * voices closer than 0.8 s meet in the middle of their pause, and the overlap replays the next 0.1 s of sound there
+ * before 0.1 s of digital silence: after such a splice the engine dropped a short closing sentence («…Then we add
+ * some text on top. Thank you for watching.» lost its last four words, and so did the captions — the gate's red since
+ * v42, found 15.11). With no overlap at all the pause gets too short the other way: a voice over music lost the full
+ * stops of half its sentences and their first words stuck to the sentence before. Measured 15.11 on fifteen clips as
+ * the app hears them (mp4 → 16 kHz), lost / invented words · sentence ends found of 160 · sentence starts stuck:
+ *   -vo 0.1   172 / 58 · 149 · 6   (the closing sentence lost)
+ *   -vo 0.05  168 / 57 · 149 · 9   (nothing lost)
+ *   -vo 0     165 / 54 · 142 · 14  (full stops lost under music)
+ *   -vo 0.2   170 / 64 · 142 · 12  (the closing sentence lost)
+ * The pause the detector splits at (-vsd 100) stays: the pieces' meeting points are how the pauses under a music bed
+ * are found (transcribe/vad.ts voiceZones).
  */
-export const VAD_ARGS = ["-vt", "0.5", "-vspd", "250", "-vsd", "100", "-vp", String(Math.round(VAD_PAD * 1000)), "-vo", "0.1"];
+export const VAD_ARGS = ["-vt", "0.5", "-vspd", "250", "-vsd", "100", "-vp", String(Math.round(VAD_PAD * 1000)), "-vo", "0.05"];
 
 /** whisper-cli's arguments for one file; `vad` is the speech detector's file when it is used. */
 export function whisperArgs({ model, wav, language, out, vad, quick }: { model: string; wav: string; language: string; out: string; vad?: string | null; quick?: boolean }): string[] {

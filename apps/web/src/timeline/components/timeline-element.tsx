@@ -1,6 +1,7 @@
 "use client";
 
 import { ClipProgress } from "@/jobs/components/clip-progress";
+import { DEMO } from "@/demo/flag";
 import { ClipLipsync } from "@/studio/components/clip-lipsync";
 import { isMographKind } from "@/montage/mograph";
 import { EditorCore } from "@/core";
@@ -1048,6 +1049,8 @@ export function TimelineElementContextMenuContent({
 			)}
 			<ContextMenuSeparator />
 			{/* CapCut: Export selected clips (each clip its own file), Deactivate clip V. */}
+			{/* the browser edition exports the whole film from its own Export menu (no clips window) */}
+			{!DEMO && (
 			<ContextMenuItem
 				icon={<HugeiconsIcon icon={Download04Icon} />}
 				onClick={(event: React.MouseEvent) => {
@@ -1060,6 +1063,7 @@ export function TimelineElementContextMenuContent({
 			>
 				Export selected clips
 			</ContextMenuItem>
+			)}
 			{canElementBeHidden(element) && (
 				<VisibilityMenuItem
 					element={element}

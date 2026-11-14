@@ -119,7 +119,12 @@ export async function newProject(p) {
 	const opened = await p.waitFor(`location.pathname.startsWith('/editor/')`, { label: "editor opens", timeout: 30000 }).then(() => true, () => false);
 	if (!opened) {
 		if (!(await clickText(p, /^(\+\s*)?(New project|Create project)$/i))) await clickText(p, /New/);
-		await p.waitFor(`location.pathname.startsWith('/editor/')`, { label: "editor opens", timeout: 60000 });
+		const again = await p.waitFor(`location.pathname.startsWith('/editor/')`, { label: "editor opens", timeout: 60000 }).then(() => true, () => false);
+		// (triage 15.11: «editor opens» timed out in core / pro-trim with no clue: say what the start page showed)
+		if (!again) {
+			const seen = await p.eval(`(() => { const b = document.querySelector('[data-testid="new-project"]'); const vis = (e) => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; }; return JSON.stringify({ path: location.pathname, button: b ? { text: b.innerText.trim(), disabled: b.disabled, shown: vis(b) } : null, first: !!document.querySelector('[data-home-new]'), dialogs: [...document.querySelectorAll('[role=dialog],[role=alertdialog]')].filter(vis).map((d) => d.innerText.trim().slice(0, 80)), toasts: [...document.querySelectorAll('[data-sonner-toast]')].map((t) => t.innerText.trim().slice(0, 120)), lang: localStorage.getItem('gaziyav.language') }); })()`).catch((e) => String(e));
+			throw new Error(`timed out waiting for: editor opens — the start page: ${seen}`);
+		}
 	}
 	await p.waitFor(`!!window.__studioBridge && !!${ED}.project.getActive()`, { label: "editor core", timeout: 20000 });
 	await sleep(1500);
@@ -273,23 +278,37 @@ export async function key(p, letter) {
 }
 
 /**
- * The one-list inspector (insp-A, 12.11) has no tabs: a tool (Mask, Face swap, Cutout…) is a section in the folded
- * «Tools» part at the end of the selected clip's list. Opens Tools and then the section the way a person does (real
- * clicks on the two heads). True when the section is in the clip's list and open.
+ * A tool's section in the selected clip's inspector (Mask, Face swap, Clean up…), opened the way a person does: real
+ * clicks. Tabs by sphere since 14.11 (properties/layout-places.ts): a section is drawn only in its own tab, so the tabs
+ * are clicked until it shows; then its folded row is opened. The one-list inspector of 12.11 (a folded «Tools» part)
+ * still works for old bundles. `sectionId` matches the plain id and a registered twin («audio.cleanup@basic»).
+ * True when the section is in the clip's inspector and open.
  */
 export async function openInspectorTool(p, sectionId) {
+	const sel = `[data-inspector-section="${sectionId}"], [data-inspector-section^="${sectionId}@"]`;
+	const here = () => p.eval(`!!document.querySelector('${sel}')`);
+	// tabs by sphere (14.11): the old «Tools» toggle is gone, the section lies in one of the named tabs
+	if (!(await here())) {
+		const tabs = await p.eval(`[...document.querySelectorAll('[data-inspector-tab-button]')].map((e) => e.getAttribute('data-inspector-tab-button'))`);
+		for (const t of tabs) {
+			const b = await boxOf(p, `[data-inspector-tab-button="${t}"]`);
+			if (!b) continue;
+			await p.mouse(b.x, b.y);
+			await p.waitFor(`!!document.querySelector('${sel}')`, { timeout: 1200, label: `${sectionId} in tab ${t}` }).catch(() => {});
+			if (await here()) break;
+		}
+	}
 	const open = () => p.eval(`document.querySelector('[data-inspector-block="insp.tools"]')?.getAttribute('data-open') ?? null`);
 	if ((await open()) === "false") {
 		const t = await boxOf(p, '[data-inspector-block-toggle="insp.tools"]');
 		if (t) await p.mouse(t.x, t.y);
 		await p.waitFor(`document.querySelector('[data-inspector-block="insp.tools"]')?.getAttribute('data-open') === 'true'`, { timeout: 4000, label: "Tools open" }).catch(() => {});
 	}
-	const sel = `[data-inspector-section="${sectionId}"]`;
 	const head = await p.eval(`(() => { const s = document.querySelector('${sel}'); if (!s) return null; const g = s.querySelector('[data-inspector-group]'); if (!g || g.querySelector('[data-inspector-group-body]')) return 'open'; const b = g.querySelector('button'); b.scrollIntoView({ block: 'center' }); const r = b.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; })()`);
 	if (!head) return false;
 	if (head !== "open") {
 		await p.mouse(head.x, head.y);
-		await p.waitFor(`!!document.querySelector('${sel} [data-inspector-group-body]')`, { timeout: 4000, label: `${sectionId} open` }).catch(() => {});
+		await p.waitFor(`!![...document.querySelectorAll('${sel}')].some((s) => s.querySelector('[data-inspector-group-body]'))`, { timeout: 4000, label: `${sectionId} open` }).catch(() => {});
 	}
 	return p.eval(`!!document.querySelector('${sel}')`);
 }

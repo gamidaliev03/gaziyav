@@ -5,6 +5,7 @@
 // left / right, the marker, the selected clip's tools (freeze, reverse, mirror, rotate, crop, its sound), the assist
 // tools (scenes, colour, beats), the voice-over, the preview axis and what follows the main track.
 import { HugeiconsIcon } from "@/components/ui/icon";
+import { DEMO } from "@/demo/flag";
 import { Fragment } from "react";
 import {
 	AlignLeftIcon,
@@ -180,10 +181,13 @@ export function TimelineMoreMenu() {
 								{actionName("freeze-frame")}
 								<Shortcut action="freeze-frame" />
 							</DropdownMenuItem>
-							<DropdownMenuItem icon={icon(BackwardIcon)} disabled={!hasVideo} title={why(!hasVideo, "Select a video clip to reverse")} onSelect={run("reverse-selected")} data-toolbar-id="reverse-selected">
-								{actionName("reverse-selected")}
-								<Shortcut action="reverse-selected" />
-							</DropdownMenuItem>
+							{/* the browser edition has no reversed copies (a job of the app) */}
+							{!DEMO && (
+								<DropdownMenuItem icon={icon(BackwardIcon)} disabled={!hasVideo} title={why(!hasVideo, "Select a video clip to reverse")} onSelect={run("reverse-selected")} data-toolbar-id="reverse-selected">
+									{actionName("reverse-selected")}
+									<Shortcut action="reverse-selected" />
+								</DropdownMenuItem>
+							)}
 							<DropdownMenuItem icon={icon(FlipHorizontalIcon)} disabled={!hasVisual} title={why(!hasVisual, "Select a clip to mirror")} onSelect={run("mirror-selected")} data-toolbar-id="mirror-selected">
 								{actionName("mirror-selected")}
 								<Shortcut action="mirror-selected" />
@@ -210,9 +214,12 @@ export function TimelineMoreMenu() {
 						</>
 					)}
 					<DropdownMenuSeparator />
-					<DropdownMenuItem icon={icon(FilmRoll01Icon)} disabled={!video} onSelect={() => video && void splitScenes({ trackId: video.trackId, elementId: video.element.id })} data-assist="split-scenes">
-						Split scenes
-					</DropdownMenuItem>
+					{/* the browser edition: Split scenes is a job of the app; Auto color is done in the page */}
+					{!DEMO && (
+						<DropdownMenuItem icon={icon(FilmRoll01Icon)} disabled={!video} onSelect={() => video && void splitScenes({ trackId: video.trackId, elementId: video.element.id })} data-assist="split-scenes">
+							Split scenes
+						</DropdownMenuItem>
+					)}
 					<DropdownMenuItem icon={icon(AiMagicIcon)} disabled={!picture} onSelect={() => void autoColor()} data-assist="auto-color">
 						Auto color
 					</DropdownMenuItem>

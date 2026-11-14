@@ -1,6 +1,7 @@
 "use client";
 
 import { materialGrid } from "@/components/editor/panels/assets/material-grid";
+import { DEMO } from "@/demo/flag";
 import { type MediaRow, PendingMediaTile, SETTLE_CLASS, landingAssetIds, usePendingMedia, withPending } from "@/jobs/components/pending-media";
 import { type Job, jobCenter } from "@/jobs/store";
 import { generateUUID } from "@/utils/id";
@@ -414,18 +415,23 @@ export function MediaView() {
 						Import files…
 						<ContextMenuShortcut>⌘I</ContextMenuShortcut>
 					</ContextMenuItem>
-					<ContextMenuItem onSelect={() => useStudioStore.getState().setYoutubeOpen(true)}>
-						YouTube link…
-						<ContextMenuShortcut>⇧⌘Y</ContextMenuShortcut>
-					</ContextMenuItem>
-					<ContextMenuItem
-						onSelect={() => {
-							setWebMode(true);
-							window.setTimeout(() => searchRef.current?.focus(), 50);
-						}}
-					>
-						Web images…
-					</ContextMenuItem>
+					{/* the browser edition has neither (a clip by link and web pictures need the app) */}
+					{!DEMO && (
+						<>
+							<ContextMenuItem onSelect={() => useStudioStore.getState().setYoutubeOpen(true)}>
+								YouTube link…
+								<ContextMenuShortcut>⇧⌘Y</ContextMenuShortcut>
+							</ContextMenuItem>
+							<ContextMenuItem
+								onSelect={() => {
+									setWebMode(true);
+									window.setTimeout(() => searchRef.current?.focus(), 50);
+								}}
+							>
+								Web images…
+							</ContextMenuItem>
+						</>
+					)}
 				</ContextMenuContent>
 			</ContextMenu>
 		</>
@@ -920,20 +926,25 @@ function AddMediaMenu({
 					Import files…
 					<DropdownMenuShortcut>⌘I</DropdownMenuShortcut>
 				</DropdownMenuItem>
-				<DropdownMenuItem onSelect={() => useStudioStore.getState().setYoutubeOpen(true)}>
-					<HugeiconsIcon icon={YoutubeIcon} />
-					YouTube link…
-					<DropdownMenuShortcut>⇧⌘Y</DropdownMenuShortcut>
-				</DropdownMenuItem>
-				<DropdownMenuItem
-					onSelect={() => {
-						keepFocus.current = true;
-						window.setTimeout(onWeb, 50);
-					}}
-				>
-					<HugeiconsIcon icon={Image02Icon} />
-					Web images…
-				</DropdownMenuItem>
+				{/* the browser edition has neither (a clip by link and web pictures need the app): they opened nothing there */}
+				{!DEMO && (
+					<>
+						<DropdownMenuItem onSelect={() => useStudioStore.getState().setYoutubeOpen(true)}>
+							<HugeiconsIcon icon={YoutubeIcon} />
+							YouTube link…
+							<DropdownMenuShortcut>⇧⌘Y</DropdownMenuShortcut>
+						</DropdownMenuItem>
+						<DropdownMenuItem
+							onSelect={() => {
+								keepFocus.current = true;
+								window.setTimeout(onWeb, 50);
+							}}
+						>
+							<HugeiconsIcon icon={Image02Icon} />
+							Web images…
+						</DropdownMenuItem>
+					</>
+				)}
 				<DropdownMenuItem onSelect={() => useAssetsPanelStore.getState().openSection("media", "ai-image")} data-media-add="ai-image">
 					<HugeiconsIcon icon={AiImageIcon} />
 					AI photo…

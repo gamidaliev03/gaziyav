@@ -1,6 +1,7 @@
 // 🎙 Record voiceover (CapCut's timeline toolbar): the microphone records while the edit plays from the playhead; on
 // stop the take goes into Media and onto an audio track where the recording started. One ⌘Z removes the clip.
 import { toast } from "sonner";
+import { DEMO } from "@/demo/flag";
 import { create } from "zustand";
 import { EditorCore } from "@/core";
 import { processMediaAssets } from "@/media/processing";
@@ -36,7 +37,8 @@ export async function toggleVoiceover(): Promise<void> {
 	try {
 		stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
 	} catch {
-		toast.error("No microphone access: System Settings → Privacy → Microphone");
+		// the browser edition: the microphone is the browser's permission for the site, not the Mac's System Settings
+		toast.error(DEMO ? "No microphone access: allow the microphone for this site in the browser" : "No microphone access: System Settings → Privacy → Microphone");
 		return;
 	}
 	const mimeType = pickMimeType();

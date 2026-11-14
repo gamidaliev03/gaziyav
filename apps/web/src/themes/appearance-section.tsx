@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Segmented } from "@/components/ui/segmented";
 import { Slider } from "@/components/ui/slider";
 import { useT } from "@/i18n";
+import { DEMO } from "@/demo/flag";
 import { cn } from "@/utils/ui";
 import { isGlass, type Mode, resolve, type Resolved } from "./engine";
 import { ACCENT_SWATCHES, FAMILIES, type Family, ORIGINAL_FAMILY } from "./families";
@@ -176,7 +177,7 @@ export function AppearanceSection() {
 						items={[
 							{ value: "dark", label: t("Dark look") },
 							{ value: "light", label: t("Light look") },
-							{ value: "system", label: t("As on this Mac") },
+							{ value: "system", label: t(DEMO ? "As on this computer" : "As on this Mac") },
 						]}
 						itemProps={(v) => ({ "data-theme-mode": v })}
 					/>

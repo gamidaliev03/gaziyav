@@ -5,6 +5,7 @@
 // CapCut's two pages on top: Normal (one speed for the whole clip: slider and field) and Curve (speed ramps). A clip
 // with a ramp opens on Curve; a speed set on Normal makes the clip constant again (one ⌘Z).
 import { useState } from "react";
+import { DEMO } from "@/demo/flag";
 import { Button } from "@/components/ui/button";
 import { InspectorGroup, InspectorRow, Segmented } from "@/components/editor/panels/properties/components/inspector-ui";
 import { SpeedFields } from "@/speed/components/speed-tab";
@@ -40,8 +41,13 @@ export function SpeedPlugin({ element, trackId }: { element: VideoElement | Audi
 										Add
 									</Button>
 								</InspectorRow>
-								<ReverseSection element={video} trackId={trackId} inline />
-								<OpticalFlowSection element={video} trackId={trackId} inline />
+								{/* the browser edition has no reversed or interpolated copies (jobs of the app) */}
+								{!DEMO && (
+									<>
+										<ReverseSection element={video} trackId={trackId} inline />
+										<OpticalFlowSection element={video} trackId={trackId} inline />
+									</>
+								)}
 							</>
 						)}
 					</>

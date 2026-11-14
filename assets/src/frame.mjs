@@ -20,7 +20,9 @@ const STILLS = ["01-home", "02-editor", "03-guides", "04-export", "05-lipsync", 
 	// the tour and the manual (capture.mjs tourPass)
 	"t-claude-before", "t-claude-after", "t-settings-ai", "t-settings-claude", "t-ondevice", "t-settings-share", "t-settings-edit", "t-settings-general",
 	"t-tab-text", "t-tab-effects", "t-tab-transitions", "t-tab-filters", "t-tab-captions", "t-tab-audio", "t-link", "t-share", "t-post",
-	"t-inspector-video", "t-inspector-title", "t-command", "t-keys", "t-web"];
+	"t-inspector-video", "t-inspector-title", "t-command", "t-keys", "t-web",
+	// the present interface (capture.mjs CAPTURE_ONLY=now)
+	"t-tab-generators", "t-inspector-color", "t-inspector-generator", "t-settings-projects"];
 const LOOK_NAMES = {
 	en: { minimal: "Minimal", retro95: "95", terminal: "Terminal", pixel: "Pixel", neon: "Neon", midnight: "Midnight", glass: "Liquid glass", sand: "Sand", strict: "Strict", contrast: "High contrast", frost: "Frosted glass", comic: "Comic", sakura: "Sakura", rose: "Rose", arena: "Arena", film: "Film", analog: "Analog" },
 	ru: { minimal: "Минимал", retro95: "95", terminal: "Терминал", pixel: "Пиксель", neon: "Неон", midnight: "Полночь", glass: "Жидкое стекло", sand: "Песок", strict: "Строгая", contrast: "Высокий контраст", frost: "Матовое стекло", comic: "Комикс", sakura: "Сакура", rose: "Роза", arena: "Арена", film: "Плёнка", analog: "Аналог" },

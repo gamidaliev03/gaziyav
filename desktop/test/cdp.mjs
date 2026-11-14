@@ -273,7 +273,7 @@ export class Page {
 function keyCode(key) {
 	// Punctuation gets its own Windows virtual key: «.» as charCode 46 is VK_DELETE, so a typed «.» deleted forward and the
 	// dot never reached the field («2» «.» «5» read «25», check-flow A6 and final-B D2 — the harness, not the app).
-	const map = { Enter: 13, Escape: 27, Backspace: 8, Delete: 46, " ": 32, ArrowLeft: 37, ArrowRight: 39, ArrowUp: 38, ArrowDown: 40, Tab: 9, ";": 186, "=": 187, ",": 188, "-": 189, ".": 190, "/": 191, "`": 192, "[": 219, "\\": 220, "]": 221, "'": 222 };
+	const map = { Enter: 13, Escape: 27, Backspace: 8, Delete: 46, " ": 32, ArrowLeft: 37, ArrowRight: 39, ArrowUp: 38, ArrowDown: 40, Tab: 9, ";": 186, "=": 187, ",": 188, "-": 189, ".": 190, "/": 191, "`": 192, "[": 219, "\\": 220, "]": 221, "'": 222, Home: 36, End: 35, PageUp: 33, PageDown: 34 };
 	if (map[key]) return map[key];
 	if (key.length === 1) return key.toUpperCase().charCodeAt(0);
 	return 0;

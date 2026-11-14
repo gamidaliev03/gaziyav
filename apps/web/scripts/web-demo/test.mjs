@@ -243,8 +243,11 @@ try {
 	check("the editor opens with the sample project (3 clips, voice + music, a title)", st.main.length === 3 && st.audio.length === 2 && st.overlay.some((e) => e.type === "text"), `${readyMs} ms; main ${st.main.length}, audio ${st.audio.length}, overlay ${st.overlay.map((e) => e.type)}`);
 	const ui = await evaluate(`({ lang: document.documentElement.lang, file: document.querySelector("[data-demo-file]")?.textContent, export: document.querySelector("[data-demo-export]")?.textContent, demoWord: /\\bdemo\\b|демо/i.test(document.body.innerText), tabs: [...document.querySelectorAll("[data-tab-group]")].map((e) => e.getAttribute("data-tab-group")), title: JSON.stringify(${TR}.overlay.flatMap((x) => x.elements).find((e) => e.type === "text")) })`);
 	check("the editor speaks Russian (UI and sample), never says «demo»", ui.lang === "ru" && ui.file === "Файл" && ui.export === "Экспорт" && !ui.demoWord && /Привет/.test(ui.title ?? ""), JSON.stringify(ui));
-	check("the panel has no AI generators, no sound library, no captions (AI = one card)", JSON.stringify(ui.tabs) === JSON.stringify(["media", "text", "effects", "avatar"]), JSON.stringify(ui.tabs));
+	// (14.11: the site got its own sounds tab and the AI tab's sections AI image · AI video · Lipsync on the visitor's key)
+	check("the panel's groups: Media, Sounds, Text, Effects, AI", JSON.stringify(ui.tabs) === JSON.stringify(["media", "sounds", "text", "effects", "avatar"]), JSON.stringify(ui.tabs));
 	await click(`[data-tab-group="avatar"]`);
+	await waitFor(`!!document.querySelector('[data-materials="avatar"] [data-nav-item="photo"]')`, 15000, "the AI tab's sections");
+	await click(`[data-materials="avatar"] [data-nav-item="photo"]`);
 	await sleep(800);
 	const lip = await evaluate(`({ beta: document.querySelector("[data-demo-lipsync-beta]")?.innerText.split("\\n")[0], all: document.querySelector("[data-demo-lipsync-beta]")?.innerText.slice(0, 60), key: !!document.querySelector("[data-weblip-key]"), keyStored: Object.keys(localStorage).filter((k) => /lipsync-key/.test(k)).length })`);
 	check("AI tab: «Lipsync with your own key — beta», the key panel and the app's lipsync view; no key, nothing sent", /своим ключом|own key/.test(lip.beta ?? "") && /бета|beta/i.test(lip.all ?? "") && lip.key && lip.keyStored === 0, JSON.stringify(lip));
@@ -287,6 +290,43 @@ try {
 	await key("KeyZ", "z", META);
 	check("⌘Z takes the title away", (await state()).overlay.filter((e) => e.type === "text").length === textsBefore);
 	await key("KeyZ", "z", META | SHIFT);
+
+	// ---- 3b. Auto color from the clip's own menu (done in the page) and the toast's «Undo», a few rounds: once, on
+	// the night of 15.11, the page fell to «Application error» right after it — never seen again, so it is watched here
+	{
+		const colourOf = `(() => { const el = ${TR}.main.elements[0]; const fx = (el?.effects ?? []).find((e) => /color/i.test(e.type)); return fx ? JSON.stringify(fx.params) : null; })()`;
+		const point = (expr) => evaluate(`(() => { const e = ${expr}; if (!e) return null; const r = e.getBoundingClientRect(); return r.width ? { x: r.x + Math.min(40, r.width / 2), y: r.y + r.height / 2 } : null; })()`);
+		const mouse = async (b, button = "left") => {
+			for (const type of ["mouseMoved", "mousePressed", "mouseReleased"]) await send("Input.dispatchMouseEvent", { type, x: b.x, y: b.y, button, clickCount: 1 });
+			await sleep(250);
+		};
+		const undoButton = `[...document.querySelectorAll("[data-sonner-toast] button")].find((b) => /^(Undo|Отменить)$/.test((b.textContent || "").trim()))`;
+		const colour0 = await evaluate(colourOf);
+		let applied = 0;
+		let back = 0;
+		let broke = "";
+		for (let round = 0; round < 4 && !broke; round++) {
+			const clip = await point(`document.querySelector('[data-timeline-element-id="' + ${TR}.main.elements[0].id + '"]')`);
+			if (!clip) break;
+			await mouse(clip, "right");
+			const offered = await waitFor(`!!document.querySelector('[data-assist="auto-color"]')`, 8000, "Auto color in the clip's menu").catch(() => false);
+			if (!offered) break;
+			await mouse(await point(`document.querySelector('[data-assist="auto-color"]')`));
+			await waitFor(`${colourOf} !== ${JSON.stringify(colour0)} && !!${undoButton}`, 20000, "Auto color applied")
+				.then(() => applied++)
+				.catch(() => {});
+			for (let k = 0; k < 3; k++) {
+				const undo = await point(undoButton);
+				if (!undo) break;
+				await mouse(undo);
+			}
+			await sleep(400);
+			if ((await evaluate(colourOf)) === colour0) back++;
+			broke = await evaluate(`/Application error|client-side exception/i.test(document.body.innerText) ? document.body.innerText.slice(0, 120) : ""`);
+		}
+		check("Auto color from the clip's menu sets the colour, the toast's Undo puts it back — four rounds, the page stays the editor", applied === 4 && back === 4 && !broke, `applied ${applied}, back ${back}${broke ? `, ${broke}` : ""}`);
+		await key("Escape", "Escape");
+	}
 
 	// ---- 4. a look switches
 	const look0 = await evaluate(`[document.documentElement.className, getComputedStyle(document.documentElement).getPropertyValue("--background")].join("|")`);

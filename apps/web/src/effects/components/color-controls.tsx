@@ -55,10 +55,11 @@ export function ColorSlider({
 }) {
 	const value = n(params, paramKey, neutral);
 	return (
-		<div className="flex h-7 items-center gap-2 px-4" data-color-param={paramKey}>
+		// (a narrow inspector — a 1024-px window: tighter gaps, a shorter name and value, so the slider keeps a draggable length)
+		<div className="flex h-7 items-center gap-2 px-4 @max-[17.5rem]/insp:gap-1" data-color-param={paramKey}>
 			{swatch && <span className="size-2.5 shrink-0 rounded-full" style={{ background: swatch }} />}
 			{/* CapCut: the name is text, not a button (a click on it did nothing); a double-click on the slider resets */}
-			<span title={label} className="text-muted-foreground line-clamp-2 w-[5.5rem] shrink-0 cursor-default text-left text-xs leading-tight select-none">
+			<span title={label} className="text-muted-foreground line-clamp-2 w-[5.5rem] shrink-0 cursor-default text-left text-xs leading-tight select-none @max-[17.5rem]/insp:w-[5rem]">
 				{label}
 			</span>
 			<Slider
@@ -80,7 +81,7 @@ export function ColorSlider({
 				thumbSize={12}
 				thumbClassName="block size-3 rounded-full border-0 bg-white shadow-[0_1px_3px_rgba(0,0,0,.55),0_0_0_.5px_rgba(0,0,0,.3)] focus-visible:ring-2 focus-visible:ring-[var(--ring)] outline-none"
 			/>
-			<span className="w-9 shrink-0 text-right text-xs tabular-nums">{step < 1 ? value.toFixed(2) : Math.round(value)}</span>
+			<span className="w-9 shrink-0 text-right text-xs tabular-nums @max-[17.5rem]/insp:w-7">{step < 1 ? value.toFixed(2) : Math.round(value)}</span>
 		</div>
 	);
 }
