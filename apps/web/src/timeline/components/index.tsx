@@ -1120,6 +1120,7 @@ const TrackLabelsPanel = memo(function TrackLabelsPanel({
 	return (
 		<div
 			className="flex shrink-0 flex-col border-r"
+			data-timeline-headers
 			style={{ width: `${TIMELINE_TRACK_LABELS_COLUMN_WIDTH_PX}px` }}
 		>
 			<div

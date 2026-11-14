@@ -861,6 +861,11 @@ export class DragDropController {
 				effectType: dragData.effectType,
 				params: dragData.params,
 			});
+			// the inspector opens where the dropped thing is edited (properties/reveal.ts listens)
+			if (typeof window !== "undefined")
+				window.dispatchEvent(
+					new CustomEvent("gz-clip-effect-added", { detail: { trackId: target.targetElement.trackId, elementId: target.targetElement.elementId, effectType: dragData.effectType } }),
+				);
 			return;
 		}
 

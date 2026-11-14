@@ -5,6 +5,7 @@ import { COLOR_EFFECT_TYPE, COLOR_GROUP_KEYS, type ColorGroup, isColorGroupNeutr
 import { EditorCore } from "@/core";
 import { isVisualElement } from "@/timeline/element-utils";
 import { openInspectorGroups } from "./components/inspector-ui";
+import { openInspectorTab } from "./inspector-tab";
 import { placeOf } from "./layout-places";
 import { elementKind } from "./registry";
 import { getInspectorSection, sectionAppliesTo } from "./slots";
@@ -39,8 +40,9 @@ export function revealInspectorSection(sectionId: string, ref?: { trackId: strin
 	// a compact window shows Media or the inspector in one side column: the inspector comes forward (page.tsx)
 	window.dispatchEvent(new Event("gz-reveal-inspector"));
 	if (!(selected.length === 1 && selected[0].elementId === target.elementId)) editor.selection.setSelectedElements({ elements: [target] });
-	const inTools = placeOf(sectionId, elementKind(found.element)).block === "tools";
-	openInspectorGroups(inTools ? ["insp.tools", sectionId] : [sectionId]);
+	// its tab comes forward (./layout-places.ts), then its row unfolds
+	openInspectorTab(placeOf(sectionId, elementKind(found.element)).block);
+	openInspectorGroups([sectionId]);
 	if (typeof window === "undefined") return true;
 	// The panel follows the selection a frame later (index.tsx): wait for the section OF THIS CLIP (the panel of the clip
 	// selected before — an audio clip has its own Lipsync — is still there for a frame), then unfold a bare one's own
@@ -66,4 +68,15 @@ export function revealInspectorSection(sectionId: string, ref?: { trackId: strin
 export function clipHasSection(sectionId: string, element: TimelineElement): boolean {
 	const section = getInspectorSection(sectionId);
 	return !!section && sectionAppliesTo(section, element);
+}
+
+// An effect or a filter dropped on a clip (timeline/controllers/drag-drop-controller.ts): the inspector opens where it
+// is edited — a filter in Colour (its name and strength on top), any other effect in the clip's Effects list. The
+if (typeof window !== "undefined") {
+	window.addEventListener("gz-clip-effect-added", (event) => {
+		const detail = (event as CustomEvent<{ trackId: string; elementId: string; effectType: string }>).detail;
+		if (!detail) return;
+		if (detail.effectType === COLOR_EFFECT_TYPE) revealClipColor(detail);
+		else revealInspectorSection("effects", detail);
+	});
 }

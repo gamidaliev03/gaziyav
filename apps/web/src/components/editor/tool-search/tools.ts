@@ -5,6 +5,7 @@ import type { Tab } from "@/components/editor/panels/assets/assets-panel-store";
 import { effectsRegistry } from "@/effects";
 import { ru } from "@/i18n/ru";
 import { TRANSITIONS } from "@/transitions/definitions";
+import { GENERATOR_PRESETS, generatorSpec } from "@/generators/catalog";
 import { COLOUR_TOOLS } from "@/colour/tools";
 import { SOUND_TOOLS } from "@/sound/tools";
 import { THEME_TOOLS } from "@/themes/tools";
@@ -114,6 +115,7 @@ export const PLACES: Tool[] = [
 	place("ai.video", "AI video", "AI", ["generate video", "ии видео", "сгенерировать видео"], "avatar", "ai-video"),
 	place("ai.avatar", "Talking avatar (lipsync)", "AI", ["avatar", "photo avatar", "аватар", "говорящее фото", "липсинк"], "avatar", "photo"),
 	place("ai.translator", "Video translator", "AI", ["translate", "dub", "перевод", "переводчик", "дубляж"], "avatar", "translator"),
+	place("effects.generators", "Generators", "Effects", ["generator", "solid", "gradient", "background", "ramp", "генераторы", "генератор", "сплошной", "заливка", "градиент", "фон", "подложка"], "generators"),
 ];
 
 // constant false in the owner's build, which carries none of these modules: src/family/edition.ts).
@@ -162,7 +164,14 @@ export function libraryTools(): Tool[] {
 		words: [ru(transition.name), "transition", "переход"],
 		target: { kind: "media", tab: "transitions" } as const,
 	}));
-	library = [...effects, ...transitions];
+	const generators: Tool[] = GENERATOR_PRESETS.map((preset) => ({
+		id: `generator:${preset.id}`,
+		title: preset.name,
+		where: "Effects · Generators",
+		words: [ru(preset.name), "generator", "генератор", ...(generatorSpec(preset.generator)?.keywords ?? [])],
+		target: { kind: "media", tab: "generators" } as const,
+	}));
+	library = [...effects, ...transitions, ...generators];
 	return library;
 }
 

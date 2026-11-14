@@ -17,6 +17,8 @@ import { Switch } from "@/components/ui/switch";
 import type { MediaTime } from "@/wasm";
 import { AiCustomFields } from "@/montage/components/ai-fields";
 import { MographExtras, mographOf } from "@/montage/components/mograph-fields";
+import { generatorOf } from "@/generators/document";
+import { GeneratorTab } from "@/generators/components/generator-tab";
 
 registerDefaultGraphics();
 
@@ -25,6 +27,7 @@ const DEFAULT_STROKE_WIDTH = 2;
 export function GraphicTab(props: { element: GraphicElement; trackId: string }) {
 	// Gaziyav AI's own components declare their own fields (texts, colours, sizes, timings, pictures).
 	if (props.element.definitionId === "ai.Custom") return <AiCustomFields {...props} />;
+	if (generatorOf(props.element)) return <GeneratorTab {...props} />;
 	// Ready-made motion graphics: their fields, plus the picture they show and their length.
 	if (mographOf(props.element.definitionId)) {
 		return (

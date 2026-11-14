@@ -136,7 +136,11 @@ async function enhanceVoice(r: AiRun, dir: string, frames: number): Promise<{ wa
 
 /** The reference recording of a target voice: one of the ready-made voices ("ready:<id>") or one of My voices ("my:<id>"). */
 function targetRecording(voice: string): string {
-	const [kind, id] = voice.split(":", 2);
+	// at the FIRST colon only: a voice of «My voices» is "my:local:<key>", and JavaScript's split(":", 2) cut its id
+	// down to "local" — every one of them answered «isn't on this Mac any more» (the owner's «ell», 14.11)
+	const at = voice.indexOf(":");
+	const kind = voice.slice(0, at);
+	const id = voice.slice(at + 1);
 	const file = kind === "ready" ? readyVoice(id, "neutral")?.ref : kind === "my" ? myVoice(id)?.path : undefined;
 	if (!file || !fs.existsSync(file)) throw new StudioError("That voice isn't on this Mac any more. Pick another one.");
 	return file;

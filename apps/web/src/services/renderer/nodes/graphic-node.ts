@@ -7,6 +7,8 @@ import {
 import type { ParamValues } from "@/params";
 import type { GraphicDefinition } from "@/graphics/types";
 import { TICKS_PER_SECOND } from "@/wasm";
+import { generatorOf } from "@/generators/document";
+import { drawGeneratorSource, type GeneratorSourceCache } from "@/generators/source";
 import {
 	VisualNode,
 	type ResolvedVisualNodeState,
@@ -19,10 +21,15 @@ const SHAPES = new Set(["rectangle", "ellipse", "polygon", "star"]);
 export interface GraphicNodeParams extends VisualNodeParams {
 	definitionId: string;
 	params: ParamValues;
+	/** The project canvas (generators size their texture from it, never from the preview's size: player = export). */
+	canvasSize?: { width: number; height: number };
 }
 
 export interface ResolvedGraphicNodeState extends ResolvedVisualNodeState {
 	resolvedParams: ParamValues;
+	/** The clip's own frame number and the project's rate (generators: seeded by the frame, never the clock). */
+	frame?: number;
+	fps?: number;
 }
 
 export class GraphicNode extends VisualNode<
@@ -31,6 +38,7 @@ export class GraphicNode extends VisualNode<
 > {
 	private cachedKey: string | null = null;
 	private cachedSource: OffscreenCanvas | null = null;
+	private generatorCache: GeneratorSourceCache = { key: null, canvases: [], index: 0, image: null };
 
 	constructor(params: GraphicNodeParams) {
 		super(params);
@@ -42,6 +50,19 @@ export class GraphicNode extends VisualNode<
 	}: {
 		resolvedParams: ParamValues;
 	}): OffscreenCanvas {
+		const generator = generatorOf({ definitionId: this.params.definitionId });
+		if (generator) {
+			return drawGeneratorSource({
+				spec: generator,
+				params: resolvedParams,
+				canvasSize: this.params.canvasSize,
+				scaleX: this.params.transform.scaleX,
+				scaleY: this.params.transform.scaleY,
+				frame: this.resolved?.frame ?? 0,
+				fps: this.resolved?.fps ?? 30,
+				cache: this.generatorCache,
+			});
+		}
 		const definition = getGraphicDefinition({
 			definitionId: this.params.definitionId,
 		});

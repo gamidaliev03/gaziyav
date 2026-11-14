@@ -11,6 +11,7 @@ import { TextView } from "@/text/components/assets-view";
 import { EffectsView } from "@/effects/components/assets-view";
 import { TransitionsView } from "@/transitions/components/assets-view";
 import { FiltersView } from "@/effects/components/filters-view";
+import { GeneratorsView } from "@/generators/components/generators-view";
 import { YouTubeDialog } from "@/studio/components/youtube-dialog";
 import { PanelErrorBoundary } from "@/reliability/panel-error-boundary";
 
@@ -25,6 +26,7 @@ const TAB_NAMES: Record<Tab, string> = {
 	captions: "Captions",
 	filters: "Filters",
 	avatar: "AI",
+	generators: "Generators",
 };
 
 export function AssetsPanel() {
@@ -39,6 +41,7 @@ export function AssetsPanel() {
 		captions: <CaptionsTab />,
 		filters: <FiltersView />,
 		avatar: <AvatarTab />,
+		generators: <GeneratorsView />,
 	};
 
 	return (

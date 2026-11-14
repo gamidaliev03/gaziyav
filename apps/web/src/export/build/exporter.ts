@@ -26,7 +26,7 @@ import {
 import type { FrameRate } from "opencut-wasm";
 import { mediaTimeToSeconds } from "opencut-wasm";
 import type { ExportFileWriter, ExportQuality } from "@/export";
-import { audioEncodingConfig, encoderDelaySamples, videoEncodingConfig } from "@/export/encoder-config";
+import { audioEncodingConfig, encoderDelaySamples, type ExportAudioCodec, videoEncodingConfig } from "@/export/encoder-config";
 import { exportedFrameCount, exportedFrameSpan } from "@/export/frame-count";
 import { type PrimingEdit, PrimingEditWriter, withAudioPrimingEdit } from "@/export/mp4-edit-list";
 import { frameRateToFloat } from "@/fps/utils";
@@ -87,7 +87,7 @@ export type BuildEvents = {
 
 /** The sound's packets as they come (kept ones are all there at once), for the file's muxer. */
 interface SoundFeed {
-	codec: "aac" | "opus";
+	codec: ExportAudioCodec;
 	priming: PrimingEdit | null;
 	/** how many packets the file's index needs room for */
 	packetRoom: number;
@@ -570,7 +570,7 @@ export class BuildExporter extends EventEmitter<BuildEvents> {
 					v: 1,
 					kind: "audio",
 					key: audio.key,
-					codec: written?.codec ?? (config.codec === "aac" ? "mp4a.40.2" : "opus"),
+					codec: written?.codec ?? (config.codec === "aac" ? "mp4a.40.2" : config.codec),
 					description: toBase64(written?.description ? bytesOf(written.description) : new Uint8Array(0)),
 					sampleRate: shape.sampleRate,
 					channels: shape.channels,

@@ -41,6 +41,8 @@ import { RU_PRO2 } from "./ru-pro2";
 import { RU_LOOKS } from "./ru-looks";
 import { RU_LOOKS3 } from "./ru-looks3";
 import { RU_LOOKS4 } from "./ru-looks4";
+import { RU_GEN } from "./ru-gen";
+import { RU_MOBILE } from "./ru-mobile";
 import { RU_INSP } from "./ru-insp";
 import { RU_THEMES } from "./ru-themes";
 import { RU_LOOKS2 } from "./ru-looks2";
@@ -1651,4 +1653,6 @@ export const RU: Record<string, string> = {
 	...RU_PANELS,
 	...RU_LOOKS2,
 	...RU_LOOKS4,
+	...RU_GEN,
+	...RU_MOBILE,
 };

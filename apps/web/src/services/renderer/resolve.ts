@@ -576,12 +576,18 @@ function resolveGraphicNode({
 		return null;
 	}
 
+	// generators are seeded by the clip's frame number (player = export = after ⌘Z), never the clock
+	const rate = context.renderer.fps;
+	const fps = rate && rate.denominator > 0 ? rate.numerator / rate.denominator : 30;
+	const frame = Math.round((Math.max(0, visualState.localTime) / TICKS_PER_SECOND) * fps);
 	return {
 		...visualState,
 		resolvedParams: resolveGraphicElementParamsAtTime({
 			element: node.params,
 			localTime: visualState.localTime,
 		}),
+		frame,
+		fps,
 	};
 }
 

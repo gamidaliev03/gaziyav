@@ -10,7 +10,7 @@ import {
 	parseGraphicParamPath,
 } from "@/animation/graphic-param-channel";
 import { effectsRegistry, registerDefaultEffects } from "@/effects";
-import { getGraphicDefinition } from "@/graphics";
+import { effectiveGraphicDefinitionId, getGraphicDefinition } from "@/graphics";
 import {
 	coerceParamValue,
 	getParamDefaultInterpolation,
@@ -114,7 +114,7 @@ function buildGraphicParamDescriptor({
 	}
 
 	const definition = getGraphicDefinition({
-		definitionId: element.definitionId,
+		definitionId: effectiveGraphicDefinitionId(element),
 	});
 	const param = definition.params.find((candidate) => candidate.key === paramKey);
 	if (!param) {

@@ -5,7 +5,7 @@ import { useKeybindingsStore } from "@/actions/keybindings-store";
 import { isTypableDOMElement } from "@/utils/browser";
 import type { TActionWithOptionalArgs } from "@/actions";
 import { FIELD_SAFE_ACTIONS, OWN_ARROW_ROLES } from "@/actions/keybinding-scope";
-import { isSourceActive, routeSourceAction } from "@/components/editor/panels/assets/source/source-store";
+import { deleteSelectedMedia, isSourceActive, routeSourceAction, skimActive } from "@/components/editor/panels/assets/source/source-store";
 import { shuttleStopKey } from "@/actions/shuttle";
 import {
 	handleDialogEnter,
@@ -98,7 +98,8 @@ export function useKeybindingsListener() {
 				!isModalOverlayOpen() &&
 				// CapCut: while a media item is open in the player, ← / → step its frames even with a tile focused
 				// (a click on a tile opens it there), so I and O mark where the user stepped to.
-				isSourceActive()
+				// (and I / O with the pointer over a tile's hover line mark that item there, wherever the focus is)
+				(isSourceActive() || ((sourceAction === "mark-in" || sourceAction === "mark-out") && skimActive()))
 			) {
 				const handled = ev.repeat && sourceAction === "toggle-play" ? true : routeSourceAction(sourceAction);
 				if (handled) {
@@ -158,6 +159,12 @@ export function useKeybindingsListener() {
 			if (role && OWN_ARROW_ROLES.has(role) && NAV_KEYS.has(ev.key)) return;
 			if (ev.repeat && !REPEATABLE_ACTIONS.has(boundAction)) {
 				ev.preventDefault();
+				return;
+			}
+			// ⌫ / Delete with files selected in Media and the focus there: Media's files, not the timeline's clips
+			if (boundAction === "delete-selected" && deleteSelectedMedia()) {
+				ev.preventDefault();
+				handledCodes.add(ev.code);
 				return;
 			}
 			if (boundAction === "paste-copied") {

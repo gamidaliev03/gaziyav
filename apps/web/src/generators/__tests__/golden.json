@@ -1,0 +1,82 @@
+{
+	"solid.black": [
+		"bb3d14a48062d600",
+		"bb3d14a48062d600",
+		"bb3d14a48062d600"
+	],
+	"solid.white": [
+		"a27a50c72e45c4f5",
+		"a27a50c72e45c4f5",
+		"a27a50c72e45c4f5"
+	],
+	"solid.blue": [
+		"2a1e02249833b194",
+		"2a1e02249833b194",
+		"2a1e02249833b194"
+	],
+	"solid.green": [
+		"0e4f26707281226c",
+		"0e4f26707281226c",
+		"0e4f26707281226c"
+	],
+	"solid.grey": [
+		"1c465a82c499f2c5",
+		"1c465a82c499f2c5",
+		"1c465a82c499f2c5"
+	],
+	"solid.veil": [
+		"63a42e50ce294fc3",
+		"63a42e50ce294fc3",
+		"63a42e50ce294fc3"
+	],
+	"gradient.sunset": [
+		"0df73e0e1ef22051",
+		"0df73e0e1ef22051",
+		"0df73e0e1ef22051"
+	],
+	"gradient.ocean": [
+		"cebb1d4fed896441",
+		"cebb1d4fed896441",
+		"cebb1d4fed896441"
+	],
+	"gradient.spot": [
+		"f905ddb59780d6da",
+		"f905ddb59780d6da",
+		"f905ddb59780d6da"
+	],
+	"gradient.vignette": [
+		"c82ec61612fba30f",
+		"c82ec61612fba30f",
+		"c82ec61612fba30f"
+	],
+	"gradient.neon": [
+		"3533dd72e4380614",
+		"3533dd72e4380614",
+		"3533dd72e4380614"
+	],
+	"gradient.diamond": [
+		"1a7b3fe8755669e7",
+		"1a7b3fe8755669e7",
+		"1a7b3fe8755669e7"
+	],
+	"gradient.fade": [
+		"b118596c43eb74c5",
+		"b118596c43eb74c5",
+		"b118596c43eb74c5"
+	],
+	"gradient.aurora": [
+		"5ba073074bc84d8a",
+		"4b273ad54a419b3f",
+		"715b138dd7ca2fba"
+	],
+	"gradient.spin": [
+		"29ccb363b515dadd",
+		"79a02e48fffaa4a4",
+		"4bbac8cdaef0faa5"
+	],
+	"gradient.pulse": [
+		"bae9bdbd8a368b3d",
+		"33762066d4ae92b8",
+		"45d5f904e14a507f"
+	]
+}

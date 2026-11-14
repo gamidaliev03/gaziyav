@@ -3,6 +3,7 @@ import type { ElementAnimations } from "@/animation/types";
 import { buildDefaultParamValues } from "@/params/registry";
 import type { ParamValues } from "@/params";
 import { graphicsRegistry } from "./registry";
+import { effectiveGraphicDefinitionId } from "@/generators/document";
 import {
 	registerDefaultGraphics,
 	ellipseGraphicDefinition,
@@ -84,8 +85,9 @@ export function resolveGraphicElementParamsAtTime({
 	};
 	localTime: number;
 }): ParamValues {
+	// a generator is stored as its carrier rectangle: its own definition resolves its «gen.» keyframes
 	const definition = getGraphicDefinition({
-		definitionId: element.definitionId,
+		definitionId: effectiveGraphicDefinitionId(element),
 	});
 	return resolveGraphicParamsAtTime({
 		params: resolveGraphicParams({
@@ -107,7 +109,7 @@ export function buildGraphicPreviewUrl({
 	params?: ParamValues;
 	size?: number;
 }): string {
-	const definition = getGraphicDefinition({ definitionId });
+	const definition = getGraphicDefinition({ definitionId: effectiveGraphicDefinitionId({ definitionId, params }) });
 	const resolvedParams = resolveGraphicParams({ definition, params });
 	const cacheKey = JSON.stringify({ definitionId, resolvedParams, size });
 	const cachedUrl = graphicPreviewUrlCache.get(cacheKey);
@@ -139,6 +141,7 @@ export function buildGraphicPreviewUrl({
 	return previewUrl;
 }
 
+export { effectiveGraphicDefinitionId };
 export {
 	DEFAULT_GRAPHIC_SOURCE_SIZE,
 	ellipseGraphicDefinition,

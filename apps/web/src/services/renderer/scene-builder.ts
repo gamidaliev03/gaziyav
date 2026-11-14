@@ -1,4 +1,5 @@
 import type { SceneTracks, TimelineTrack } from "@/timeline";
+import { effectiveGraphicDefinitionId } from "@/generators/document";
 import { byTier } from "@/platform/hardware-client";
 import { getSourceTimeAtClipTime } from "@/retime";
 import { mediaTime, TICKS_PER_SECOND } from "@/wasm";
@@ -347,8 +348,9 @@ function buildElementNode({
 			if (element.type === "graphic") {
 				nodes.push(
 					new GraphicNode({
-						definitionId: element.definitionId,
+						definitionId: effectiveGraphicDefinitionId(element),
 						params: element.params,
+						canvasSize,
 						duration: element.duration,
 						timeOffset: element.startTime,
 						trimStart: element.trimStart,

@@ -1,0 +1,103 @@
+"use client";
+
+// «Try it in a minute»: one small card at the foot of the materials panel (never over the player or the timeline) with
+// four things to do; each ticks itself when the visitor really does it — a cut (a clip split in two), a title (a new
+// text clip), another look (Themes), an export. One click closes it for good; Help → Try it in a minute brings it back.
+import { useEffect, useState } from "react";
+import { useEditor } from "@/editor/use-editor";
+import { useT } from "@/i18n";
+import { useThemeStore } from "@/themes/store";
+import type { EditorCore } from "@/core";
+
+const KEY = "gzdemo.try";
+type Step = "cut" | "title" | "look" | "export";
+interface TryState {
+	done: Step[];
+	closed: boolean;
+}
+const STEPS: Array<{ id: Step; label: string }> = [
+	{ id: "cut", label: "Cut a clip (S or the scissors)" },
+	{ id: "title", label: "Add a title (Text)" },
+	{ id: "look", label: "Switch the look (Themes)" },
+	{ id: "export", label: "Export a video" },
+];
+
+const read = (): TryState => {
+	try {
+		const s = JSON.parse(localStorage.getItem(KEY) ?? "null") as TryState | null;
+		if (s && Array.isArray(s.done)) return s;
+	} catch {}
+	return { done: [], closed: false };
+};
+const write = (s: TryState) => {
+	try {
+		localStorage.setItem(KEY, JSON.stringify(s));
+	} catch {}
+	document.dispatchEvent(new CustomEvent("gz-demo-try"));
+};
+
+export function reopenTryCard() {
+	write({ ...read(), closed: false });
+}
+
+/** How many extra pieces of the same files and text clips the timeline holds (pure over the tracks: the ticks compare two counts). */
+export function counts(editor: EditorCore): { clips: number; texts: number } {
+	const tracks = editor.scenes.getActiveSceneOrNull()?.tracks;
+	if (!tracks) return { clips: 0, texts: 0 };
+	const all = [tracks.main, ...tracks.overlay, ...tracks.audio].flatMap((t) => t.elements as Array<{ type: string; mediaId?: string }>);
+	const media = all.filter((e) => e.mediaId);
+	// a cut makes two clips of one file: clips beyond one per file
+	return { clips: media.length - new Set(media.map((e) => e.mediaId)).size, texts: all.filter((e) => e.type === "text").length };
+}
+
+export function TryCard() {
+	const tr = useT();
+	const editor = useEditor();
+	const [state, setState] = useState<TryState>(() => read());
+	useEffect(() => {
+		const sync = () => setState(read());
+		document.addEventListener("gz-demo-try", sync);
+		const tick = (step: Step) => {
+			const s = read();
+			if (!s.done.includes(step)) write({ ...s, done: [...s.done, step] });
+		};
+		let base = counts(editor);
+		const offEditor = editor.command.subscribeHistory(() => {
+			const now = counts(editor);
+			if (now.clips > base.clips) tick("cut");
+			if (now.texts > base.texts) tick("title");
+			base = { clips: Math.min(base.clips, now.clips), texts: Math.min(base.texts, now.texts) };
+		});
+		const offTheme = useThemeStore.subscribe(() => tick("look"));
+		const onExport = () => tick("export");
+		document.addEventListener("gz-demo-exported", onExport);
+		return () => {
+			document.removeEventListener("gz-demo-try", sync);
+			document.removeEventListener("gz-demo-exported", onExport);
+			offEditor();
+			offTheme();
+		};
+	}, [editor]);
+	if (state.closed) return null;
+	return (
+		<div className="bg-background/95 absolute inset-x-2 bottom-2 z-10 rounded-md border p-3 shadow-sm" data-demo-try>
+			<div className="mb-2 flex justify-between items-center">
+				<span className="text-foreground text-[12px] font-semibold">{tr("Try it in a minute")}</span>
+				<button type="button" aria-label={tr("Close")} className="text-muted-foreground hover:text-foreground -mr-1 h-5 w-5 rounded text-[14px] leading-none" onClick={() => write({ ...read(), closed: true })} data-demo-try-close>
+					×
+				</button>
+			</div>
+			<ul className="space-y-1">
+				{STEPS.map((step) => {
+					const done = state.done.includes(step.id);
+					return (
+						<li key={step.id} className="flex items-center gap-2 text-[12px]" data-demo-try-step={step.id} data-done={done ? "1" : "0"}>
+							<span className={done ? "bg-primary text-primary-foreground flex h-3.5 w-3.5 items-center justify-center rounded-full text-[9px]" : "h-3.5 w-3.5 rounded-full border"}>{done ? "✓" : ""}</span>
+							<span className={done ? "text-muted-foreground line-through" : "text-foreground"}>{tr(step.label)}</span>
+						</li>
+					);
+				})}
+			</ul>
+		</div>
+	);
+}

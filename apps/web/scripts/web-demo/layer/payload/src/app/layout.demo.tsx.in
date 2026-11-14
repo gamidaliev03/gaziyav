@@ -1,0 +1,52 @@
+// The browser demo's page shell (next.config.ts: pageExtensions "demo.tsx" — this layout and ./page.demo.tsx are the
+// whole site of the demo build). The app's own layout without what needs the Mac app: no native window marks, no
+// interrupted-export notes, no family hosts. Nothing here comes from another host.
+import { ThemeProvider } from "next-themes";
+import localFont from "next/font/local";
+import type { Metadata, Viewport } from "next";
+import "./globals.css";
+import "./skin.css";
+import "../themes/themes.css";
+import { Toaster } from "../components/ui/sonner";
+import { TooltipProvider } from "../components/ui/tooltip";
+import { SettingsHost } from "@/settings/settings-host";
+import { ThemeHost } from "@/themes/theme-host";
+import { themeBootScript } from "@/themes/boot";
+import { MOBILE_METADATA, MOBILE_VIEWPORT } from "@/mobile/head-tags";
+
+const uiFont = localFont({ src: "../../public/fonts/bundled/GolosText.ttf", weight: "400 900", variable: "--font-golos", display: "swap" });
+const displayFont = localFont({ src: "../../public/fonts/bundled/Unbounded.ttf", weight: "200 900", variable: "--font-unbounded", display: "swap" });
+
+export const metadata: Metadata = {
+	title: "Gaziyav — demo",
+	description: "The Gaziyav video editor in your browser. Everything runs in your browser — your files never leave it.",
+	robots: { index: true, follow: true },
+	// «Add to Home Screen» on a phone (src/mobile/head-tags.ts): the icon, the app title, a full-screen web app
+	...MOBILE_METADATA,
+	icons: { icon: "../icons/icon-32.png", apple: [{ url: "../icons/icon-180.png", sizes: "180x180" }] },
+};
+// viewport-fit=cover: the phone layout pads for the notch and the home indicator itself (mobile.css)
+export const viewport: Viewport = MOBILE_VIEWPORT;
+
+export default function DemoLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+	return (
+		<html lang="en" className={`${uiFont.variable} ${displayFont.variable}`} suppressHydrationWarning>
+			<head>
+				{/* the boot screen's progress and the browser check, before the editor's own files (src/demo/static) */}
+				<script src="demo-boot.js" />
+				{/* biome-ignore lint/security/noDangerouslySetInnerHtml: the theme's boot script, made at build time */}
+				<script dangerouslySetInnerHTML={{ __html: themeBootScript() }} />
+			</head>
+			<body className="font-sans antialiased">
+				<ThemeProvider attribute="class" defaultTheme="dark" disableTransitionOnChange={true}>
+					<TooltipProvider>
+						<Toaster />
+						{children}
+						<SettingsHost />
+						<ThemeHost />
+					</TooltipProvider>
+				</ThemeProvider>
+			</body>
+		</html>
+	);
+}

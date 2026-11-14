@@ -1,0 +1,102 @@
+"use client";
+
+// The browser demo: one page, the editor with the sample project (src/demo/sample.ts). The page answers the app's /api/
+// requests itself (src/demo/api-shim.ts), installed before anything asks. A browser without what the editor needs gets
+// one calm sentence instead of the editor (src/demo/support.ts), never a white page.
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { installDemoApi } from "@/demo/api-shim";
+import { registerBrowserAi } from "@/demo/ai-adapter";
+import { mountBrowserLipsync } from "@/web/lipsync/mount";
+import { mountWebLipsync } from "@/web/lipsync/adapter";
+import { KeyPanel } from "@/web/lipsync/key-panel";
+import { openSample } from "@/demo/sample";
+import { demoLanguage, missingFeatures } from "@/demo/support";
+import { EditorBody } from "./editor/[project_id]/page";
+import { importProjectFile, projectFileBlob } from "@/demo/project-file";
+import { storageService } from "@/services/storage/service";
+
+// TEST-ONLY switch: the site step (post.mjs) fills this placeholder with a local stand-in provider's origin when
+// GZ_TEST_PROVIDER is set; the published site keeps the placeholder, the test below fails, nothing is ever routed.
+const TEST_PROVIDER: string = "__GZ_TEST_PROVIDER_ORIGIN_UNSET__";
+const testProvider = /^http:\/\/127\.0\.0\.1:\d{2,5}$/.test(TEST_PROVIDER) ? TEST_PROVIDER : "";
+const nativeFetch = typeof window !== "undefined" ? window.fetch.bind(window) : undefined;
+
+installDemoApi();
+// lipsync with the visitor's own key (beta): the one browser AI module, mounted on the seam (src/demo/ai-adapter.ts)
+if (!testProvider) mountBrowserLipsync(registerBrowserAi);
+else {
+	// the test site: provider URLs go to the stand-in (https://<host>/<path> → <stand-in>/<host>/<path>), by the native
+	// fetch (the page's guard only knows the provider's https hosts)
+	const lang = () => (/^en/i.test(document.documentElement.lang) ? "en" : "ru");
+	mountWebLipsync(registerBrowserAi, { fetch: nativeFetch, route: (u: string) => u.replace(/^https:\/\//, `${testProvider}/`), pollMs: 200, lang, panel: () => <KeyPanel lang={lang()} /> });
+	Object.assign(window, { __gzTestProvider: testProvider });
+}
+// the test of the site saves and opens a project file through the same functions as the File menu
+if (typeof window !== "undefined") Object.assign(window, { __demoProjectFile: { projectFileBlob, importProjectFile }, __demoStorage: { storageService } });
+
+type Boot = { phase: "start" | "sample" | "ready" | "blocked" | "failed"; done: number; total: number; text?: string; id?: string };
+
+export default function DemoPage() {
+	const [boot, setBoot] = useState<Boot>({ phase: "start", done: 0, total: 1 });
+	useEffect(() => {
+		const lang = demoLanguage();
+		const ru = lang === "ru";
+		document.documentElement.lang = lang;
+		const missing = missingFeatures();
+		if (missing.fatal) {
+			setBoot({ phase: "blocked", done: 0, total: 1, text: ru ? missing.ru : missing.en });
+			return;
+		}
+		setBoot({ phase: "sample", done: 0, total: 1 });
+		openSample({ ru, onStep: (done, total) => setBoot((b) => ({ ...b, done, total })) })
+			.then((id) => {
+				setBoot({ phase: "ready", done: 1, total: 1, id });
+				document.documentElement.dataset.demoReady = "1";
+				const note = ru ? missing.ru : missing.en;
+				if (note) toast(note, { duration: 12_000 });
+				(window as unknown as { __demoBoot?: (s: string) => void }).__demoBoot?.("ready");
+			})
+			.catch((error: unknown) => {
+				setBoot({
+					phase: "failed",
+					done: 0,
+					total: 1,
+					text: (ru ? "Пример не открылся в этом браузере. Откройте демо в Chrome или Edge — или скачайте приложение. " : "The sample didn't open in this browser. Open the demo in Chrome or Edge — or get the app. ") + (error instanceof Error ? `(${error.message})` : ""),
+				});
+			});
+	}, []);
+	useEffect(() => {
+		const step = (window as unknown as { __demoBoot?: (s: string, p?: number) => void }).__demoBoot;
+		if (boot.phase === "sample") step?.("sample", boot.total ? boot.done / boot.total : 0);
+		if (boot.phase === "blocked" || boot.phase === "failed") step?.("message", 0);
+	}, [boot]);
+	if (boot.phase === "ready" && boot.id) return <EditorBody projectId={boot.id} />;
+	if (boot.phase === "blocked" || boot.phase === "failed")
+		return (
+			<main className="bg-background text-foreground flex h-screen items-center justify-center p-6" data-demo-message>
+				<div className="max-w-md space-y-4 text-center">
+					<p className="text-[15px] leading-relaxed">{boot.text}</p>
+					<p className="text-[13px]">
+						<a className="text-primary underline" href="../">
+							Gaziyav
+						</a>
+					</p>
+				</div>
+			</main>
+		);
+	// the boot screen of demo-boot.js stays over this until the editor is ready
+	return (
+		<main className="flex h-screen items-center justify-center bg-[#0b0a09] p-6 text-[#f2efe9]" data-demo-booting>
+			<div className="w-full max-w-sm space-y-3">
+				<div className="text-[15px] font-semibold">Gaziyav</div>
+				<div className="h-1 overflow-hidden rounded bg-white/10">
+					<div id="demo-boot-bar" className="h-full w-[3%] rounded bg-[#e8a33d] transition-[width] duration-200" suppressHydrationWarning />
+				</div>
+				{/* the words come from demo-boot.js as attributes (drawn by CSS), so hydration never meets changed text */}
+				<p id="demo-boot-text" className="text-[13px] text-white/60 after:content-[attr(data-text)]" suppressHydrationWarning />
+				<p id="demo-boot-privacy" className="text-[12px] text-white/40 after:content-[attr(data-text)]" suppressHydrationWarning />
+			</div>
+		</main>
+	);
+}

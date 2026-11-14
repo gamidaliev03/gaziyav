@@ -21,6 +21,7 @@ import {
 } from "@/timeline/placement";
 import { roundMediaTime } from "@/wasm";
 import { endOnFrame } from "@/timeline/frame-grid";
+import { generatorOf } from "@/generators/document";
 
 type InsertElementPlacement =
 	| { mode: "explicit"; trackId: string }
@@ -281,11 +282,15 @@ export class InsertElementCommand extends Command {
 			return null;
 		}
 
+		const groundInRow =
+			placement.mode === "explicit" && placement.trackId === tracks.main.id && element.type === "graphic" && generatorOf(element)?.role === "ground";
 		const placementResult = resolveTrackPlacement({
 			tracks,
 			...(placement.mode === "auto" && placement.trackType
 				? { trackType: placement.trackType }
-				: { elementType: element.type }),
+				: groundInRow
+					? { trackType: "video" as const }
+					: { elementType: element.type }),
 			timeSpans: [
 				{
 					startTime: element.startTime,

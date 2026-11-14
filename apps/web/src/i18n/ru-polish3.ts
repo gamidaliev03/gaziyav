@@ -156,4 +156,8 @@ export const RU_POLISH3: Record<string, string> = {
 	"a short glow fade: things light up and settle, 140 ms — only as an answer": "короткое свечение: всё вспыхивает и успокаивается за 140 мс — только как ответ",
 	// lip3 A (14.11): added by the integrator
 	"Takes": "Дубли",
+	// the lead, 14.11: a tool applied from the inspector is the clip's effect, not a file of Media
+	"Applying to the clip": "Применяем к клипу",
+	"AI photo…": "ИИ-фото…",
+	"AI video…": "ИИ-видео…",
 };

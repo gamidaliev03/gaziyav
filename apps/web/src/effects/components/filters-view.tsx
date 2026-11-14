@@ -4,6 +4,7 @@
 // (a .cube file) and the looks as tiles with categories and search. A filter or LUT goes onto the selected clip; with
 // nothing selected it becomes a filter layer at the playhead that colours everything under it, like CapCut's filter track.
 import { toast } from "sonner";
+import { revealClipColor } from "@/components/editor/panels/properties/reveal";
 import { PanelView } from "@/components/editor/panels/assets/views/base-panel";
 import { EditorCore } from "@/core";
 import { useEditor } from "@/editor/use-editor";
@@ -48,6 +49,8 @@ export function FiltersView() {
 	const apply = (look: ParamValues, name: string) => {
 		if (target) {
 			applyParams(target, { ...targetParams(target), ...look });
+			// where it is edited: the clip's Colour section opens on the filter (its name, strength, «Remove»)
+			if (target.kind === "clip") revealClipColor({ trackId: target.trackId, elementId: target.element.id });
 			return;
 		}
 		const editor = EditorCore.getInstance();

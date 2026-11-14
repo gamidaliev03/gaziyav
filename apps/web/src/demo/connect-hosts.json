@@ -1,0 +1,9 @@
+{
+	"_": "Hosts the browser edition may talk to (CSP connect-src and the page's fetch guard); \u00ab*.x\u00bb = any sub-host of x. Without a pasted key nothing is sent to any of them.",
+	"connect": [
+		"queue.fal.run",
+		"rest.fal.ai",
+		"fal.media",
+		"*.fal.media"
+	]
+}

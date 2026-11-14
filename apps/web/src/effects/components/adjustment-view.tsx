@@ -292,10 +292,8 @@ export function ColorControls({ target }: { target: Target }) {
 						</div>
 					</>
 				)}
-				<div className="-mx-4">
-					{look !== "none" && slider("lookIntensity", "Intensity", { min: 0, max: 100 })}
-					{slider("vignette", "Vignette", { min: 0, max: 100 })}
-				</div>
+				{/* (the applied filter's Intensity is at the top of the section, with its name — below) */}
+				<div className="-mx-4">{slider("vignette", "Vignette", { min: 0, max: 100 })}</div>
 			</div>
 		),
 	};
@@ -332,6 +330,21 @@ export function ColorControls({ target }: { target: Target }) {
 					</button>
 				)}
 			</div>
+			{/* The filter on this clip, where it is edited: its name, its strength, «Remove» (the owner, 14.11: «куда
+			    фильтры применяются при перетаскивании и редачатся» — it sat in the closed last group of this section). */}
+			{look !== "none" && (
+				<div className="pb-1" data-applied-filter={look}>
+					<div className="flex items-center gap-2 px-4 pb-1">
+						<span className="min-w-0 flex-1 truncate text-xs font-medium">
+							{t("Filter")} · {look === "custom" ? String(params.lutName ?? t("Imported")) : t(LOOKS.find((item) => item.id === look)?.name ?? look)}
+						</span>
+						<button type="button" data-filter-remove className="text-muted-foreground hover:text-foreground text-xs" onClick={() => edit.apply({ look: "none" })}>
+							{t("Remove")}
+						</button>
+					</div>
+					{slider("lookIntensity", "Intensity", { min: 0, max: 100 })}
+				</div>
+			)}
 			{GROUPS.map((group) => {
 				const changed = !isColorGroupNeutral(group.id, params);
 				return (
@@ -339,7 +352,9 @@ export function ColorControls({ target }: { target: Target }) {
 						key={group.id}
 						id={`color.${group.id}`}
 						title={t(group.title)}
-						defaultOpen={false}
+						// the everyday sliders (exposure, contrast, highlights…) are open; the rest unfold (the owner, 14.11:
+						// «где обычная цветокоррекция» — it was a closed row under the fold)
+						defaultOpen={group.id === "basic"}
 						trailing={
 							<span className="flex items-center gap-2" data-color-group={group.id}>
 								<ChangedDot on={changed} />

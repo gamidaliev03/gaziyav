@@ -19,6 +19,8 @@ import { canTrackHaveAudio } from "@/timeline";
 import { mediaSupportsAudio } from "@/media/media-utils";
 import { getSourceTimeAtClipTime, renderRetimedBuffer } from "@/retime";
 import { Input, ALL_FORMATS, AudioBufferSink } from "mediabunny";
+// Safari up to 18 has no AudioDecoder for pages: AAC goes through the system decoder there (a no-op elsewhere)
+import "./aac-fallback";
 import { fileSource } from "@/media/file-source";
 import { gatherChunks, stereoSources, trackBase } from "@/media/audio-gather";
 import { clipSampleSpan, clipTimeAtSample } from "@/media/clip-samples";

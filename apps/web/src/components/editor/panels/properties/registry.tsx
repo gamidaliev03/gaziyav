@@ -1,3 +1,4 @@
+import { generatorOf } from "@/generators/document";
 import {
 	AiMagicIcon,
 	ColorsIcon,
@@ -139,6 +140,8 @@ function tabLabel(kind: ElementKind, element: TimelineElement, id: InspectorTabI
 	if (kind === "effect") return effectLayerLabel(element);
 	// an AI layer's own tab holds the fields of the plate / template it is
 	if (kind === "ai" && id === "ai") return "Template";
+	// a generator (a solid, a gradient…) rides on a rectangle: its tab is named for what it is
+	if (id === "shape" && element.type === "graphic" && generatorOf(element)) return "Generator";
 	if (id === "basic") return BASIC_LABEL[kind] ?? TAB_LABEL.basic;
 	return TAB_LABEL[id];
 }
@@ -160,6 +163,7 @@ export const isCompositionElement = (element: TimelineElement) => element.type =
 
 export function kindLabel(element: TimelineElement): string {
 	if (element.type === "graphic" && isCompositionElement(element)) return element.params?.compound ? "Compound clip" : "Old AI composition";
+	if (element.type === "graphic" && generatorOf(element)) return "Generator";
 	return {
 		video: "Video",
 		image: "Photo",

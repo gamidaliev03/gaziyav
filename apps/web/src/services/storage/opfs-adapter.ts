@@ -1,4 +1,5 @@
 import { isLeftoverName } from "./cut-copies";
+import { writeOpfsFile } from "./opfs-write";
 import type { StorageAdapter } from "./types";
 
 export class OPFSAdapter implements StorageAdapter<File> {
@@ -37,19 +38,9 @@ export class OPFSAdapter implements StorageAdapter<File> {
 	}): Promise<void> {
 		const directory = await this.getDirectory();
 		const fileHandle = await directory.getFileHandle(key, { create: true });
-		const writable = await fileHandle.createWritable();
-
-		// createWritable writes to a swap file; close() swaps it in atomically.
-		// On failure abort, so a half-written file never replaces the old one.
-		try {
-			await writable.write(file);
-			await writable.close();
-		} catch (error) {
-			try {
-				await writable.abort();
-			} catch {}
-			throw error;
-		}
+		// createWritable where the browser has it (a swap file, swapped in atomically; on failure aborted, so a
+		// half-written file never replaces the old one); older Safari writes through a worker — see opfs-write.ts.
+		await writeOpfsFile({ handle: fileHandle, path: [this.directoryName], name: key, parts: [file] });
 	}
 
 	async remove(key: string): Promise<void> {

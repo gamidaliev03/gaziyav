@@ -5,7 +5,7 @@ import type { MediaAsset } from "@/media/types";
 import { useSourceMarks } from "@/media/source-marks";
 import { buildWaveformSourceKey } from "@/media/waveform-summary";
 import { waveformCache } from "@/services/waveform-cache/service";
-import { useSourceStore } from "./source-store";
+import { clearSkim, setSkim, useSourceStore } from "./source-store";
 
 /** A playable URL for a media item (its own blob URL, else one made from the file). */
 export function useAssetUrl(asset: MediaAsset | null | undefined): string | null {
@@ -80,6 +80,8 @@ export function HoverScrubVideo({ asset }: { asset: MediaAsset }) {
 	const video = useRef<HTMLVideoElement>(null);
 	const pending = useRef<number | null>(null);
 	const url = useAssetUrl(x === null ? null : asset);
+	const playhead = useSourceStore((state) => (state.assetId === asset.id && asset.duration ? state.time / asset.duration : null));
+	useEffect(() => () => clearSkim(asset.id), [asset.id]);
 
 	const seek = (fraction: number) => {
 		const v = video.current;
@@ -102,12 +104,18 @@ export function HoverScrubVideo({ asset }: { asset: MediaAsset }) {
 				const fraction = Math.max(0, Math.min(1, (event.clientX - r.left) / r.width));
 				setX(fraction);
 				seek(fraction);
+				// one playhead with the source monitor: it goes where the line is, and I / O mark there (source-store.ts)
+				const d = asset.duration ?? video.current?.duration ?? 0;
+				if (d > 0) setSkim({ assetId: asset.id, seconds: Math.min(Math.max(0, d - 0.05), fraction * d), duration: d, fps: (asset as { fps?: number }).fps });
 			}}
 			onPointerLeave={() => {
 				setX(null);
 				pending.current = null;
+				clearSkim(asset.id);
 			}}
 		>
+			{/* the pointer away: the source monitor's playhead, when it shows this item — the same line */}
+			{x === null && playhead !== null && <div className="pointer-events-none absolute inset-y-0 w-px bg-white/90" style={{ left: `${Math.min(1, playhead) * 100}%` }} data-source-playhead />}
 			{x !== null && url && (
 				<>
 					<video
@@ -135,15 +143,21 @@ export function HoverScrubVideo({ asset }: { asset: MediaAsset }) {
 export function AudioTileWaveform({ asset }: { asset: MediaAsset }) {
 	const peaks = useWaveformPeaks(asset, 40);
 	const [x, setX] = useState<number | null>(null);
+	useEffect(() => () => clearSkim(asset.id), [asset.id]);
 	const playhead = useSourceStore((state) => (state.assetId === asset.id && asset.duration ? state.time / asset.duration : null));
 	return (
 		<div
 			className="text-primary/80 relative flex size-full items-center rounded border bg-muted/30 px-1"
 			onPointerMove={(event) => {
 				const r = event.currentTarget.getBoundingClientRect();
-				setX(Math.max(0, Math.min(1, (event.clientX - r.left) / r.width)));
+				const fraction = Math.max(0, Math.min(1, (event.clientX - r.left) / r.width));
+				setX(fraction);
+				if (asset.duration) setSkim({ assetId: asset.id, seconds: fraction * asset.duration, duration: asset.duration });
 			}}
-			onPointerLeave={() => setX(null)}
+			onPointerLeave={() => {
+				setX(null);
+				clearSkim(asset.id);
+			}}
 		>
 			{peaks?.length ? (
 				<WaveformBars peaks={peaks} className="h-3/5 w-full" />

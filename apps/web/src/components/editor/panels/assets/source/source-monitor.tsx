@@ -13,7 +13,7 @@ import type { MediaAsset } from "@/media/types";
 import { sayFittedToVideo } from "@/sound/fitted";
 import { addAssetsAtPlayhead } from "@/timeline/placement/row-place";
 import { cn } from "@/utils/ui";
-import { SOURCE_SCOPE_ATTR, sourceControls, useSourceStore } from "./source-store";
+import { SOURCE_SCOPE_ATTR, sourceControls, useSourceStore, takeOpenAt } from "./source-store";
 import { useAssetUrl, useWaveformPeaks, WaveformBars } from "./tile-media";
 
 const fmt = (s: number) => {
@@ -228,12 +228,20 @@ function Monitor({ asset, editor, onClose }: { asset: MediaAsset; editor: Editor
 			},
 			gotoStart: () => seek(0),
 			gotoEnd: () => seek(duration),
+			seek: (seconds) => {
+				// a tile's hover line: the playhead goes with it (never while the source plays — source-store.ts setSkim)
+				stopReverse();
+				seek(seconds);
+			},
 			insert,
 		};
+		// opened by a mark on a hovered tile: it opens where that mark is
+		const at = takeOpenAt(asset.id);
+		if (at !== null) seek(at);
 		return () => {
 			sourceControls.current = null;
 		};
-	}, [asset.id, clearMarks, duration, fps, insert, isImage, pause, play, runReverse, seek, setIn, setOut]);
+	}, [asset.id, clearMarks, duration, fps, insert, isImage, pause, play, runReverse, seek, setIn, setOut, stopReverse]);
 
 	useEffect(() => {
 		useSourceStore.getState().setPlaying(playing);

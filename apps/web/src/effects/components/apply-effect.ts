@@ -24,5 +24,8 @@ export function applyEffectToSelection({ effectType }: { effectType: string }): 
 	);
 	const command = commands.length === 1 ? commands[0] : new BatchCommand(commands);
 	EditorCore.getInstance().command.execute({ command });
+	// one clip: the inspector opens on its Effects, where the new effect is edited (properties/reveal.ts)
+	if (targets.length === 1 && typeof window !== "undefined")
+		window.dispatchEvent(new CustomEvent("gz-clip-effect-added", { detail: { trackId: targets[0].track.id, elementId: targets[0].element.id, effectType } }));
 	return targets.length;
 }

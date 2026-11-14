@@ -7,6 +7,8 @@
 //
 // Every failure here is silent and means «not kept»: the summary is then made as before.
 
+import { writeOpfsFile } from "@/services/storage/opfs-write";
+
 const DIRECTORY = "waveform-summaries";
 /** "GZWF" */
 const MAGIC = 0x46575a47;
@@ -120,18 +122,12 @@ export async function writeStoredSummary({ sourceKey, file, summary }: { sourceK
 		if (!dir) return;
 		// an older summary of the same source (the file was replaced): gone first
 		await removeStoredSummaries({ sourceKey });
-		const handle = await dir.getFileHandle(storedSummaryName({ sourceKey, file }), { create: true });
-		// createWritable writes to a swap file; close() swaps it in whole (a quit midway leaves no half summary)
-		const writable = await handle.createWritable();
-		try {
-			const { header, peaks } = encodeStoredSummary(summary);
-			await writable.write(header);
-			await writable.write(peaks as unknown as BufferSource);
-			await writable.close();
-		} catch (error) {
-			await writable.abort().catch(() => {});
-			throw error;
-		}
+		const name = storedSummaryName({ sourceKey, file });
+		const handle = await dir.getFileHandle(name, { create: true });
+		// a swap file where the browser has createWritable (a quit midway leaves no half summary); older Safari writes
+		// through a worker, and a half summary there is caught by decodeStoredSummary and made again
+		const { header, peaks } = encodeStoredSummary(summary);
+		await writeOpfsFile({ handle, path: [DIRECTORY], name, parts: [header, peaks as unknown as ArrayBufferView] });
 		waveformStoreStats.written++;
 		await keepUnderLimit(dir);
 	} catch {

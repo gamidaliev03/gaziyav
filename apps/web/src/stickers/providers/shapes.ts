@@ -46,7 +46,7 @@ function getShapePresets(): ShapeGraphicPreset[] {
 	registerDefaultGraphics();
 	return graphicsRegistry
 		.getAll()
-		.filter((definition) => !definition.id.startsWith("ai."))
+		.filter((definition) => !definition.id.startsWith("ai.") && !definition.id.startsWith("gen."))
 		.map((definition) => ({
 		shapeKey: definition.id,
 		name: definition.name,

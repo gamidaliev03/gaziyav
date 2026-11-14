@@ -47,7 +47,7 @@ export function videoEncodingConfig({
 	};
 }
 
-export type ExportAudioCodec = "aac" | "opus";
+export type ExportAudioCodec = "aac" | "opus" | "pcm-s16";
 
 /** The steps here that fell back since the last take (exp2, 14.11: no silent fallback — the export says each one). */
 const fellBack: Array<{ step: "aac"; reason: string }> = [];
@@ -78,6 +78,13 @@ export async function audioEncodingConfig({
 }): Promise<AudioEncodingConfig & { codec: ExportAudioCodec }> {
 	let codec: ExportAudioCodec = format === "webm" ? "opus" : "aac";
 	let bitrate = AUDIO_BITRATE[quality];
+	// A browser with no audio encoder for pages at all (Safari up to 18, macOS 15 / iOS 18): the mix goes in
+	// uncompressed — 16-bit PCM, which MP4 carries and mediabunny writes itself — a bigger file WITH its sound instead
+	// of an export that fails. Never taken in the Mac app, Chrome, Edge or Safari 26+ (they have AudioEncoder).
+	if (typeof AudioEncoder === "undefined" && format !== "webm") {
+		fellBack.push({ step: "aac", reason: "this browser has no audio encoder: the sound is written uncompressed (PCM)" });
+		return { codec: "pcm-s16" };
+	}
 	if (codec === "aac" && typeof AudioEncoder !== "undefined") {
 		// The rate the encoder takes for this layout (320 kbit/s is stereo only: mono stops at 256), else Opus.
 		const steps = [...new Set([bitrate, 256000, 192000])].filter((b) => b <= bitrate);

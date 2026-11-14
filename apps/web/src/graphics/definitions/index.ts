@@ -5,6 +5,7 @@ import { rectangleGraphicDefinition } from "./rectangle";
 import { starGraphicDefinition } from "./star";
 import { aiGraphicDefinitions } from "./ai";
 import { lottieGraphicDefinition } from "./lottie";
+import { generatorGraphicDefinitions } from "@/generators/graphic";
 
 const defaultGraphicDefinitions = [
 	rectangleGraphicDefinition,
@@ -13,6 +14,7 @@ const defaultGraphicDefinitions = [
 	starGraphicDefinition,
 	...aiGraphicDefinitions,
 	lottieGraphicDefinition,
+	...generatorGraphicDefinitions,
 ];
 
 export function registerDefaultGraphics(): void {

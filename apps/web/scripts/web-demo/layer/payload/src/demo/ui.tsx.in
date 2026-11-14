@@ -1,0 +1,414 @@
+"use client";
+
+// Gaziyav in the browser: its own few pieces of interface. The strip at the left of the header (the site, the File menu
+// — new project, open my files, project files, the projects of this browser —, the language, the themes, help), the
+// Export menu (any length: Chrome / Edge write the file straight to disk), the one quiet card where the visitor looks
+// for lipsync, and the small «Try it in a minute» card. Everything else on screen is the editor itself.
+import { useEffect, useState, useSyncExternalStore } from "react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuLabel,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useEditor } from "@/editor/use-editor";
+import { EditorCore } from "@/core";
+import { setLanguage, useLang, useT } from "@/i18n";
+import { downloadBuffer, type ExportFileWriter } from "@/export";
+import { mediaTimeToSeconds } from "@/wasm";
+import { openSettings } from "@/settings/settings-store";
+import { invokeAction } from "@/actions";
+import { storageService } from "@/services/storage/service";
+import type { TProjectMetadata } from "@/project/types";
+import { forgetSample, rememberProject, storedSampleId } from "./sample";
+import { EXTENSION, importProjectFile, projectFileBlob } from "./project-file";
+import { browserAi, onBrowserAi } from "./ai-adapter";
+import { reopenTryCard } from "./try-card";
+import { LipsyncView } from "@/studio/components/lipsync-view";
+import { resumePendingJobs } from "@/studio/client/actions";
+
+const APP_HREF = "../#download";
+/** A loop of lipsync from the docs (script/web-demo.sh copies it when the docs have one). */
+const LOOP = process.env.NEXT_PUBLIC_GAZIYAV_DEMO_LOOP === "1";
+
+type SavePicker = (o: { suggestedName: string; types: Array<{ description: string; accept: Record<string, string[]> }> }) => Promise<{
+	createWritable: () => Promise<{ write: (d: unknown) => Promise<void>; close: () => Promise<void>; abort?: () => Promise<void> }>;
+}>;
+const savePicker = (): SavePicker | null => {
+	const p = (window as unknown as { showSaveFilePicker?: SavePicker }).showSaveFilePicker;
+	return typeof p === "function" ? p.bind(window) : null;
+};
+
+/** Writes a blob to a file the visitor picks (Chrome / Edge), else to their downloads. */
+async function saveBlob(blob: Blob, name: string, description: string, ext: string, mime: string): Promise<boolean> {
+	const pick = savePicker();
+	if (pick) {
+		try {
+			const handle = await pick({ suggestedName: name, types: [{ description, accept: { [mime]: [ext] } }] });
+			const out = await handle.createWritable();
+			await out.write(blob);
+			await out.close();
+			return true;
+		} catch (error) {
+			if ((error as Error)?.name === "AbortError") return false;
+		}
+	}
+	downloadBuffer({ buffer: await blob.arrayBuffer(), filename: name, mimeType: mime });
+	return true;
+}
+
+function pickFile(accept: string): Promise<File | null> {
+	return new Promise((resolve) => {
+		const input = document.createElement("input");
+		input.type = "file";
+		input.accept = accept;
+		input.onchange = () => resolve(input.files?.[0] ?? null);
+		input.click();
+	});
+}
+
+const openProject = (id: string) => {
+	rememberProject(id);
+	location.reload();
+};
+
+export function DemoBar() {
+	const tr = useT();
+	const editor = useEditor();
+	const code = useLang((s) => s.code);
+	const ru = code !== "en";
+	const [projects, setProjects] = useState<TProjectMetadata[]>([]);
+	const activeId = editor.project.getActiveOrNull()?.metadata.id;
+	// In the desktop app the YouTube dialog (absent here) re-attaches to paid jobs after a reload; here the bar does it,
+	// so a lipsync that was running when the tab reloaded still lands — collected, never sent twice.
+	useEffect(() => {
+		if (activeId && browserAi()) resumePendingJobs(editor);
+	}, [activeId, editor]);
+
+	const newProject = async () => {
+		await editor.project.saveCurrentProject().catch(() => {});
+		const id = await editor.project.createNewProject({ name: tr("Untitled Project") });
+		openProject(id);
+	};
+	const saveFile = async () => {
+		const project = editor.project.getActiveOrNull();
+		if (!project) return;
+		await editor.project.saveCurrentProject();
+		const blob = await projectFileBlob(project.metadata.id);
+		if (await saveBlob(blob, `${project.metadata.name || "Gaziyav"}${EXTENSION}`, "Gaziyav project", EXTENSION, "application/octet-stream"))
+			toast.success(tr("The project is saved to a file."));
+	};
+	const openFile = async () => {
+		const file = await pickFile(`${EXTENSION},application/octet-stream`);
+		if (!file) return;
+		try {
+			await editor.project.saveCurrentProject().catch(() => {});
+			openProject(await importProjectFile(file));
+		} catch (error) {
+			toast.error(tr("This file couldn't be opened"), { description: error instanceof Error ? error.message : undefined });
+		}
+	};
+
+	return (
+		<div className="flex min-w-0 items-center gap-1.5 pl-2" data-demo-bar>
+			<a href="../" className="text-foreground mr-1 text-[13px] font-semibold tracking-tight hover:opacity-80" data-demo-home title={tr("Everything runs in your browser — your files never leave it.")}>
+				Gaziyav
+			</a>
+			<DropdownMenu onOpenChange={(open) => open && void storageService.loadAllProjectsMetadata().then(setProjects).catch(() => {})}>
+				<DropdownMenuTrigger asChild>
+					<button type="button" data-demo-file className="text-muted-foreground hover:text-foreground h-6 rounded px-1.5 text-[12px] font-medium">
+						{tr("File")}
+					</button>
+				</DropdownMenuTrigger>
+				<DropdownMenuContent align="start" className="z-100 w-64">
+					<DropdownMenuItem onClick={newProject} data-demo-new>
+						{tr("New project")}
+					</DropdownMenuItem>
+					<DropdownMenuItem onClick={() => invokeAction("import-media")} data-demo-import>
+						{tr("Open my files…")}
+					</DropdownMenuItem>
+					<DropdownMenuSeparator />
+					<DropdownMenuItem onClick={openFile} data-demo-open-file>
+						{tr("Open project file…")}
+					</DropdownMenuItem>
+					<DropdownMenuItem onClick={saveFile} data-demo-save-file>
+						{tr("Save project file…")}
+					</DropdownMenuItem>
+					{projects.length > 1 && (
+						<>
+							<DropdownMenuSeparator />
+							<DropdownMenuLabel className="px-2.5 pt-1">{tr("In this browser")}</DropdownMenuLabel>
+							{projects
+								.filter((p) => !p.trashedAt)
+								.slice(0, 12)
+								.map((p) => (
+									<DropdownMenuItem key={p.id} onClick={() => p.id !== activeId && openProject(p.id)} data-demo-project={p.id}>
+										<span className="truncate" data-no-translate>
+											{p.name}
+										</span>
+										{p.id === activeId && <span className="text-muted-foreground ml-auto text-[11px]">✓</span>}
+									</DropdownMenuItem>
+								))}
+						</>
+					)}
+					<DropdownMenuSeparator />
+					<DropdownMenuItem
+						data-demo-reset
+						onClick={async () => {
+							if (activeId === storedSampleId() && !window.confirm(tr("Start the sample project over? Your changes to it will be removed."))) return;
+							await editor.project.saveCurrentProject().catch(() => {});
+							await forgetSample();
+							location.reload();
+						}}
+					>
+						{tr("Sample project (fresh)")}
+					</DropdownMenuItem>
+				</DropdownMenuContent>
+			</DropdownMenu>
+			<button type="button" data-demo-looks onClick={() => openSettings("appearance")} className="text-muted-foreground hover:text-foreground h-6 rounded px-1.5 text-[12px] font-medium">
+				{tr("Themes")}
+			</button>
+			<DropdownMenu>
+				<DropdownMenuTrigger asChild>
+					<button type="button" data-demo-help className="text-muted-foreground hover:text-foreground hidden h-6 rounded px-1.5 text-[12px] font-medium min-[900px]:block">
+						{tr("Help")}
+					</button>
+				</DropdownMenuTrigger>
+				<DropdownMenuContent align="start" className="z-100 w-60">
+					<DropdownMenuItem onClick={reopenTryCard} data-demo-try-open>
+						{tr("Try it in a minute")}
+					</DropdownMenuItem>
+					<DropdownMenuItem onClick={() => invokeAction("show-shortcuts")}>{tr("Keyboard shortcuts")}</DropdownMenuItem>
+					<DropdownMenuSeparator />
+					<DropdownMenuItem asChild>
+						<a href={APP_HREF}>{tr("Get the app")}</a>
+					</DropdownMenuItem>
+				</DropdownMenuContent>
+			</DropdownMenu>
+			<button
+				type="button"
+				data-demo-lang
+				onClick={() => {
+					const next = ru ? "en" : "ru";
+					setLanguage(next);
+					document.documentElement.lang = next;
+				}}
+				className="text-muted-foreground hover:text-foreground h-6 rounded px-1.5 text-[11px] font-medium"
+				aria-label={ru ? "Switch to English" : "Переключить на русский"}
+			>
+				{ru ? "EN" : "RU"}
+			</button>
+		</div>
+	);
+}
+
+/** Export sizes the menu offers (the project's own frame is the first). */
+function sizesFor(canvas: { width: number; height: number }) {
+	const scaled = (h: number) => {
+		const w = Math.round((canvas.width / canvas.height) * h);
+		return { width: w - (w % 2), height: h };
+	};
+	const out = [{ label: `${canvas.width}×${canvas.height}`, size: canvas }];
+	for (const h of [1080, 720]) if (h < canvas.height) out.push({ label: `${h}p`, size: scaled(h) });
+	return out;
+}
+
+/** The file written as it grows (Chrome / Edge): no length limit but the disk's. */
+async function diskWriter(name: string): Promise<{ writer: ExportFileWriter; close: () => Promise<void>; abort: () => Promise<void> } | null | "cancelled"> {
+	const pick = savePicker();
+	if (!pick) return null;
+	try {
+		const handle = await pick({ suggestedName: name, types: [{ description: "MP4 video", accept: { "video/mp4": [".mp4"] } }] });
+		const out = await handle.createWritable();
+		return {
+			writer: {
+				write: (position, data) => out.write({ type: "write", position, data }),
+				reset: () => out.write({ type: "truncate", size: 0 }),
+			},
+			close: () => out.close(),
+			abort: async () => {
+				await out.abort?.().catch(() => {});
+			},
+		};
+	} catch (error) {
+		return (error as Error)?.name === "AbortError" ? "cancelled" : null;
+	}
+}
+
+export function DemoExportButton() {
+	const tr = useT();
+	const editor = useEditor();
+	const [progress, setProgress] = useState<number | null>(null);
+	const canvas = useEditor((e) => e.project.getActiveOrNull()?.settings.canvasSize ?? { width: 1920, height: 1080 }, ["project"]);
+	useEffect(
+		() =>
+			editor.project.subscribe(() => {
+				const state = editor.project.getExportState();
+				setProgress(state.isExporting ? state.progress : null);
+			}),
+		[editor],
+	);
+	const run = async (size: { width: number; height: number }) => {
+		const project = editor.project.getActiveOrNull();
+		if (!project || progress !== null) return;
+		const total = mediaTimeToSeconds({ time: editor.timeline.getTotalDuration() });
+		if (total <= 0) {
+			toast(tr("Put something on the timeline first."));
+			return;
+		}
+		const name = `${project.metadata.name || "Gaziyav"}.mp4`;
+		const disk = await diskWriter(name);
+		if (disk === "cancelled") return;
+		const started = performance.now();
+		const result = await editor.project.export({
+			options: { format: "mp4", quality: "high", includeAudio: true, size, ...(disk ? { toFile: disk.writer } : {}) },
+		});
+		editor.project.clearExportState();
+		const seconds = (performance.now() - started) / 1000;
+		if (result.success && (result.buffer || disk)) {
+			if (disk) await disk.close();
+			else if (result.buffer) downloadBuffer({ buffer: result.buffer, filename: name, mimeType: "video/mp4" });
+			(window as unknown as { __demoExport?: unknown }).__demoExport = { bytes: result.buffer?.byteLength ?? result.bytes, length: total, size, seconds, toDisk: !!disk, buffer: result.buffer };
+			toast.success(tr("Exported: {name}", { name }));
+			document.dispatchEvent(new CustomEvent("gz-demo-exported"));
+		} else {
+			await disk?.abort();
+			if (!result.cancelled) toast(tr("This browser couldn't encode the video. Chrome or Edge can, and so can the app."), { description: result.error });
+		}
+	};
+	if (progress !== null)
+		return (
+			<div className="flex items-center gap-2" data-demo-exporting>
+				<Progress value={Math.round(progress * 100)} className="h-1.5 w-28" />
+				<button type="button" className="text-[12px] text-muted-foreground hover:text-foreground" onClick={() => editor.project.cancelExport()}>
+					{tr("Cancel")}
+				</button>
+			</div>
+		);
+	const toDisk = typeof window !== "undefined" && !!savePicker();
+	return (
+		<DropdownMenu>
+			<DropdownMenuTrigger asChild>
+				<Button size="sm" className="h-7 rounded-md px-3 text-[12px]" data-demo-export>
+					{tr("Export")}
+				</Button>
+			</DropdownMenuTrigger>
+			<DropdownMenuContent align="end" className="z-100 w-72">
+				<DropdownMenuLabel className="text-muted-foreground px-2.5 pt-1 text-[11px] leading-snug font-normal">
+					{toDisk
+						? tr("MP4 (H.264), encoded by your browser and written straight to the file you pick: any length.")
+						: tr("MP4 (H.264), encoded by your browser. This browser holds the whole file in the tab's memory until it is saved (about 35 MB a minute at 720p): a long film may not fit — Chrome and Edge write straight to disk.")}
+				</DropdownMenuLabel>
+				{sizesFor(canvas).map((item) => (
+					<DropdownMenuItem key={item.label} onClick={() => void run(item.size)} data-demo-export-size={`${item.size.width}x${item.size.height}`}>
+						{tr("MP4 · {size}", { size: item.label })}
+					</DropdownMenuItem>
+				))}
+			</DropdownMenuContent>
+		</DropdownMenu>
+	);
+}
+
+const LIPSYNC_HIDE = [
+	"[data-demo-lipsync-beta] [data-lipsync-nokey]",
+	"[data-demo-lipsync-beta] [data-ai-open-settings]",
+	"[data-demo-lipsync-beta] [data-lipsync-toggle=captions]",
+	"[data-demo-lipsync-beta] [data-testid=text-length] ~ *",
+	"[data-demo-try]",
+].join(",").concat("{display:none!important}");
+
+/**
+ * The app's lipsync view plays a voice from its server's file address (`<audio src="/api/studio/file/<id>">`). In the
+ * browser that address exists only for fetch (the page's shim hands it to the AI module), so a media element given one
+ * gets the same bytes as a blob address instead — before it asks the site's host for a file that is not there.
+ */
+const FILE_ADDRESS = /^(?:https?:\/\/[^/]+)?\/api\/studio\/file\/[^/?#]+/;
+function fileAddressesAsBlobs() {
+	if (typeof window === "undefined" || typeof HTMLMediaElement === "undefined") return;
+	const proto = HTMLMediaElement.prototype as HTMLMediaElement & { __gzFiles?: boolean };
+	if (proto.__gzFiles) return;
+	proto.__gzFiles = true;
+	const made = new Map<string, Promise<string | null>>();
+	const blobFor = (path: string) => {
+		let p = made.get(path);
+		if (!p) {
+			p = fetch(path)
+				.then((r) => (r.ok ? r.blob() : null))
+				.then((b) => (b ? URL.createObjectURL(b) : null))
+				.catch(() => null);
+			made.set(path, p);
+		}
+		return p;
+	};
+	const src = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, "src");
+	const setAttribute = Element.prototype.setAttribute;
+	const redirect = (el: HTMLMediaElement, value: string): boolean => {
+		const m = FILE_ADDRESS.exec(value);
+		if (!m) return false;
+		const path = m[0].replace(/^https?:\/\/[^/]+/, "");
+		void blobFor(path).then((url) => {
+			if (url) src?.set?.call(el, url);
+		});
+		return true;
+	};
+	if (src?.set)
+		Object.defineProperty(HTMLMediaElement.prototype, "src", {
+			...src,
+			set(this: HTMLMediaElement, value: string) {
+				if (!redirect(this, String(value))) src.set?.call(this, value);
+			},
+		});
+	Element.prototype.setAttribute = function (this: Element, name: string, value: string) {
+		if (this instanceof HTMLMediaElement && name.toLowerCase() === "src" && redirect(this, String(value))) return;
+		return setAttribute.call(this, name, value);
+	};
+}
+fileAddressesAsBlobs();
+
+export function DemoLipsyncCard() {
+	const tr = useT();
+	const lang = useLang((s) => s.code);
+	const ai = useSyncExternalStore(onBrowserAi, browserAi, () => null);
+	if (ai?.panel)
+		return (
+			<div className="flex h-full min-h-0 flex-col overflow-y-auto" data-demo-lipsync-beta>
+				{/* the lipsync view as the desktop draws it, minus what has no place here: the key goes in the panel above (not
+				    Settings → AI), no AI script / Shorten (the desktop's assistant), no captions (no word timings in the
+				    browser); the «Try it» card would cover the Run button */}
+				<style>{LIPSYNC_HIDE}</style>
+				<div className="flex items-center gap-2 px-3 pt-3 text-[13px] font-semibold">
+					{tr("Lipsync with your own key")}
+					<span className="bg-primary/15 text-primary rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase">{tr("beta")}</span>
+				</div>
+				{ai.panel()}
+				<LipsyncView />
+			</div>
+		);
+	return (
+		<div className="flex h-full min-h-0 flex-col items-center justify-center overflow-y-auto p-5" data-demo-lipsync>
+			<div className="flex w-full max-w-[300px] flex-col gap-3">
+				{LOOP && (
+					// biome-ignore lint/a11y/useMediaCaption: a silent loop of the feature
+					<video src={`media/lipsync-${lang === "en" ? "en" : "ru"}.mp4`} autoPlay loop muted playsInline className="w-full rounded-md border" />
+				)}
+				<h3 className="text-foreground text-[15px] font-semibold">{tr("Lipsync")}</h3>
+				<p className="text-muted-foreground text-[13px] leading-relaxed">
+					{tr("Give a face a new line: Gaziyav moves the lips to any voice or song, on your computer or through a service you choose. This is in the desktop app.")}
+				</p>
+				<Button asChild size="sm" className="self-start">
+					<a href={APP_HREF} data-demo-get-app>
+						{tr("Get the app")}
+					</a>
+				</Button>
+			</div>
+		</div>
+	);
+}
+
+/** The open project's id (tests and the try card read it). */
+export const activeProjectId = () => EditorCore.peekInstance()?.project.getActiveOrNull()?.metadata.id ?? null;

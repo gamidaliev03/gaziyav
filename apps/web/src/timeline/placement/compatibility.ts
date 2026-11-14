@@ -1,4 +1,6 @@
 import type { ElementType, TrackType } from "@/timeline";
+import type { ParamValues } from "@/params";
+import { generatorOf } from "@/generators/document";
 
 const ELEMENT_TRACK_MAP: Record<ElementType, TrackType> = {
 	audio: "audio",
@@ -35,7 +37,7 @@ export function validateElementTrackCompatibility({
 	element,
 	track,
 }: {
-	element: { type: ElementType; definitionId?: string };
+	element: { type: ElementType; definitionId?: string; params?: ParamValues };
 	track: { type: TrackType };
 }): { isValid: boolean; errorMessage?: string } {
 	const isValid =
@@ -43,7 +45,9 @@ export function validateElementTrackCompatibility({
 			elementType: element.type,
 			trackType: track.type,
 		}) ||
-		(element.type === "graphic" && element.definitionId === COMPOSITION_DEFINITION && track.type === "video");
+		(element.type === "graphic" && element.definitionId === COMPOSITION_DEFINITION && track.type === "video") ||
+		// a ground generator (solid, gradient, background) is a picture of the film: it may sit in the main row
+		(element.type === "graphic" && track.type === "video" && generatorOf(element)?.role === "ground");
 
 	if (!isValid) {
 		return {

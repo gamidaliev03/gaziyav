@@ -297,6 +297,7 @@ export function AudioVolumeLine({
 				{/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- custom drag widget for clip volume; pointer events drive the interaction, the click/mousedown handlers are propagation-stoppers. The a11y-correct long-term shape is <input type="range"> with a custom thumb. */}
 				<div
 					className="absolute inset-x-0 touch-none cursor-ns-resize pointer-events-auto"
+					data-volume-line
 					style={{ top: lineTop, height: `${hitAreaPx}px`, marginTop: `${-hitAreaPx / 2}px` }}
 					onClick={handleClick}
 					onMouseDown={handleMouseDown}

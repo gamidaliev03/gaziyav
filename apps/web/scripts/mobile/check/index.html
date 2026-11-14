@@ -1,0 +1,229 @@
+<!doctype html>
+<!-- Gaziyav · phone self-check (mobile, 14.11). One static page, no requests to any host, nothing stored but one
+     number (the memory probe's last step, so a crash still tells it). Published at <site>/check/. It lists what the
+     editor needs and what THIS device does, and prints one line to screenshot. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0a09">
+<title>Gaziyav · device check</title>
+<style>
+:root { color-scheme: dark; --bg:#0b0a09; --fg:#f2efe9; --mut:#9a948a; --ok:#5fd38d; --no:#ff6b5e; --unk:#e8c15a; --line:#26231f; }
+* { box-sizing: border-box; }
+body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.4 -apple-system, system-ui, sans-serif;
+  padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
+h1 { font-size:20px; margin:0 0 4px; }
+p.mut { color:var(--mut); margin:0 0 12px; font-size:13px; }
+#verdict { font-weight:600; margin:8px 0 12px; }
+#line { font:12px/1.35 ui-monospace, Menlo, monospace; background:#16140f; border:1px solid var(--line); border-radius:10px; padding:10px; word-break:break-all; user-select:all; -webkit-user-select:all; }
+table { width:100%; border-collapse:collapse; margin-top:12px; }
+td { padding:7px 4px; border-top:1px solid var(--line); vertical-align:top; }
+td.s { width:28px; text-align:center; font-weight:700; }
+td.v { color:var(--mut); font-size:12px; text-align:right; max-width:45vw; word-break:break-word; }
+.ok { color:var(--ok); } .no { color:var(--no); } .unk { color:var(--unk); }
+.row { display:flex; gap:8px; margin-top:14px; flex-wrap:wrap; }
+button, label.btn { flex:1; min-height:48px; border-radius:12px; border:1px solid var(--line); background:#1c1a16; color:var(--fg); font:inherit; padding:0 12px; display:flex; align-items:center; justify-content:center; }
+input[type=file] { display:none; }
+</style>
+</head>
+<body>
+<h1 id="h">Gaziyav · device check</h1>
+<p class="mut" id="sub">What the editor needs, and what this device has. Screenshot this screen.</p>
+<div id="verdict">…</div>
+<div id="line">…</div>
+<div class="row">
+  <label class="btn" id="pickL"><input type="file" id="pick" accept="video/*"><span id="pickT">Pick a clip from Photos</span></label>
+  <button id="mem">Memory probe</button>
+</div>
+<table id="t"></table>
+<script>
+"use strict";
+const RU = (navigator.language || "").toLowerCase().startsWith("ru");
+const L = (en, ru) => (RU ? ru : en);
+document.documentElement.lang = RU ? "ru" : "en";
+document.getElementById("h").textContent = L("Gaziyav · device check", "Gaziyav · проверка устройства");
+document.getElementById("sub").textContent = L("What the editor needs, and what this device has. Screenshot this screen.", "Что нужно редактору и что есть на этом устройстве. Сделайте скриншот этого экрана.");
+document.getElementById("pickT").textContent = L("Pick a clip from Photos", "Выбрать клип из Фото");
+document.getElementById("mem").textContent = L("Memory probe", "Проверка памяти");
+
+const rows = []; // {key, label, state: ok|no|unk, value, code}
+const add = (key, label, state, value, code) => { rows.push({ key, label, state, value: value ?? "", code: code ?? key }); };
+const yes = (b) => (b ? "ok" : "no");
+const timeout = (p, ms) => Promise.race([p, new Promise((r) => setTimeout(() => r("timeout"), ms))]);
+
+async function vdec(codec, w, h) {
+  if (typeof VideoDecoder !== "function") return false;
+  try { return (await VideoDecoder.isConfigSupported({ codec, codedWidth: w, codedHeight: h })).supported === true; } catch { return false; }
+}
+async function venc(codec, w, h) {
+  if (typeof VideoEncoder !== "function") return false;
+  try { return (await VideoEncoder.isConfigSupported({ codec, width: w, height: h, bitrate: 8e6, framerate: 30 })).supported === true; } catch { return false; }
+}
+async function aenc(codec) {
+  if (typeof AudioEncoder !== "function") return false;
+  try { return (await AudioEncoder.isConfigSupported({ codec, sampleRate: 48000, numberOfChannels: 2, bitrate: 192000 })).supported === true; } catch { return false; }
+}
+async function adec(codec) {
+  if (typeof AudioDecoder !== "function") return false;
+  try { return (await AudioDecoder.isConfigSupported({ codec, sampleRate: 48000, numberOfChannels: 2 })).supported === true; } catch { return false; }
+}
+
+async function run() {
+  const mm = (q) => (window.matchMedia ? matchMedia(q).matches : false);
+  const coarse = mm("(pointer: coarse)");
+  const standalone = mm("(display-mode: standalone)") || navigator.standalone === true;
+  const sw = screen.width, sh = screen.height, dpr = window.devicePixelRatio || 1;
+  const cls = !coarse ? "desktop" : Math.min(sw, sh) < 600 ? "phone" : "tablet";
+  add("dev", L("Layout this device gets", "Раскладка для этого устройства"), "ok", `${cls} · ${sw}×${sh} @${dpr} · ${coarse ? "touch" : "fine"}${standalone ? " · home-screen app" : ""}`, `dev=${cls}:${sw}x${sh}@${dpr}${standalone ? ":app" : ""}`);
+
+  add("wasm", "WebAssembly", yes(typeof WebAssembly === "object"));
+
+  // the engine: wgpu asks WebGPU first, then WebGL2 (rust/crates/gpu/src/context.rs)
+  let gpu = "no", gpuV = "";
+  if (navigator.gpu) {
+    try {
+      const a = await timeout(navigator.gpu.requestAdapter(), 3000);
+      if (a && a !== "timeout") {
+        const d = await timeout(a.requestDevice(), 3000);
+        gpu = d && d !== "timeout" ? "ok" : "unk";
+        gpuV = (a.info && (a.info.vendor + " " + a.info.architecture).trim()) || "";
+        if (d && d.destroy) d.destroy();
+      } else gpu = "no", gpuV = "no adapter";
+    } catch (e) { gpu = "no"; gpuV = String(e && e.name || e); }
+  }
+  add("webgpu", "WebGPU", gpu, gpuV || (navigator.gpu ? "" : L("absent", "нет")));
+  let gl2 = false, maxTex = 0;
+  try { const c = document.createElement("canvas"); const g = c.getContext("webgl2"); gl2 = !!g; if (g) maxTex = g.getParameter(g.MAX_TEXTURE_SIZE); } catch {}
+  add("webgl2", L("WebGL2 (the engine's fallback)", "WebGL2 (запасной путь движка)"), yes(gl2), maxTex ? `max texture ${maxTex}` : "", `gl2${maxTex ? ":" + maxTex : ""}`);
+  add("engine", L("Picture engine can start", "Движок картинки запустится"), yes(gpu === "ok" || gl2), gpu === "ok" ? "WebGPU" : gl2 ? "WebGL2" : "");
+
+  // decoding the phone's clips
+  const dAvc = await vdec("avc1.640028", 1920, 1080), dAvc4k = await vdec("avc1.640033", 3840, 2160);
+  const dHevc = await vdec("hvc1.1.6.L123.B0", 1920, 1080), dHevc10 = await vdec("hvc1.2.4.L153.B0", 3840, 2160);
+  const dVp9 = await vdec("vp09.00.10.08", 1920, 1080), dAv1 = await vdec("av01.0.08M.08", 1920, 1080);
+  add("vdec", L("Video decoder (WebCodecs)", "Видеодекодер (WebCodecs)"), yes(dAvc), `H.264 ${dAvc ? "✓" : "✗"} 4K ${dAvc4k ? "✓" : "✗"} · HEVC ${dHevc ? "✓" : "✗"} HDR10 ${dHevc10 ? "✓" : "✗"} · VP9 ${dVp9 ? "✓" : "✗"} · AV1 ${dAv1 ? "✓" : "✗"}`,
+    `vdec=${[dAvc && "avc", dAvc4k && "avc4k", dHevc && "hevc", dHevc10 && "hevc10", dVp9 && "vp9", dAv1 && "av1"].filter(Boolean).join("+") || "none"}`);
+  const aAac = await adec("mp4a.40.2"), aOpus = await adec("opus");
+  add("adec", L("Audio decoder", "Аудиодекодер"), aAac || aOpus ? "ok" : typeof AudioDecoder === "function" ? "no" : "unk", `AAC ${aAac ? "✓" : "✗"} · Opus ${aOpus ? "✓" : "✗"}${typeof AudioDecoder !== "function" ? " · " + L("no AudioDecoder (Web Audio decodes instead)", "нет AudioDecoder (декодирует Web Audio)") : ""}`, `adec=${[aAac && "aac", aOpus && "opus"].filter(Boolean).join("+") || "none"}`);
+
+  // export: H.264 9:16 + AAC in MP4 (export/encoder-config.ts); Opus when no AAC
+  const eAvc = await venc("avc1.640028", 1080, 1920), eAvc4k = await venc("avc1.640033", 2160, 3840), eHevc = await venc("hvc1.1.6.L123.B0", 1080, 1920);
+  add("venc", L("Video encoder (export 9:16)", "Видеокодер (экспорт 9:16)"), yes(eAvc), `H.264 1080×1920 ${eAvc ? "✓" : "✗"} · 4K ${eAvc4k ? "✓" : "✗"} · HEVC ${eHevc ? "✓" : "✗"}`, `venc=${[eAvc && "avc", eAvc4k && "avc4k", eHevc && "hevc"].filter(Boolean).join("+") || "none"}`);
+  const eAac = await aenc("mp4a.40.2"), eOpus = await aenc("opus");
+  add("aenc", L("Audio encoder (export's sound)", "Аудиокодер (звук экспорта)"), eAac || eOpus ? "ok" : "no", typeof AudioEncoder !== "function" ? L("no AudioEncoder", "нет AudioEncoder") : `AAC ${eAac ? "✓" : "✗"} · Opus ${eOpus ? "✓" : "✗"}`, `aenc=${[eAac && "aac", eOpus && "opus"].filter(Boolean).join("+") || "none"}`);
+
+  // keeping the clips: OPFS + createWritable (services/storage/opfs-adapter.ts), IndexedDB
+  let idb = false;
+  try { idb = await timeout(new Promise((r) => { const q = indexedDB.open("gz-check"); q.onsuccess = () => { q.result.close(); indexedDB.deleteDatabase("gz-check"); r(true); }; q.onerror = () => r(false); }), 3000) === true; } catch {}
+  add("idb", "IndexedDB", yes(idb));
+  let opfs = false, opfsW = false, opfsMs = "";
+  try {
+    const root = await navigator.storage.getDirectory(); opfs = true;
+    const fh = await root.getFileHandle("gz-check.bin", { create: true });
+    if (fh.createWritable) {
+      const t0 = performance.now(); const w = await fh.createWritable(); await w.write(new Uint8Array(8 << 20)); await w.close();
+      opfsW = (await fh.getFile()).size === 8 << 20; opfsMs = `8 MB ${Math.round(performance.now() - t0)} ms`;
+    }
+    await root.removeEntry("gz-check.bin");
+  } catch (e) { opfsMs = String(e && e.name || e); }
+  add("opfs", L("Private files (OPFS)", "Личные файлы (OPFS)"), yes(opfs));
+  add("opfsw", L("Write a file in the page (createWritable)", "Запись файла на странице (createWritable)"), yes(opfsW), opfsMs, `opfsW=${opfsW ? 1 : 0}`);
+  // the fallback a pre-26 Safari has: a worker's sync handle
+  let sync = "unk";
+  try {
+    const src = "onmessage=async()=>{try{const r=await navigator.storage.getDirectory();const f=await r.getFileHandle('gz-sync.bin',{create:true});const h=await f.createSyncAccessHandle();h.write(new Uint8Array(1024));h.flush();const n=h.getSize();h.close();await r.removeEntry('gz-sync.bin');postMessage(n===1024)}catch(e){postMessage(false)}}";
+    const wk = new Worker(URL.createObjectURL(new Blob([src], { type: "text/javascript" })));
+    sync = (await timeout(new Promise((r) => { wk.onmessage = (m) => r(m.data); wk.onerror = () => r("err"); wk.postMessage(0); }), 3000));
+    sync = sync === true ? "ok" : sync === false ? "no" : "unk"; wk.terminate();
+  } catch {}
+  add("sync", L("Write a file in a worker (sync handle)", "Запись файла в воркере (sync handle)"), sync, "", `sync=${sync}`);
+  let quota = "", usage = "", persisted = "?";
+  try { const e = await navigator.storage.estimate(); quota = (e.quota / 2 ** 30).toFixed(1) + " GB"; usage = (e.usage / 2 ** 20).toFixed(0) + " MB"; } catch {}
+  try { persisted = (await navigator.storage.persisted()) ? "yes" : "no"; } catch {}
+  add("quota", L("Space for projects", "Место для проектов"), quota ? "ok" : "unk", `${quota || "?"} (${L("used", "занято")} ${usage || "?"}) · persisted ${persisted}`, `q=${quota.replace(" GB", "G") || "?"}:p=${persisted}`);
+
+  // offline + install
+  add("sw", L("Works offline (service worker)", "Работает без сети (service worker)"), yes("serviceWorker" in navigator), navigator.serviceWorker && navigator.serviceWorker.controller ? L("site copy active", "копия сайта активна") : "");
+
+  // saving the result
+  let share = false;
+  try { share = !!navigator.canShare && navigator.canShare({ files: [new File([new Uint8Array(1)], "a.mp4", { type: "video/mp4" })] }); } catch {}
+  add("share", L("Share a video file (→ Save Video)", "Поделиться видеофайлом (→ Сохранить видео)"), yes(share));
+  const picker = typeof window.showSaveFilePicker === "function";
+  add("savepick", L("Save-file dialog (stream long exports)", "Окно сохранения (длинный экспорт потоком)"), picker ? "ok" : "no", picker ? "" : L("export is held in memory, then shared", "экспорт держится в памяти, затем отдаётся"), `save=${picker ? 1 : 0}`);
+
+  // canvases (the preview, the filmstrip)
+  const canvasOk = (w, h) => { try { const c = document.createElement("canvas"); c.width = w; c.height = h; const x = c.getContext("2d"); x.fillStyle = "#f00"; x.fillRect(w - 2, h - 2, 1, 1); const d = x.getImageData(w - 2, h - 2, 1, 1).data[0] === 255; c.width = c.height = 0; return d; } catch { return false; } };
+  const c4 = canvasOk(4096, 4096), c8 = canvasOk(8192, 4096);
+  add("canvas", L("Big canvases", "Большие холсты"), yes(c4), `4096² ${c4 ? "✓" : "✗"} · 8192×4096 ${c8 ? "✓" : "✗"}`, `cv=${c4 ? (c8 ? "8k" : "4k") : "small"}`);
+
+  // sound
+  let ac = "?";
+  try { const A = window.AudioContext || window.webkitAudioContext; const a = new A(); ac = a.state; a.close(); } catch {}
+  add("audio", L("Sound starts after a tap", "Звук начинается после касания"), ac === "running" || ac === "suspended" ? "ok" : "unk", `AudioContext ${ac}${navigator.audioSession ? " · audioSession" : ""}`, `ac=${ac}${navigator.audioSession ? "+as" : ""}`);
+
+  add("sab", L("SharedArrayBuffer (not needed)", "SharedArrayBuffer (не нужен)"), "ok", `${typeof SharedArrayBuffer !== "undefined" ? "present" : "absent"} · isolated ${self.crossOriginIsolated ? "yes" : "no"}`, `sab=${self.crossOriginIsolated ? 1 : 0}`);
+  add("mem", L("Device memory (hint)", "Память устройства (подсказка)"), navigator.deviceMemory ? "ok" : "unk", navigator.deviceMemory ? navigator.deviceMemory + " GB" : L("not told by this browser", "браузер не сообщает"), `dm=${navigator.deviceMemory || "?"}`);
+  let lastProbe = null; try { lastProbe = localStorage.getItem("gz-check-mem"); } catch {}
+  if (lastProbe) add("memprobe", L("Memory probe: held before the tab stopped", "Проверка памяти: удержано до остановки"), "unk", lastProbe + " MB", `mp=${lastProbe}`);
+
+  // the verdict
+  const g = (k) => rows.find((r) => r.key === k)?.state === "ok";
+  const canRun = g("wasm") && g("engine") && g("idb") && g("opfs") && (g("opfsw") || g("sync")) && g("vdec");
+  const canExport = g("venc");
+  const withSound = g("aenc");
+  const verdict = !canRun ? L("✗ The editor can't run here yet.", "✗ Редактор здесь пока не запустится.")
+    : !g("opfsw") ? L("◐ Runs only with the worker storage path (this Safari is older than 26).", "◐ Запустится только через хранение в воркере (Safari старше 26).")
+    : !canExport ? L("◐ Edits here; export can't run.", "◐ Монтаж работает; экспорт — нет.")
+    : !withSound ? L("◐ Edits and exports here — the export's sound needs another path.", "◐ Монтаж и экспорт работают — звуку экспорта нужен другой путь.")
+    : L("✓ The editor and the export can run on this device.", "✓ Редактор и экспорт могут работать на этом устройстве.");
+  document.getElementById("verdict").textContent = verdict;
+  const ua = navigator.userAgent;
+  const os = (ua.match(/OS (\d+)_(\d+)/) || [])[0] || (ua.match(/Android [\d.]+/) || [])[0] || (ua.match(/Mac OS X [\d_]+/) || [])[0] || "?";
+  const line = ["GZ1", os.replace(/_/g, "."), ...rows.map((r) => (r.state === "ok" ? "+" : r.state === "no" ? "-" : "?") + r.code)].join(" ");
+  document.getElementById("line").textContent = line;
+
+  const t = document.getElementById("t");
+  t.innerHTML = "";
+  for (const r of rows) {
+    const tr = document.createElement("tr");
+    const s = document.createElement("td"); s.className = "s " + r.state; s.textContent = r.state === "ok" ? "✓" : r.state === "no" ? "✗" : "?";
+    const n = document.createElement("td"); n.textContent = r.label;
+    const v = document.createElement("td"); v.className = "v"; v.textContent = r.value;
+    tr.append(s, n, v); t.append(tr);
+  }
+}
+
+// a clip from Photos: what iOS hands the page (type, size, picture size, length)
+document.getElementById("pick").addEventListener("change", (e) => {
+  const f = e.target.files && e.target.files[0]; if (!f) return;
+  const v = document.createElement("video"); v.muted = true; v.playsInline = true; v.preload = "metadata";
+  const url = URL.createObjectURL(f);
+  const done = (extra) => { URL.revokeObjectURL(url); rows.push({ key: "clip", label: L("Picked clip", "Выбранный клип"), state: extra ? "ok" : "unk", value: `${f.type || "?"} · ${(f.size / 2 ** 20).toFixed(1)} MB · ${f.name.split(".").pop()}${extra ? " · " + extra : ""}`, code: `clip=${(f.type || "?").replace("video/", "")}:${(f.size / 2 ** 20).toFixed(0)}M${extra ? ":" + extra.replace(/ /g, "") : ""}` }); run2(); };
+  v.onloadedmetadata = () => done(`${v.videoWidth}×${v.videoHeight} ${v.duration.toFixed(1)}s`);
+  v.onerror = () => done("");
+  v.src = url;
+});
+// re-render without re-running the probes
+function run2() { const keep = rows.slice(); rows.length = 0; run().then(() => { for (const r of keep) if (!rows.some((x) => x.key === r.key)) rows.push(r); renderOnly(); }); }
+function renderOnly() { const t = document.getElementById("t"); t.innerHTML = ""; for (const r of rows) { const tr = document.createElement("tr"); tr.innerHTML = `<td class="s ${r.state}">${r.state === "ok" ? "✓" : r.state === "no" ? "✗" : "?"}</td><td></td><td class="v"></td>`; tr.children[1].textContent = r.label; tr.children[2].textContent = r.value; t.append(tr); } const line = document.getElementById("line"); line.textContent = line.textContent.split(" ").filter((x) => !/^[+?-]clip=/.test(x)).concat(rows.filter((r) => r.key === "clip").map((r) => "?" + r.code)).join(" "); }
+
+// memory: hold 64 MB more each step up to 1.5 GB; each reached step is written down first, so if the tab is killed the
+// reload shows how far it got (the number goes in the line as mp=)
+document.getElementById("mem").addEventListener("click", async () => {
+  const held = []; const btn = document.getElementById("mem");
+  try { localStorage.removeItem("gz-check-mem"); } catch {}
+  for (let mb = 64; mb <= 1536; mb += 64) {
+    try { const b = new Uint8Array(64 << 20); for (let i = 0; i < b.length; i += 4096) b[i] = 1; held.push(b); } catch { break; }
+    try { localStorage.setItem("gz-check-mem", String(mb)); } catch {}
+    btn.textContent = mb + " MB…"; await new Promise((r) => setTimeout(r, 30));
+  }
+  btn.textContent = L("Held ", "Удержано ") + held.length * 64 + " MB ✓";
+  held.length = 0;
+});
+
+run();
+</script>
+</body>
+</html>

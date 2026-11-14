@@ -1,0 +1,150 @@
+/* The touch layout's own rules (mobile, 14.11). Everything is scoped under .gz-mobile, which only the phone / tablet
+   shell renders: the desktop never matches a line of this file. */
+
+.gz-mobile {
+	/* no rubber-band of the whole page, no pull-to-refresh, no double-tap zoom anywhere in the editor */
+	overscroll-behavior: none;
+	touch-action: manipulation;
+	-webkit-tap-highlight-color: transparent;
+}
+.gz-safe-top {
+	padding-top: env(safe-area-inset-top);
+	padding-left: max(12px, env(safe-area-inset-left));
+	padding-right: max(12px, env(safe-area-inset-right));
+}
+.gz-safe-bottom {
+	padding-bottom: env(safe-area-inset-bottom);
+	padding-left: env(safe-area-inset-left);
+	padding-right: env(safe-area-inset-right);
+}
+
+/* a finger's target: never under 44 × 44 (Apple HIG) / 48 × 48 (Material) */
+.gz-mobile .gz-hit {
+	min-width: 48px;
+	min-height: 48px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+.gz-mobile .gz-tool {
+	min-width: 56px;
+	min-height: 56px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 2px;
+	font-size: 11px;
+	opacity: 0.8;
+}
+.gz-mobile .gz-tool[data-active] {
+	opacity: 1;
+	color: var(--primary);
+}
+.gz-mobile .gz-tool:disabled {
+	opacity: 0.35;
+}
+
+/* the timeline for a hand: taller rows, and FAT trim handles — the visible bar stays thin, the hit zone is 28 px wide
+   reaching outside the clip (on a selected clip; an unselected clip's edges are not grabbed by a swipe) */
+.gz-mobile .gz-timeline [data-timeline-track-row] {
+	min-height: 56px;
+}
+.gz-mobile .gz-timeline .tl-trim {
+	width: 28px !important;
+}
+.gz-mobile .gz-timeline .tl-trim[data-trim-handle="left"] {
+	margin-left: -14px;
+}
+.gz-mobile .gz-timeline .tl-trim[data-trim-handle="right"] {
+	margin-right: -14px;
+}
+.gz-mobile .gz-timeline [data-touch*="l"] .tl-trim[data-trim-handle="left"] {
+	margin-left: 0;
+	width: min(24px, 40%) !important;
+}
+.gz-mobile .gz-timeline [data-touch*="r"] .tl-trim[data-trim-handle="right"] {
+	margin-right: 0;
+	width: min(24px, 40%) !important;
+}
+.gz-mobile .gz-timeline .tl-trim-bar[data-selected] {
+	width: 6px;
+	border-radius: 3px;
+}
+/* no hover-only affordances on a touch screen */
+@media (hover: none) {
+	.gz-mobile [data-hover-only] {
+		display: none !important;
+	}
+}
+
+.gz-sheet {
+	padding-bottom: env(safe-area-inset-bottom);
+	transition: transform 160ms ease-out;
+}
+
+/* the player's desktop bar gives way to the phone's transport row (time · undo · play · redo) */
+.gz-mobile [data-player-bar] {
+	display: none !important;
+}
+/* no column of track buttons, no level meters, no desktop toolbar: the timeline takes the whole width */
+.gz-mobile[data-device="phone"] [data-timeline-headers],
+.gz-mobile[data-device="phone"] [data-level-meter],
+.gz-mobile[data-device="phone"] [data-timeline-toolbar] {
+	display: none !important;
+}
+/* in a sheet the panel's own tab strip is the bottom bar's job; the desktop's «try it» card is not for a hand */
+.gz-mobile .gz-sheet [data-tab-strip],
+.gz-mobile aside [data-tab-strip],
+.gz-mobile [data-demo-try] {
+	display: none !important;
+}
+.gz-mobile .gz-sheet [data-assets-panel],
+.gz-mobile .gz-sheet .panel {
+	border: 0;
+	border-radius: 0;
+}
+/* the bar's tools share the width (six on a 360-px phone) */
+.gz-mobile nav .gz-tool {
+	flex: 1 1 0;
+	min-width: 0;
+}
+/* the clip's quick actions over the bar: one row, scrolls sideways */
+.gz-mobile .gz-quick {
+	display: flex;
+	gap: 2px;
+	overflow-x: auto;
+	scrollbar-width: none;
+	padding: 0 4px;
+}
+.gz-mobile .gz-quick::-webkit-scrollbar {
+	display: none;
+}
+.gz-mobile .gz-quick .gz-tool {
+	min-width: 64px;
+	min-height: 52px;
+	flex: 0 0 auto;
+}
+
+/* Every finger on the timeline and the player is the editor's (gestures/timeline-bridge.ts, player-gestures.ts): no
+   native pan or zoom may begin inside them — a native pan of the tracks' own scroller cancelled the finger's gesture
+   (touch-action on the wrapper alone does not reach inside a scroller: the first touch walk scrolled and trimmed nothing). */
+.gz-mobile .gz-timeline,
+.gz-mobile .gz-timeline * {
+	touch-action: none;
+}
+/* the sheet over the timeline scrolls by itself */
+.gz-mobile .gz-timeline .gz-sheet,
+.gz-mobile .gz-timeline .gz-sheet * {
+	touch-action: pan-y;
+}
+.gz-mobile .gz-timeline .gz-sheet .gz-quick,
+.gz-mobile .gz-timeline .gz-sheet [data-material-grid] {
+	touch-action: pan-x pan-y;
+}
+
+/* On a phone a clip's volume line does not take the finger (a thin line across the whole clip: a swipe that began on
+   it scrolled nothing — the touch walk, 14.11); the level is in Edit → Volume. A tablet keeps the line. */
+.gz-mobile[data-device="phone"] [data-volume-line] {
+	pointer-events: none !important;
+}

@@ -1,7 +1,7 @@
 "use client";
 
-// Properties panel (the inspector), Premiere's Effect Controls: ONE scrolling list for the selected clip — its
-// properties, its sound under «Audio», its tools folded at the end (./layout.ts). No tabs. Sections come from ./slots —
+// Properties panel (the inspector): a few named TABS by sphere for the selected clip — the clip itself, its sound,
+// speed, colour, effects, AI (./layout-places.ts, the owner 14.11) — each a short list of rows. Sections come from ./slots —
 // the panel's own ones (./sections/builtin) and any feature's (./plugins). Nothing selected: the project's own settings.
 import {
 	Activity,
@@ -28,6 +28,7 @@ import { onlyPlacementChanged, onlyTypedTextChanged, typingInInspector } from ".
 import { currentTabId, elementKind, kindLabel } from "./registry";
 import { usePropertiesStore } from "./stores/properties-store";
 import { revealInspectorSection } from "./reveal";
+import { useInspectorTab } from "./inspector-tab";
 import {
 	getInspectorSectionsVersion,
 	shownTabOf,
@@ -35,8 +36,8 @@ import {
 	type InspectorSection,
 } from "./slots";
 import { registerBuiltInSections } from "./sections/builtin";
-import { GroupDefaultsContext, InspectorBlock, InspectorGroup } from "./components/inspector-ui";
-import { inspectorBlocks, type InspectorBlockSpec } from "./layout";
+import { GroupDefaultsContext, InspectorGroup } from "./components/inspector-ui";
+import { type BlockId, inspectorBlocks, type InspectorBlockSpec } from "./layout";
 import { EffectsHeaderButtons } from "@/effects/components/effects-tab";
 import { AudioEffectsAdd } from "@/sounds/components/audio-effects";
 import { DetailsView } from "./details-view";
@@ -261,38 +262,61 @@ const PanelForSelection = memo(function PanelForSelection({ selectedElements }: 
 	);
 });
 
-/** A tool folded in the list starts closed (whatever its own component says), until the user opens it. */
-const FOLDED: Readonly<Record<string, boolean>> = { "*": false };
 const hasEffectList = (element: TimelineElement) => ["video", "image", "sticker", "graphic"].includes(element.type);
 
 const ClipPanel = memo(function ClipPanel({ element, track }: Pair) {
 	const blocks = inspectorBlocks(element);
+	// the open tab, or the clip's own first tab when it has no such one (a text has no «Audio»)
+	const wanted = useInspectorTab((state) => state.tab);
+	const active = blocks.find((block) => block.id === wanted) ?? blocks[0];
 
 	// Clicking from clip to clip of the same kind reuses the open properties (Transform, Opacity, Speed, Color: no
 	// per-clip state) with the new clip's values instead of building the list again — that rebuild was most of the cost
 	// of selecting a clip. The tools keep state per clip (lipsync, tracker, masks…): they start fresh for each clip.
 	const bodyKey = element.type === "video" || element.type === "image" ? element.type : element.id;
+	if (!active) return null;
 	return (
-		<Body scrollKey={bodyKey} scrollResetKey={element.id}>
+		<Body scrollKey={`${bodyKey}:${active.id}`} scrollResetKey={`${element.id}:${active.id}`}>
 			{/* data-inspector-tab: Tab walks the panel's controls before it leaves the panel (keyboard/navigation.ts) */}
 			<div data-inspector-tab="list" data-inspector-list={elementKind(element)}>
-				{blocks.map((block) => (
-					<BlockView
-						key={block.id}
-						block={block}
-						element={element}
-						trackId={track.id}
-						// the clip's own part is named only when there is something to tell it from (its sound) or a «+» to hold
-						showTitle={block.id !== "main" || blocks.some((b) => b.id === "audio") || hasEffectList(element) || element.type === "audio"}
-					/>
-				))}
+				<TabStrip blocks={blocks} active={active.id} />
+				<BlockView key={active.id} block={active} element={element} trackId={track.id} />
 			</div>
 		</Body>
 	);
 });
 
-function BlockView({ block, element, trackId, showTitle }: { block: InspectorBlockSpec; element: TimelineElement; trackId: string; showTitle: boolean }) {
+/** The tabs by sphere (./layout-places.ts): named, few, the same order for every kind of clip. One alone is not drawn. */
+function TabStrip({ blocks, active }: { blocks: InspectorBlockSpec[]; active: BlockId }) {
 	const t = useT();
+	if (blocks.length < 2) return null;
+	return (
+		<div role="tablist" data-inspector-tabs className="bg-background sticky top-0 z-10 flex gap-0.5 overflow-x-auto border-b border-white/[.07] px-2 py-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+			{blocks.map((block) => {
+				const on = block.id === active;
+				return (
+					<button
+						key={block.id}
+						type="button"
+						role="tab"
+						aria-selected={on}
+						data-inspector-tab-button={block.id}
+						onClick={() => useInspectorTab.getState().setTab(block.id)}
+						className={
+							on
+								? "bg-foreground/[0.1] text-foreground shrink-0 rounded-md px-2.5 py-1 text-xs font-medium whitespace-nowrap"
+								: "text-muted-foreground hover:text-foreground hover:bg-foreground/[0.05] shrink-0 rounded-md px-2.5 py-1 text-xs font-medium whitespace-nowrap"
+						}
+					>
+						{t(block.title)}
+					</button>
+				);
+			})}
+		</div>
+	);
+}
+
+function BlockView({ block, element, trackId }: { block: InspectorBlockSpec; element: TimelineElement; trackId: string }) {
 	const tools = block.id === "tools";
 	const sections = block.sections.map(({ section, folded }) => (
 		<SectionBoundary key={tools ? `${section.id}:${element.id}` : section.id} title={section.title} resetKey={element.id}>
@@ -301,24 +325,18 @@ function BlockView({ block, element, trackId, showTitle }: { block: InspectorBlo
 			</div>
 		</SectionBoundary>
 	));
-	const body = <GroupDefaultsContext.Provider value={tools ? FOLDED : foldedIds(block)}>{sections}</GroupDefaultsContext.Provider>;
-	if (!showTitle) return <div data-inspector-block={block.id}>{body}</div>;
+	// «+» of the tab: an effect onto the clip (Effects), a sound effect (the sound's tab)
+	const add =
+		block.id === "effects" && hasEffectList(element) ? (
+			<EffectsHeaderButtons element={element} trackId={trackId} />
+		) : block.id === "audio" || (block.id === "main" && element.type === "audio") ? (
+			<AudioEffectsAdd element={element} trackId={trackId} />
+		) : null;
 	return (
-		<InspectorBlock
-			id={`insp.${block.id}`}
-			title={t(block.title)}
-			collapsible={tools}
-			defaultOpen={!tools}
-			trailing={
-				block.id === "main" && hasEffectList(element) ? (
-					<EffectsHeaderButtons element={element} trackId={trackId} />
-				) : block.id === "audio" || (block.id === "main" && element.type === "audio") ? (
-					<AudioEffectsAdd element={element} trackId={trackId} />
-				) : undefined
-			}
-		>
-			{body}
-		</InspectorBlock>
+		<div data-inspector-block={block.id}>
+			{add && <div className="flex justify-end px-3 pt-1.5">{add}</div>}
+			<GroupDefaultsContext.Provider value={foldedIds(block)}>{sections}</GroupDefaultsContext.Provider>
+		</div>
 	);
 }
 

@@ -1,7 +1,5 @@
 "use client";
 
-import { useShelfLeft } from "@/platform/desktop-sections";
-import { ShelfDialog } from "@/platform/desktop-sections";
 import { materialGrid } from "@/components/editor/panels/assets/material-grid";
 import { type MediaRow, PendingMediaTile, SETTLE_CLASS, landingAssetIds, usePendingMedia, withPending } from "@/jobs/components/pending-media";
 import { type Job, jobCenter } from "@/jobs/store";
@@ -66,11 +64,11 @@ import { MASKABLE_ELEMENT_TYPES } from "@/timeline";
 import type { MediaAsset } from "@/media/types";
 import { cn } from "@/utils/ui";
 import { placeFirstVideoIfEmpty, useImportedSelection } from "./auto-place";
-import { isResultAsset } from "./origin";
+import { isAppliedToolResult } from "./origin";
 import { WebImages } from "./web-images";
 import { MediaCompounds, useMediaCompoundCount } from "./media-compounds";
 import { insertMediaIntoRow } from "../source/source-monitor";
-import { SOURCE_SCOPE_ATTR, useSourceStore } from "../source/source-store";
+import { mediaDelete, SOURCE_SCOPE_ATTR, useSourceStore } from "../source/source-store";
 import { AudioTileWaveform, HoverScrubVideo, MarksBar } from "../source/tile-media";
 import { smartFilter } from "@/search/smart";
 import { Input } from "@/components/ui/input";
@@ -87,6 +85,8 @@ import {
 	GridViewIcon,
 	LeftToRightListDashIcon,
 	SortingOneNineIcon,
+	AiImageIcon,
+	AiVideoIcon,
 	Image02Icon,
 	MusicNote01Icon,
 	Video01Icon,
@@ -94,7 +94,6 @@ import {
 	Search01Icon,
 	Add01Icon,
 	PlayIcon,
-	Folder01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon, type IconSvgElement } from "@/components/ui/icon";
 import { useT } from "@/i18n";
@@ -207,6 +206,10 @@ export function MediaView() {
 		ids: string[];
 	}) => {
 		event.stopPropagation();
+		requestRemove(ids);
+	};
+	/** The tile menu's «Delete» and the ⌫ / Delete key (source-store.ts deleteSelectedMedia). */
+	const requestRemove = (ids: string[]) => {
 		const wanted = new Set(ids);
 		const uses = editor.scenes
 			.getScenes()
@@ -229,7 +232,8 @@ export function MediaView() {
 	};
 
 	const filteredMediaItems = useMemo(() => {
-		const filtered = mediaFiles.filter((item) => !item.ephemeral);
+		// (a tool applied from the inspector is the clip's effect: its processed copy is not listed — origin.ts)
+		const filtered = mediaFiles.filter((item) => !item.ephemeral && !isAppliedToolResult(item));
 
 		filtered.sort((a, b) => {
 			let valueA: string | number;
@@ -277,27 +281,14 @@ export function MediaView() {
 				: filteredMediaItems,
 		[filteredMediaItems, query, searching],
 	);
-	const { sources, results } = useMemo(() => {
-		const sources: MediaAsset[] = [];
-		const results: MediaAsset[] = [];
-		for (const item of visibleMediaItems) {
-			// Reversed / smooth-motion files are internal copies of a clip's media (src/motion): not listed.
-			if (item.motionProxy) continue;
-			(isResultAsset(item) ? results : sources).push(item);
-		}
-		return { sources, results };
-	}, [visibleMediaItems]);
-	const orderedMediaIds = useMemo(() => {
-		return [...sources, ...results].map((item) => item.id);
-	}, [sources, results]);
+	// (a generated picture, a lipsync take, a YouTube piece) are all media, in the order the user sorts by.
+	// Reversed / smooth-motion files are internal copies of a clip's media (src/motion): not listed.
+	const items = useMemo(() => visibleMediaItems.filter((item) => !item.motionProxy), [visibleMediaItems]);
+	const orderedMediaIds = useMemo(() => items.map((item) => item.id), [items]);
 	// Items on their way (a YouTube piece, a web picture, a file being read): there already, where they will land.
 	const assetIds = useMemo(() => new Set(mediaFiles.map((a) => a.id)), [mediaFiles]);
 	const pending = usePendingMedia(activeProjectId, assetIds);
-	const pendingSources = pending.filter((j) => j.place?.media?.origin !== "result");
-	const pendingResults = pending.filter((j) => j.place?.media?.origin === "result");
 	const landing = landingAssetIds();
-	const hasSources = sources.length + pendingSources.length > 0;
-	const hasResults = results.length + pendingResults.length > 0;
 
 	return (
 		<>
@@ -393,25 +384,12 @@ export function MediaView() {
 							onRevealComplete={clearHighlight}
 						>
 							<MediaScopeRegistrar />
+							<MediaDeleteKey onRemove={requestRemove} />
 							<div className="flex flex-col gap-3 pb-3">
-								{/* the two groups are named only when both are there; nothing says where things will appear */}
-								{hasSources && hasResults && <MediaSectionTitle>Sources</MediaSectionTitle>}
-								{hasSources && (
+								{items.length + pending.length > 0 && (
 									<MediaItemList
-										items={sources}
-										pending={pendingSources}
-										landing={landing}
-										sortBy={mediaSortBy}
-										sortOrder={mediaSortOrder}
-										mode={mediaViewMode}
-										onRemove={handleRemove}
-									/>
-								)}
-								{hasResults && hasSources && <MediaSectionTitle>Results</MediaSectionTitle>}
-								{hasResults && (
-									<MediaItemList
-										items={results}
-										pending={pendingResults}
+										items={items}
+										pending={pending}
 										landing={landing}
 										sortBy={mediaSortBy}
 										sortOrder={mediaSortOrder}
@@ -420,7 +398,7 @@ export function MediaView() {
 									/>
 								)}
 								<MediaCompounds grid={mediaViewMode === "grid"} query={query} />
-								{searching && sources.length + results.length === 0 && (
+								{searching && items.length === 0 && (
 									<p className="text-muted-foreground text-xs">{t("No media matches “{q}”", { q: query.trim() })}</p>
 								)}
 								{searching && <WebImages query={query} />}
@@ -454,14 +432,29 @@ export function MediaView() {
 	);
 }
 
-function MediaSectionTitle({ children }: { children: React.ReactNode }) {
-	return (
-		<h4 className="text-muted-foreground text-xs font-medium">{children}</h4>
-	);
-}
 
 function MediaScopeRegistrar() {
 	useSelectionScope();
+	return null;
+}
+
+/** ⌫ / Delete removes the files selected in Media (the key dispatcher asks through source-store.ts). */
+function MediaDeleteKey({ onRemove }: { onRemove: (ids: string[]) => void }) {
+	const { selectedIds } = useSelection();
+	const selected = useRef(selectedIds);
+	selected.current = selectedIds;
+	const remove = useRef(onRemove);
+	remove.current = onRemove;
+	useEffect(() => {
+		mediaDelete.current = () => {
+			if (selected.current.length === 0) return false;
+			remove.current([...selected.current]);
+			return true;
+		};
+		return () => {
+			mediaDelete.current = null;
+		};
+	}, []);
 	return null;
 }
 
@@ -897,14 +890,10 @@ function AddMediaMenu({
 }) {
 	// "Search images on the web" focuses the search field: the menu must not take the focus back when it closes.
 	const keepFocus = useRef(false);
-	// there are any, read again each time the menu opens (polish3 D3, 13.11)
-	const [asked, setAsked] = useState(0);
-	const left = useShelfLeft(asked);
-	const [shelf, setShelf] = useState(false);
+	// 14.11, «зачем вообще это нужно». The files on that shelf stay on disk untouched; the editor imports from Finder.)
 	return (
 		<>
-		<ShelfDialog open={shelf} onOpenChange={setShelf} />
-		<DropdownMenu onOpenChange={(open) => open && setAsked((n) => n + 1)}>
+		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
 				<Button
 					variant="ghost"
@@ -945,12 +934,14 @@ function AddMediaMenu({
 					<HugeiconsIcon icon={Image02Icon} />
 					Web images…
 				</DropdownMenuItem>
-				{left > 0 && (
-					<DropdownMenuItem onSelect={() => setShelf(true)} data-media-add="downloads">
-						<HugeiconsIcon icon={Folder01Icon} />
-						From downloads…
-					</DropdownMenuItem>
-				)}
+				<DropdownMenuItem onSelect={() => useAssetsPanelStore.getState().openSection("media", "ai-image")} data-media-add="ai-image">
+					<HugeiconsIcon icon={AiImageIcon} />
+					AI photo…
+				</DropdownMenuItem>
+				<DropdownMenuItem onSelect={() => useAssetsPanelStore.getState().openSection("media", "ai-video")} data-media-add="ai-video">
+					<HugeiconsIcon icon={AiVideoIcon} />
+					AI video…
+				</DropdownMenuItem>
 			</DropdownMenuContent>
 		</DropdownMenu>
 		</>

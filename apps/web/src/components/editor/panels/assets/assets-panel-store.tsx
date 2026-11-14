@@ -26,6 +26,7 @@ export const TAB_KEYS = [
 	"transitions",
 	"filters",
 	"avatar",
+	"generators",
 ] as const;
 
 export type Tab = (typeof TAB_KEYS)[number];
@@ -71,7 +72,7 @@ export const TAB_GROUPS = [
 	{ key: "media", tabs: ["media"] },
 	{ key: "sounds", tabs: ["sounds"] },
 	{ key: "text", tabs: ["text", "captions"] },
-	{ key: "effects", tabs: ["effects", "transitions", "filters"] },
+	{ key: "effects", tabs: ["effects", "transitions", "filters", "generators"] },
 	{ key: "avatar", tabs: ["avatar"] },
 ] as const satisfies ReadonlyArray<{ key: Tab; tabs: readonly Tab[] }>;
 
@@ -119,6 +120,10 @@ export const tabs = {
 	captions: {
 		icon: createHugeiconsIcon({ icon: ClosedCaptionIcon }),
 		label: "Captions",
+	},
+	generators: {
+		icon: createHugeiconsIcon({ icon: MagicWand05Icon }),
+		label: "Generators",
 	},
 } satisfies Record<
 	Tab,

@@ -160,7 +160,7 @@ async function runOnPhoto(editor: EditorCore, trackId: string, element: ImageEle
 				const data = await res.json().catch(() => null);
 				throw new Error(data?.error || "Remove background failed");
 			}
-			jobCenter.update(jobId, { stage: "Adding the result to Media", progress: 0.9 });
+			jobCenter.update(jobId, { stage: "Applying to the clip", progress: 0.9 });
 			const file = new File([await res.blob()], `${baseName(source.name)} · ${effect.done}.png`, { type: "image/png" });
 			result = await addResult(editor, projectId, file, {
 				effect: effect.id,
@@ -516,7 +516,7 @@ async function runOnClip(editor: EditorCore, target: Target, effect: NeuralEffec
 					serverJob = id;
 				},
 			});
-			jobCenter.update(jobId, { stage: "Adding the result to Media", progress: floor + (1 - floor) * 0.96 });
+			jobCenter.update(jobId, { stage: "Applying to the clip", progress: floor + (1 - floor) * 0.96 });
 			const file = await download(key, names ? names.voiceFile : `${baseName(source.name)} · ${effect.done}.mov`, soundOnly);
 			if (controller.signal.aborted) throw new Cancelled();
 			result = await addResult(editor, projectId, file, info);

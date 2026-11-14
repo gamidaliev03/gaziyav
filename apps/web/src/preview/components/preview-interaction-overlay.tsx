@@ -9,6 +9,7 @@ import { SnapGuides } from "./snap-guides";
 import { TextEditOverlay } from "./text-edit-overlay";
 import { useEditor } from "@/editor/use-editor";
 import { useInspectorGroupOpen } from "@/components/editor/panels/properties/components/inspector-ui";
+import { useInspectorTab } from "@/components/editor/panels/properties/inspector-tab";
 
 export function PreviewInteractionOverlay() {
 	const [snapLines, setSnapLinesState] = useState<SnapLine[]>([]);
@@ -40,11 +41,11 @@ export function PreviewInteractionOverlay() {
 		},
 		["timeline", "selection"],
 	);
-	// The inspector is one list (properties/layout.ts): the player edits the mask while the Mask section is open in it
-	// (among the tools, unfolded) — what the Cutout tab being open meant before.
-	const toolsOpen = useInspectorGroupOpen("insp.tools");
+	// The player edits the mask while the Mask row is open in the inspector's open «Effects» tab
+	// (properties/layout-places.ts) — what the Cutout tab being open meant before.
+	const masksTab = useInspectorTab((state) => state.tab === "effects");
 	const masksOpen = useInspectorGroupOpen("masks");
-	const isMaskMode = !!activeElement && toolsOpen && masksOpen && hasMasks;
+	const isMaskMode = !!activeElement && masksTab && masksOpen && hasMasks;
 
 	const {
 		onPointerDown,

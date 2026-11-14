@@ -1,3 +1,5 @@
+// Safari up to 18 has no AudioDecoder for pages: AAC goes through the system decoder there (a no-op elsewhere)
+import "@/media/aac-fallback";
 import type { EditorCore } from "@/core";
 import { playbackTracks } from "@/montage/compositions";
 import { TICKS_PER_SECOND } from "@/wasm";
