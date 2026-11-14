@@ -1,0 +1,1 @@
+(globalThis.TURBOPACK||(globalThis.TURBOPACK=[])).push(["object"==typeof document?document.currentScript:void 0,52150,a=>a.a(async(t,e)=>{try{var r=a.i(37025),c=a.i(80528),l=t([r]);[r]=l.then?(await l)():l,a.s(["readOnlyCall",()=>c.readOnlyCall,"resolveTarget",()=>r.resolveTarget,"runMcp",()=>r.runMcp,"watchHistory",()=>r.watchHistory]),e()}catch(a){e(a)}},!1)]);

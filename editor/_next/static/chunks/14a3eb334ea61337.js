@@ -1,0 +1,1 @@
+(globalThis.TURBOPACK||(globalThis.TURBOPACK=[])).push(["object"==typeof document?document.currentScript:void 0,3298,e=>e.a(async(a,t)=>{try{var T=e.i(9001),p=e.i(7052),l=a([T]);[T]=l.then?(await l)():l,e.s(["TEMPLATES",()=>p.TEMPLATES,"TemplatesView",()=>T.TemplatesView,"applyTemplate",()=>T.applyTemplate]),t()}catch(e){t(e)}},!1)]);

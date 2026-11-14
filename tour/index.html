@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gaziyav — the tour</title>
+<style>html,body{margin:0;height:100%;background:#07090C;color:#ECEEF2;font:16px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}main{height:100%;display:grid;place-content:center;gap:12px;text-align:center}a{color:#E8A33D}</style>
+<script>
+	(() => {
+		let lang = null;
+		try { lang = localStorage.getItem("gaziyav.tour.lang"); } catch {}
+		if (lang !== "ru" && lang !== "en") lang = (navigator.languages || [navigator.language || "en"]).some((l) => /^(ru|uk|be|kk)\b/i.test(l)) ? "ru" : "en";
+		location.replace(`${lang}.html${location.hash}`);
+	})();
+</script>
+</head>
+<body><main><a href="en.html">The Gaziyav tour</a><a href="ru.html">Экскурсия по Gaziyav</a></main></body>
+</html>
