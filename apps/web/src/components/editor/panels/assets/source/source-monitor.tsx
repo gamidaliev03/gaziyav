@@ -322,7 +322,17 @@ function Monitor({ asset, editor, onClose }: { asset: MediaAsset; editor: Editor
 			</div>
 			{!isImage && (
 				<>
-					<ScrubBar duration={duration} time={time} range={range} marks={marks} onSeek={(t) => { pause(); seek(t); }} />
+					<ScrubBar
+						duration={duration}
+						time={time}
+						range={range}
+						marks={marks}
+						onSeek={(t) => {
+							pause();
+							seek(t);
+						}}
+						onMoveRange={(start, end) => useSourceMarks.setState((state) => ({ marks: { ...state.marks, [asset.id]: { in: start, out: end } } }))}
+					/>
 					<div className="flex flex-wrap items-center gap-1">
 						<Button
 							variant="ghost"
@@ -367,14 +377,20 @@ function ScrubBar({
 	range,
 	marks,
 	onSeek,
+	onMoveRange,
 }: {
 	duration: number;
 	time: number;
 	range: { start: number; end: number } | null;
 	marks: { in?: number; out?: number } | undefined;
 	onSeek: (t: number) => void;
+	/** The marked range slid as a whole (its length kept). */
+	onMoveRange: (start: number, end: number) => void;
 }) {
 	const bar = useRef<HTMLDivElement>(null);
+	// a press inside the marked range that moves slides the range (the owner, 14.11: the whole In–Out by its middle,
+	// in the source too); a press that does not move — and any press outside the range — is a seek, as before
+	const drag = useRef<{ range: { start: number; end: number } | null; x0: number; moved: boolean } | null>(null);
 	const pct = (t: number) => `${(Math.max(0, Math.min(t, duration)) / Math.max(duration, 0.001)) * 100}%`;
 	const at = (clientX: number) => {
 		const r = bar.current?.getBoundingClientRect();
@@ -389,15 +405,36 @@ function ScrubBar({
 			onPointerDown={(event) => {
 				event.preventDefault();
 				event.currentTarget.setPointerCapture(event.pointerId);
-				onSeek(at(event.clientX));
+				const t = at(event.clientX);
+				const inside = range && t >= range.start && t <= range.end ? range : null;
+				drag.current = { range: inside, x0: event.clientX, moved: false };
+				if (!inside) onSeek(t);
 			}}
 			onPointerMove={(event) => {
-				if (event.currentTarget.hasPointerCapture(event.pointerId)) onSeek(at(event.clientX));
+				const d = drag.current;
+				if (!d || !event.currentTarget.hasPointerCapture(event.pointerId)) return;
+				if (!d.range) return onSeek(at(event.clientX));
+				const dx = event.clientX - d.x0;
+				if (!d.moved && Math.abs(dx) < 3) return;
+				d.moved = true;
+				const width = bar.current?.getBoundingClientRect().width || 1;
+				const length = d.range.end - d.range.start;
+				const start = Math.max(0, Math.min(Math.max(0, duration - length), d.range.start + (dx / width) * duration));
+				onMoveRange(start, start + length);
+			}}
+			onPointerUp={(event) => {
+				const d = drag.current;
+				drag.current = null;
+				if (d?.range && !d.moved) onSeek(at(event.clientX));
+			}}
+			onPointerCancel={() => {
+				drag.current = null;
 			}}
 		>
 			{range && (
 				<div
-					className="absolute inset-y-0 border-x-2 border-yellow-400 bg-yellow-400/25"
+					data-source-range
+					className="absolute inset-y-0 cursor-grab border-x-2 border-yellow-400 bg-yellow-400/25 active:cursor-grabbing"
 					style={{ left: pct(range.start), width: `calc(${pct(range.end)} - ${pct(range.start)})` }}
 				/>
 			)}

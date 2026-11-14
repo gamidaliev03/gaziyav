@@ -61,15 +61,73 @@ export function WaveformBars({ peaks, className }: { peaks: number[] | null; cla
 	);
 }
 
-/** In/Out of a media item as a bar along the bottom of its tile. */
+/**
+ * In/Out of a media item as a bar along the bottom of its tile. The marked part slides as a whole by its middle (the
+ */
 export function MarksBar({ asset }: { asset: MediaAsset }) {
 	const marks = useSourceMarks((state) => state.marks[asset.id]);
+	const track = useRef<HTMLDivElement>(null);
 	if (!marks || !asset.duration || (marks.in === undefined && marks.out === undefined)) return null;
-	const start = Math.max(0, Math.min(1, (marks.in ?? 0) / asset.duration));
-	const end = Math.max(start, Math.min(1, (marks.out ?? asset.duration) / asset.duration));
+	const duration = asset.duration;
+	const from = Math.max(0, Math.min(duration, marks.in ?? 0));
+	const to = Math.max(from, Math.min(duration, marks.out ?? duration));
+	const start = from / duration;
+	const end = to / duration;
+	const slide = (event: React.PointerEvent<HTMLDivElement>) => {
+		// the tile under it is draggable and opens the item on a click: this press is the bar's alone
+		event.preventDefault();
+		event.stopPropagation();
+		const width = track.current?.getBoundingClientRect().width || 1;
+		const x0 = event.clientX;
+		const length = to - from;
+		const move = (ev: PointerEvent) => {
+			const next = Math.max(0, Math.min(Math.max(0, duration - length), from + ((ev.clientX - x0) / width) * duration));
+			useSourceMarks.setState((state) => ({ marks: { ...state.marks, [asset.id]: { in: next, out: next + length } } }));
+		};
+		const up = () => {
+			window.removeEventListener("pointermove", move);
+			window.removeEventListener("pointerup", up);
+		};
+		window.addEventListener("pointermove", move);
+		window.addEventListener("pointerup", up);
+	};
+	const quiet = (event: React.SyntheticEvent) => {
+		event.preventDefault();
+		event.stopPropagation();
+	};
 	return (
-		<div className="pointer-events-none absolute inset-x-0 bottom-0 h-1 bg-black/50" data-marks-bar>
-			<div className="absolute inset-y-0 bg-yellow-400" style={{ left: `${start * 100}%`, width: `${(end - start) * 100}%` }} />
+		<div ref={track} className="pointer-events-none absolute inset-x-0 bottom-0 h-1 bg-black/50" data-marks-bar>
+			<div
+				className="pointer-events-auto absolute inset-y-0 cursor-grab bg-yellow-400 active:cursor-grabbing"
+				style={{ left: `${start * 100}%`, width: `${(end - start) * 100}%` }}
+				title="Drag to move the marked part"
+				data-marks-range
+				draggable={false}
+				onPointerDown={slide}
+				onMouseDown={quiet}
+				onClick={quiet}
+				onDragStart={quiet}
+			>
+				{/* a taller place to grab than the 4-px line */}
+				<span className="absolute inset-x-0 -top-2 bottom-0" />
+			</div>
+			<button
+				type="button"
+				aria-label="Clear In / Out"
+				title="Clear In / Out"
+				data-marks-clear
+				draggable={false}
+				className="pointer-events-auto absolute -top-3.5 hidden size-3.5 -translate-x-1/2 items-center justify-center rounded-full bg-black/70 text-[9px] leading-none text-white group-hover:flex"
+				style={{ left: `${Math.min(96, Math.max(4, end * 100))}%` }}
+				onPointerDown={quiet}
+				onMouseDown={quiet}
+				onClick={(event) => {
+					quiet(event);
+					useSourceMarks.getState().clear({ id: asset.id });
+				}}
+			>
+				×
+			</button>
 		</div>
 	);
 }

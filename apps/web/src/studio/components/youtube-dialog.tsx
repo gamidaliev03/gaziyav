@@ -298,6 +298,13 @@ export function YouTubeDialog() {
 			if (end >= s + 0.5) return [s, end];
 			return [Math.max(0, end - (e - s)), Math.max(end, 0.5)];
 		});
+	// the whole piece, its length kept, inside the video
+	const moveRange = (start: number, end: number) => {
+		const length = Math.max(0.5, end - start);
+		const total = info?.duration ?? end;
+		const from = Math.max(0, Math.min(Math.max(0, total - length), start));
+		setRange([from, Math.min(total, from + length)]);
+	};
 
 	const onKey = (e: React.KeyboardEvent) => {
 		if (!info || (e.target as HTMLElement).tagName === "INPUT") return;
@@ -519,7 +526,7 @@ export function YouTubeDialog() {
 									{fmt(time)} / {fmt(info.duration)}
 								</span>
 								<div className="flex-1">
-									<RangeBar label="Full length" view={[0, info.duration]} range={range} time={time} board={info.storyboard} onSeek={seek} onStart={setStart} onEnd={setEnd} />
+									<RangeBar label="Full length" view={[0, info.duration]} range={range} time={time} board={info.storyboard} onSeek={seek} onStart={setStart} onEnd={setEnd} onMove={moveRange} />
 								</div>
 							</div>
 							{info.duration > 90 && (
@@ -527,7 +534,7 @@ export function YouTubeDialog() {
 									<span className="w-9 shrink-0" />
 									<span className="w-28 shrink-0" />
 									<div className="flex-1">
-										<RangeBar label="Close-up ±15 s" view={fineView} range={range} time={time} board={info.storyboard} onSeek={seek} onStart={setStart} onEnd={setEnd} />
+										<RangeBar label="Close-up ±15 s" view={fineView} range={range} time={time} board={info.storyboard} onSeek={seek} onStart={setStart} onEnd={setEnd} onMove={moveRange} />
 									</div>
 								</div>
 							)}
@@ -669,6 +676,7 @@ function RangeBar({
 	onSeek,
 	onStart,
 	onEnd,
+	onMove,
 }: {
 	label: string;
 	view: [number, number];
@@ -678,6 +686,8 @@ function RangeBar({
 	onSeek: (t: number) => void;
 	onStart: (t: number) => void;
 	onEnd: (t: number) => void;
+	/** The marked piece slid as a whole (its length kept). */
+	onMove: (start: number, end: number) => void;
 }) {
 	const bar = useRef<HTMLDivElement>(null);
 	const [width, setWidth] = useState(0);
@@ -708,7 +718,6 @@ function RangeBar({
 		window.addEventListener("pointerup", up);
 	};
 	const inView = (t: number) => t >= view[0] - 0.001 && t <= view[1] + 0.001;
-	const len = range[1] - range[0];
 	return (
 		<div className="flex flex-col gap-0.5">
 			<span className="text-muted-foreground text-[10px]">{label}</span>
@@ -738,14 +747,34 @@ function RangeBar({
 							<span className="rounded bg-black/80 px-1 text-[10px] text-white tabular-nums">{fmt(hover.t)}</span>
 						</div>
 					)}
+				{/* The marked piece: its middle slides it whole (the owner, 14.11: the same rule as on the timeline, «в сорсе и
+				    при импорте с ютуба»); a press that does not move is a seek, as anywhere on the bar. No words on it. */}
 				<div
-					className="absolute inset-y-0 flex items-center justify-center rounded-sm border-y-2 border-yellow-400 bg-yellow-400/25"
+					data-range-body
+					className="absolute inset-y-0 cursor-grab rounded-sm border-y-2 border-yellow-400 bg-yellow-400/25 active:cursor-grabbing"
 					style={{ left: pct(range[0]), width: `calc(${pct(range[1])} - ${pct(range[0])})` }}
-				>
-					{len / span > 0.08 && (
-						<span className="pointer-events-none truncate px-3 text-[10px] font-medium text-yellow-200 tabular-nums">{len.toFixed(1)} s</span>
-					)}
-				</div>
+					onPointerDown={(e) => {
+						e.stopPropagation();
+						e.preventDefault();
+						const x0 = e.clientX;
+						const [s0, e0] = range;
+						const r = bar.current!.getBoundingClientRect();
+						let moved = false;
+						const move = (ev: PointerEvent) => {
+							const dx = ev.clientX - x0;
+							if (!moved && Math.abs(dx) < 3) return;
+							moved = true;
+							onMove(s0 + (dx / r.width) * span, e0 + (dx / r.width) * span);
+						};
+						const up = (ev: PointerEvent) => {
+							window.removeEventListener("pointermove", move);
+							window.removeEventListener("pointerup", up);
+							if (!moved) onSeek(at(ev.clientX));
+						};
+						window.addEventListener("pointermove", move);
+						window.addEventListener("pointerup", up);
+					}}
+				/>
 				{(
 					[
 						[range[0], onStart, "-translate-x-0"],
