@@ -31,6 +31,7 @@ export interface TranscriptionProgress {
 
 export type TranscriptionModelId =
 	| "whisper-tiny"
+	| "whisper-base"
 	| "whisper-small"
 	| "whisper-medium"
 	| "whisper-large-v3-turbo";

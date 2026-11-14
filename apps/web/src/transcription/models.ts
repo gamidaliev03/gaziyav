@@ -11,6 +11,12 @@ export const TRANSCRIPTION_MODELS: TranscriptionModel[] = [
 		description: "Fastest, lower accuracy",
 	},
 	{
+		id: "whisper-base",
+		name: "Base",
+		huggingFaceId: "onnx-community/whisper-base",
+		description: "Light: for a phone (half the download of Small)",
+	},
+	{
 		id: "whisper-small",
 		name: "Small",
 		huggingFaceId: "onnx-community/whisper-small",

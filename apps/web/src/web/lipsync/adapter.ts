@@ -10,6 +10,8 @@ import { browserMedia, type Media } from "./media";
 import { indexedDbPark, type Park } from "./park";
 import { createProvider } from "./provider";
 import { keyOf, type Lang, say, WebLipError } from "./sentences";
+import { createGenerateAdapter, joinAdapters } from "../generate/adapter";
+import { createGenerator } from "../generate/engine";
 
 /** pubdemo's BrowserAi, structurally (its file is not imported: the two trees meet only here). */
 export interface WebAiAdapter {
@@ -42,10 +44,11 @@ export interface WebLipsyncOptions {
 	panel?: () => ReactNode;
 }
 
-export function createWebLipsync(o: WebLipsyncOptions = {}): { adapter: WebAiAdapter; engine: Engine; hosts: readonly string[]; key: { read: typeof readKey; save: typeof saveKey; forget: typeof forgetKey; hint: () => string | null } } {
+export function createWebLipsync(o: WebLipsyncOptions = {}) {
 	const lang = o.lang ?? (() => (typeof document !== "undefined" && /^en/i.test(document.documentElement.lang) ? "en" : "ru"));
 	const provider = createProvider({ key: () => readKey(), fetch: o.fetch, route: o.route });
-	const engine = createEngine({ provider, park: o.park ?? indexedDbPark(), media: o.media ?? browserMedia, hasKey: () => !!readKey(), lang, pollMs: o.pollMs });
+	const park = o.park ?? indexedDbPark();
+	const engine = createEngine({ provider, park, media: o.media ?? browserMedia, hasKey: () => !!readKey(), lang, pollMs: o.pollMs });
 	const fail = (error: unknown, status = 400) => {
 		const key = keyOf(error);
 		return json({ error: say(key, lang()), errorKey: key }, status);
@@ -89,7 +92,7 @@ export function createWebLipsync(o: WebLipsyncOptions = {}): { adapter: WebAiAda
 		},
 		...(o.panel ? { panel: o.panel } : {}),
 	};
-	return { adapter, engine, hosts: CONNECT_HOSTS, key: { read: readKey, save: saveKey, forget: forgetKey, hint: () => keyHint(readKey()) } };
+	return { adapter, engine, provider, park, hosts: CONNECT_HOSTS, key: { read: readKey, save: saveKey, forget: forgetKey, hint: () => keyHint(readKey()) } };
 }
 
 /**
@@ -134,7 +137,23 @@ export function bridgeUploadXhr(adapter: WebAiAdapter, w: Window & typeof global
  */
 export function mountWebLipsync(register: (a: WebAiAdapter) => void, o: WebLipsyncOptions = {}) {
 	const made = createWebLipsync(o);
-	register(made.adapter);
-	if (typeof window !== "undefined") bridgeUploadXhr(made.adapter);
-	return made;
+	// AI image and AI video on the same key, provider and job store (web/generate): one adapter answers both
+	const generator = createGenerator({
+		provider: made.provider,
+		park: made.park,
+		hasKey: () => !!readKey(),
+		seconds: async (blob) => (await (o.media ?? browserMedia).probe(blob)).duration,
+		pollMs: o.pollMs,
+	});
+	const media = o.media ?? browserMedia;
+	const adapter = joinAdapters(
+		made.adapter,
+		createGenerateAdapter(generator, {
+			fileOfUpload: async (id) => (await made.engine.file(id))?.blob,
+			cut: async (blob, kind, from, length) => (kind === "video" ? (await media.prepareSpan(blob, from, length)).file : (await media.voiceSample(blob, from, length)).file),
+		}),
+	);
+	register(adapter);
+	if (typeof window !== "undefined") bridgeUploadXhr(adapter);
+	return { ...made, adapter, generator };
 }

@@ -30,6 +30,8 @@ import { EXTENSION, importProjectFile, projectFileBlob } from "./project-file";
 import { browserAi, onBrowserAi } from "./ai-adapter";
 import { reopenTryCard } from "./try-card";
 import { LipsyncView } from "@/studio/components/lipsync-view";
+import { PointView } from "@/cloud/components/point-view";
+import { MaterialsLayout, type NavItem } from "@/components/editor/panels/assets/materials-nav";
 import { resumePendingJobs } from "@/studio/client/actions";
 
 const APP_HREF = "../#download";
@@ -317,6 +319,7 @@ export function DemoExportButton() {
 const LIPSYNC_HIDE = [
 	"[data-demo-lipsync-beta] [data-lipsync-nokey]",
 	"[data-demo-lipsync-beta] [data-ai-open-settings]",
+	"[data-demo-generate] [data-ai-open-settings]",
 	"[data-demo-lipsync-beta] [data-lipsync-toggle=captions]",
 	"[data-demo-lipsync-beta] [data-testid=text-length] ~ *",
 	"[data-demo-try]",
@@ -327,7 +330,7 @@ const LIPSYNC_HIDE = [
  * browser that address exists only for fetch (the page's shim hands it to the AI module), so a media element given one
  * gets the same bytes as a blob address instead — before it asks the site's host for a file that is not there.
  */
-const FILE_ADDRESS = /^(?:https?:\/\/[^/]+)?\/api\/studio\/file\/[^/?#]+/;
+const FILE_ADDRESS = /^(?:https?:\/\/[^/]+)?\/api\/(?:studio\/file\/[^/?#]+|cloud\/file\/[^/?#]+\/\d+)/;
 function fileAddressesAsBlobs() {
 	if (typeof window === "undefined" || typeof HTMLMediaElement === "undefined") return;
 	const proto = HTMLMediaElement.prototype as HTMLMediaElement & { __gzFiles?: boolean };
@@ -347,15 +350,24 @@ function fileAddressesAsBlobs() {
 	};
 	const src = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, "src");
 	const setAttribute = Element.prototype.setAttribute;
-	const redirect = (el: HTMLMediaElement, value: string): boolean => {
+	// (a finished AI picture is an <img> with the same kind of address: cloud/components/point-view.tsx)
+	const imgSrc = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, "src");
+	const redirect = (el: HTMLMediaElement | HTMLImageElement, value: string): boolean => {
 		const m = FILE_ADDRESS.exec(value);
 		if (!m) return false;
 		const path = m[0].replace(/^https?:\/\/[^/]+/, "");
 		void blobFor(path).then((url) => {
-			if (url) src?.set?.call(el, url);
+			if (url) (el instanceof HTMLImageElement ? imgSrc : src)?.set?.call(el, url);
 		});
 		return true;
 	};
+	if (imgSrc?.set)
+		Object.defineProperty(HTMLImageElement.prototype, "src", {
+			...imgSrc,
+			set(this: HTMLImageElement, value: string) {
+				if (!redirect(this, String(value))) imgSrc.set?.call(this, value);
+			},
+		});
 	if (src?.set)
 		Object.defineProperty(HTMLMediaElement.prototype, "src", {
 			...src,
@@ -364,11 +376,18 @@ function fileAddressesAsBlobs() {
 			},
 		});
 	Element.prototype.setAttribute = function (this: Element, name: string, value: string) {
-		if (this instanceof HTMLMediaElement && name.toLowerCase() === "src" && redirect(this, String(value))) return;
+		if ((this instanceof HTMLMediaElement || this instanceof HTMLImageElement) && name.toLowerCase() === "src" && redirect(this, String(value))) return;
 		return setAttribute.call(this, name, value);
 	};
 }
 fileAddressesAsBlobs();
+
+/** The AI tab's sections in the browser edition (the app's own keys: Media's «+» opens «ai-image» / «ai-video»). */
+const WEB_AI_NAV: NavItem[] = [
+	{ key: "ai-image", label: "AI image" },
+	{ key: "ai-video", label: "AI video" },
+	{ key: "photo", label: "Lipsync" },
+];
 
 export function DemoLipsyncCard() {
 	const tr = useT();
@@ -376,18 +395,33 @@ export function DemoLipsyncCard() {
 	const ai = useSyncExternalStore(onBrowserAi, browserAi, () => null);
 	if (ai?.panel)
 		return (
-			<div className="flex h-full min-h-0 flex-col overflow-y-auto" data-demo-lipsync-beta>
-				{/* the lipsync view as the desktop draws it, minus what has no place here: the key goes in the panel above (not
-				    Settings → AI), no AI script / Shorten (the desktop's assistant), no captions (no word timings in the
-				    browser); the «Try it» card would cover the Run button */}
-				<style>{LIPSYNC_HIDE}</style>
-				<div className="flex items-center gap-2 px-3 pt-3 text-[13px] font-semibold">
-					{tr("Lipsync with your own key")}
-					<span className="bg-primary/15 text-primary rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase">{tr("beta")}</span>
-				</div>
-				{ai.panel()}
-				<LipsyncView />
-			</div>
+			<MaterialsLayout
+				tab="avatar"
+				items={WEB_AI_NAV}
+				render={(section) =>
+					section === "ai-image" || section === "ai-video" ? (
+						// the app's own generator on the visitor's key (web/generate): the key goes in the panel above
+						<div className="flex h-full min-h-0 flex-col overflow-y-auto" data-demo-generate={section}>
+							<style>{LIPSYNC_HIDE}</style>
+							{ai.panel?.()}
+							<PointView key={section} kind={section === "ai-image" ? "image" : "video"} title={section === "ai-image" ? "AI image" : "AI video"} />
+						</div>
+					) : (
+						<div className="flex h-full min-h-0 flex-col overflow-y-auto" data-demo-lipsync-beta>
+							{/* the lipsync view as the desktop draws it, minus what has no place here: the key goes in the panel above (not
+							    Settings → AI), no AI script / Shorten (the desktop's assistant), no captions (no word timings in the
+							    browser); the «Try it» card would cover the Run button */}
+							<style>{LIPSYNC_HIDE}</style>
+							<div className="flex items-center gap-2 px-3 pt-3 text-[13px] font-semibold">
+								{tr("Lipsync with your own key")}
+								<span className="bg-primary/15 text-primary rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase">{tr("beta")}</span>
+							</div>
+							{ai.panel?.()}
+							<LipsyncView />
+						</div>
+					)
+				}
+			/>
 		);
 	return (
 		<div className="flex h-full min-h-0 flex-col items-center justify-center overflow-y-auto p-5" data-demo-lipsync>

@@ -20,13 +20,21 @@ function entry(dir: string, name: string, kb: number, hoursAgo: number, folder =
 	return full;
 }
 
+const before = { data: process.env.STUDIO_DATA_DIR, tmp: process.env.TMPDIR };
 beforeAll(async () => {
 	process.env.STUDIO_DATA_DIR = root;
 	// (unsaved exports wait in the system's temp folder: the test gets its own, never the real one)
 	process.env.TMPDIR = root;
 	({ trimCaches } = await import("../server/storage"));
 });
-afterAll(() => fs.rmSync(root, { recursive: true, force: true }));
+afterAll(() => {
+	// (the other test files of the same run get their folders back)
+	for (const [key, value] of [["STUDIO_DATA_DIR", before.data], ["TMPDIR", before.tmp]] as const) {
+		if (value === undefined) delete process.env[key];
+		else process.env[key] = value;
+	}
+	fs.rmSync(root, { recursive: true, force: true });
+});
 
 describe("the cache keeps itself under a size: the oldest entries make room", () => {
 	test("over the limit the oldest go first, until it fits; under it nothing goes", () => {

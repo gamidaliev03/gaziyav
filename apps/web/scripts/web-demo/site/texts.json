@@ -28,7 +28,7 @@
 		"t_mac_hero": "Download for macOS",
 		"t_tour": "All features",
 		"t_extras": "Also in the browser",
-		"t_x1": "Lipsync with your own key — beta: type a new line and the same face says it; the price shows before every run, the key stays in this browser. The desktop app is cheaper — it sends only the speech.",
+		"t_x1": "With your own fal.ai key — beta: lipsync (type a new line and the same face says it), AI image and AI video; the price shows before every run, the key stays in this browser. Lipsync is cheaper in the desktop app — it sends only the speech.",
 		"t_x2": "Install it from the browser's menu to open it like an app — it works without the internet.",
 		"t_other": "On Windows, Linux or any other computer — use it right here, in your browser."
 	},
@@ -61,7 +61,7 @@
 		"t_mac_hero": "Скачать для macOS",
 		"t_tour": "Все возможности",
 		"t_extras": "Ещё в браузере",
-		"t_x1": "Липсинк своим ключом — бета: напишите новую реплику — и то же лицо её произнесёт; цена видна до запуска, ключ остаётся в этом браузере. В приложении дешевле — оно отправляет только речь.",
+		"t_x1": "Своим ключом fal.ai — бета: липсинк (напишите новую реплику — и то же лицо её произнесёт), ИИ-фото и ИИ-видео; цена видна до запуска, ключ остаётся в этом браузере. Липсинк в приложении дешевле — оно отправляет только речь.",
 		"t_x2": "Установите его из меню браузера, чтобы открывать как приложение, — работает и без интернета.",
 		"t_other": "На Windows, Linux и любом другом компьютере — работайте прямо здесь, в браузере."
 	}

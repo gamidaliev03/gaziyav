@@ -3,7 +3,8 @@
 // sound, speed, colour, effects, AI. Nothing is lost: a section this table does not name still shows, in «AI».
 import { generatorOf } from "@/generators/document";
 import type { TimelineElement } from "@/timeline";
-import { BLOCK_ORDER, type BlockId, placeOf } from "./layout-places";
+import { BLOCK_ORDER, type BlockId, placeOf, worksInABrowser } from "./layout-places";
+import { DEMO } from "@/demo/flag";
 import { effectLayerLabel, elementKind, type ElementKind } from "./registry";
 import { getInspectorSections, type InspectorSection, type InspectorTabId } from "./slots";
 
@@ -79,6 +80,7 @@ export function inspectorBlocks(element: TimelineElement): InspectorBlockSpec[] 
 	const kind = elementKind(element);
 	const blocks: Record<BlockId, PlacedSection[]> = { main: [], audio: [], speed: [], color: [], effects: [], tools: [] };
 	for (const section of clipSections(element)) {
+		if (DEMO && !worksInABrowser(section.id)) continue;
 		const place = placeOf(section.id, kind);
 		blocks[place.block].push({ section, rank: place.rank * 1000 + (section.order ?? 0), folded: !!place.folded });
 	}

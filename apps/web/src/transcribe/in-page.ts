@@ -3,6 +3,7 @@
 // (services/transcription: the model is downloaded once from its publisher, the sound never leaves the tab). Everything
 // built on a transcript works from it as in the app: captions, «Remove pauses», the text view.
 import { decodeAudioToFloat32 } from "@/media/audio";
+import { deviceClass } from "@/mobile/device-class";
 import { transcriptionService } from "@/services/transcription/service";
 import { DEFAULT_TRANSCRIPTION_SAMPLE_RATE } from "@/transcription/audio";
 import type { TranscriptionLanguage } from "@/transcription/types";
@@ -44,6 +45,8 @@ export async function transcribeInPage({ media, language = "auto", signal, onPro
 	try {
 		const result = await transcriptionService.transcribe({
 			audioData: samples,
+			// a phone gets the light model (143 MB against 300: its memory and its connection), a computer the accurate one
+			...(deviceClass() === "phone" ? { modelId: "whisper-base" as const } : {}),
 			language: (language === "auto" ? undefined : language) as TranscriptionLanguage | undefined,
 			onProgress: (progress) => onProgress?.(progress.status === "loading-model" ? "Downloading the speech model" : "Transcribing speech", progress.progress / 100),
 		});

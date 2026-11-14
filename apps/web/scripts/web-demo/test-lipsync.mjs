@@ -292,6 +292,9 @@ try {
 
 	// ---- 1. no key: the AI tab, a clip, the words, the price — and nothing sent anywhere
 	await click(`[data-tab-group="avatar"]`);
+	// (the AI tab's sections: AI image · AI video · Lipsync)
+	await waitFor(`!!document.querySelector('[data-materials="avatar"] [data-nav-item="photo"]')`, 15000, "the AI tab's sections");
+	await click(`[data-materials="avatar"] [data-nav-item="photo"]`);
 	await waitFor(`!!document.querySelector("[data-demo-lipsync-beta] [data-lipsync-window]")`, 15000, "the lipsync view in the AI tab");
 	await select("clip-1.mp4");
 	await words("Привет! Это проверка липсинка в браузере.");
@@ -388,6 +391,45 @@ try {
 	const shown = await evaluate(`document.querySelector("[data-lipsync-footer]")?.innerText ?? ""`);
 	const sentence = failed6?.error ?? "";
 	check("a failure says one sentence (and offers Retry); the timeline is as it was", !!sentence && !/\n/.test(sentence) && (sentence.match(/[.!?](\s|$)/g) ?? []).length === 1 && shown.includes(sentence) && /Повторить|Retry/.test(shown) && JSON.stringify(await tl()) === JSON.stringify(before5), `«${sentence}»`);
+
+	// ---- 6b. AI image and AI video on the same key (web/generate): the price first, one submission each, the file kept
+	//          in the page and put on the timeline
+	{
+		const imageSubmits = () => submits().filter((r) => /seedream|flux|nano-banana/.test(r.url)).length;
+		const videoSubmits = () => submits().filter((r) => /seedance|kling|veo|wan|minimax|pixverse|ltx|vidu|hailuo|luma/.test(r.url) && !/latentsync|lipsync/.test(r.url)).length;
+		const mediaCount = () => evaluate(`${ED}.media.getAssets().length`);
+		await click(`[data-materials="avatar"] [data-nav-item="ai-image"]`);
+		await waitFor(`!!document.querySelector('[data-demo-generate="ai-image"] [data-point-field="prompt"]')`, 15000, "the AI image form");
+		const images0 = imageSubmits();
+		await typeText(`[data-demo-generate="ai-image"] [data-point-field="prompt"]`, "Красный воздушный змей над морем");
+		await waitFor(`(() => { const b = document.querySelector('[data-demo-generate="ai-image"] [data-point-generate]'); return !!b && !b.disabled && /\\$|¢/.test(b.innerText); })()`, 20000, "the picture's price on the button");
+		const imagePrice = await evaluate(`document.querySelector('[data-demo-generate="ai-image"] [data-point-generate]').innerText`);
+		const assets0 = await mediaCount();
+		await click(`[data-demo-generate="ai-image"] [data-point-generate]`);
+		if (await evaluate(`!!document.querySelector("[data-confirm-go]")`)) await click("[data-confirm-go]");
+		await waitFor(`!!document.querySelector('[data-point-result][data-point-state="succeeded"]')`, 60000, "the picture is made");
+		await waitFor(`(() => { const i = document.querySelector('[data-point-result][data-point-state="succeeded"] img'); return !!i && /^blob:/.test(i.src) && i.naturalWidth > 0; })()`, 20000, "the picture shows");
+		check("AI image: the price on the button, one submission to the stand-in, the picture shown from the page's own copy", /\$|¢/.test(imagePrice) && imageSubmits() - images0 === 1, `${imagePrice.replace(/\s+/g, " ")}; submissions ${imageSubmits() - images0}`);
+		await click(`[data-point-result][data-point-state="succeeded"] [data-point-to-media]`);
+		await waitFor(`${ED}.media.getAssets().length === ${assets0 + 1}`, 20000, "the picture is in Media");
+		const picture = await evaluate(`(() => { const a = ${ED}.media.getAssets().at(-1); return { name: a.name, type: a.type, bytes: a.file.size }; })()`);
+		check("AI image: «to Media» puts the picture in the project", picture.type === "image" && picture.bytes > 0, JSON.stringify(picture));
+
+		await click(`[data-materials="avatar"] [data-nav-item="ai-video"]`);
+		await waitFor(`!!document.querySelector('[data-demo-generate="ai-video"] [data-point-field="prompt"]')`, 15000, "the AI video form");
+		const videos0 = videoSubmits();
+		await typeText(`[data-demo-generate="ai-video"] [data-point-field="prompt"]`, "Змей поднимается над волнами, камера летит следом");
+		await waitFor(`(() => { const b = document.querySelector('[data-demo-generate="ai-video"] [data-point-generate]'); return !!b && !b.disabled; })()`, 20000, "the clip's Generate button");
+		const videoPrice = await evaluate(`Number(document.querySelector('[data-demo-generate="ai-video"] [data-video-price]')?.dataset.videoPrice ?? NaN)`);
+		await click(`[data-demo-generate="ai-video"] [data-point-generate]`);
+		if (await evaluate(`!!document.querySelector("[data-confirm-go]")`)) await click("[data-confirm-go]");
+		await waitFor(`!!document.querySelector('[data-demo-generate="ai-video"] [data-point-result][data-point-state="succeeded"] video')`, 90000, "the clip is made");
+		check("AI video: the price before the run, one submission to the stand-in, the clip kept in the page", videoPrice > 0 && videoSubmits() - videos0 === 1, `price ${videoPrice} $; submissions ${videoSubmits() - videos0}`);
+		const elements0 = await evaluate(`${TR}.main.elements.length + ${TR}.overlay.reduce((n, t) => n + t.elements.length, 0)`);
+		await click(`[data-demo-generate="ai-video"] [data-point-result][data-point-state="succeeded"] [data-point-to-timeline]`);
+		await waitFor(`${TR}.main.elements.length + ${TR}.overlay.reduce((n, t) => n + t.elements.length, 0) === ${elements0 + 1}`, 30000, "the clip is on the timeline");
+		check("AI video: «to the timeline» places the clip", true);
+	}
 
 	// ---- 7. the key and the hosts
 	const keyed = front.filter((r) => r.auth);

@@ -26,6 +26,37 @@ export const BLOCK_ORDER: readonly BlockId[] = ["main", "audio", "speed", "color
 
 export type Place = { block: BlockId; rank: number; folded?: boolean };
 
+/**
+ * Sections whose tool runs on the Mac app's own models and helpers (on-device AI, the motion and voice helpers). The
+ * browser edition has no place to run them yet, so its inspector does not list them — no dead ends there; each comes
+ * back the day it works in a page (lipsync, chroma key, masks, colour, effects, sound level and effects already do).
+ */
+const NEEDS_THE_APP: ReadonlySet<string> = new Set([
+	"adjust.autoColor",
+	"adjust.colorMatch",
+	"cutout.remove",
+	"motion.tracker",
+	"text.tracking",
+	"motion.follow",
+	"motion.make-vertical",
+	"audio.enhanceVoice",
+	"audio.voiceChanger",
+	"audio.separate",
+	"audio.parts",
+	"text.tts",
+	"faceswap",
+	"ai.upscale",
+	"fix.enhance",
+	"fix.denoise",
+	"cleanup",
+	"retouch.face",
+	"stabilize",
+	"video.deflicker",
+]);
+
+/** Whether the browser edition's inspector shows this section. */
+export const worksInABrowser = (sectionId: string): boolean => !NEEDS_THE_APP.has(sectionId.replace(/@[a-z]+$/, ""));
+
 /** Where a section goes in the inspector of a clip of this kind. */
 export function placeOf(sectionId: string, kind: ElementKind): Place {
 	// a sound section is registered twice (an audio clip's own, a video's sound): one place for both

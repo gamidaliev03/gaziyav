@@ -45,6 +45,26 @@
 	};
 	document.addEventListener("DOMContentLoaded", tick);
 	// the site's own files, kept for offline use (../sw.js); nothing else
-	if ("serviceWorker" in navigator && location.protocol !== "file:")
+	if ("serviceWorker" in navigator && location.protocol !== "file:") {
+		// A new version of the site took over while this page still shows the kept one (a returning visitor): the page
+		// starts again on it by itself in its first minute, if nothing was touched yet; a visitor already at work is
+		// never interrupted — they get one small button instead (and the new version at their next open anyway).
+		var kept = !!navigator.serviceWorker.controller, touched = false, born = Date.now();
+		["pointerdown", "keydown", "touchstart"].forEach(function (name) {
+			window.addEventListener(name, function () { touched = true; }, { capture: true, passive: true });
+		});
+		navigator.serviceWorker.addEventListener("controllerchange", function () {
+			if (!kept) return;
+			kept = false;
+			if (!touched && Date.now() - born < 60000) return location.reload();
+			var b = document.createElement("button");
+			b.type = "button";
+			b.setAttribute("data-demo-update", "");
+			b.textContent = lang === "ru" ? "Вышла новая версия — обновить" : "A new version is ready — reload";
+			b.style.cssText = "position:fixed;left:12px;bottom:12px;z-index:2147483000;padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.18);background:#1f2937;color:#fff;font:500 13px system-ui,sans-serif;cursor:pointer;box-shadow:0 6px 24px rgba(0,0,0,.35)";
+			b.addEventListener("click", function () { location.reload(); });
+			document.body.appendChild(b);
+		});
 		window.addEventListener("load", function () { navigator.serviceWorker.register("../sw.js", { scope: "../" }).catch(function () {}); });
+	}
 })();

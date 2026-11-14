@@ -6,8 +6,8 @@ import { forgetKey, keyHint, readKey, saveKey } from "./key";
 import type { Lang } from "./sentences";
 
 const T = {
-	ru: { title: "Липсинк в браузере", note: "Ключ fal.ai хранится только в этом браузере и уходит только на fal.ai.", save: "Сохранить", forget: "Забыть ключ", saved: "Ключ", placeholder: "Ключ fal.ai" },
-	en: { title: "Lipsync in the browser", note: "The fal.ai key stays in this browser and goes only to fal.ai.", save: "Save", forget: "Forget the key", saved: "Key", placeholder: "fal.ai key" },
+	ru: { title: "ИИ на вашем ключе fal.ai", note: "Ключ fal.ai хранится только в этом браузере и уходит только на fal.ai.", save: "Сохранить", forget: "Забыть ключ", saved: "Ключ", placeholder: "Ключ fal.ai" },
+	en: { title: "AI on your own fal.ai key", note: "The fal.ai key stays in this browser and goes only to fal.ai.", save: "Save", forget: "Forget the key", saved: "Key", placeholder: "fal.ai key" },
 };
 
 export function KeyPanel({ lang = "ru" }: { lang?: Lang }) {
