@@ -20,6 +20,8 @@ export interface AppPrefs {
 	projectFps: number;
 	/** Projects → Cache: delete cached files older than this many days (null: never). */
 	cacheDays: number | null;
+	/** Projects → Cache: the cache keeps itself under this many GB, the oldest entries making room (null: no limit). */
+	cacheLimitGb: number | null;
 	/** Edit → Step forward or back many N frames (⇧← / ⇧→). */
 	stepFrames: number;
 	/** Edit → Image duration: seconds a picture lasts when it is added. */
@@ -36,6 +38,7 @@ export const DEFAULT_APP_PREFS: AppPrefs = {
 	editingProxies: true,
 	projectFps: 30,
 	cacheDays: null,
+	cacheLimitGb: 10,
 	stepFrames: 10,
 	imageSeconds: 5,
 	trackpadFeedback: true,
@@ -50,6 +53,8 @@ export const LOUDNESS_TARGETS = [
 ] as const;
 
 export const PROJECT_FRAME_RATES = [24, 25, 30, 50, 60] as const;
+
+export const CACHE_LIMITS_GB = [5, 10, 20, 50] as const;
 
 interface AppPrefsState extends AppPrefs {
 	setPrefs: (patch: Partial<AppPrefs>) => void;

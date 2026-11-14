@@ -1,3 +1,4 @@
+import { DEMO } from "@/demo/flag";
 // Shared between the library server and the Sounds panel.
 export type LibraryKind = "sfx" | "music";
 export type LibrarySource = "bundled" | "kadr" | "lipsync";
@@ -49,4 +50,6 @@ export interface LibraryUserState {
 	recent: FavouriteEntry[];
 }
 
-export const libraryFileUrl = (id: string) => `/api/library/file/${encodeURIComponent(id)}`;
+/** Where a library file is served. The browser edition has no server: its own sound pack lies beside the page (sfx/). */
+export const libraryFileUrl = (id: string) =>
+	DEMO && id.startsWith("b-") ? new URL(`sfx/${encodeURIComponent(id.slice(2))}.wav`, document.baseURI).href : `/api/library/file/${encodeURIComponent(id)}`;

@@ -41,6 +41,7 @@ Only the parts where somebody speaks are sent — never the silence, never the r
 - **Your media is never uploaded.** Files you open are read by the page inside your browser tab and stay there.
 - **Projects** are stored in that browser's own storage on your computer (IndexedDB, local storage). Clearing the site's data in the browser deletes them — export what you want to keep.
 - **After the first open** the editor's files are cached by the browser, so it also works offline.
+- **Captions from speech:** on the first «Generate» the page downloads the open Whisper speech model from Hugging Face (a download: nothing is sent there) and hears the sound itself, inside the tab.
 - **Lipsync (beta), with your own key:** the fal.ai key you paste is kept only in this browser's storage and is sent only to fal.ai, with the clip piece and the sound, when you press the button. Nobody else — not this site, not GitHub — receives it.
 
 ## What Gaziyav never does

@@ -36,5 +36,24 @@ export function SettingsHost() {
 			body: JSON.stringify({ olderThanDays: days }),
 		}).catch(() => {});
 	}, []);
+	// Settings → Projects → Cache: «Keep under N GB» — the oldest cache entries make room, a while after the launch and
+	// then every half hour (what is being made or was just used stays: settings/server/storage.ts trimCaches).
+	useEffect(() => {
+		const trim = () => {
+			const gb = appPrefs().cacheLimitGb;
+			if (gb == null) return;
+			void fetch("/api/settings/storage", {
+				method: "POST",
+				headers: { "content-type": "application/json", "x-studio": "1" },
+				body: JSON.stringify({ limitBytes: gb * 1_000_000_000 }),
+			}).catch(() => {});
+		};
+		const first = window.setTimeout(trim, 20_000);
+		const timer = window.setInterval(trim, 30 * 60 * 1000);
+		return () => {
+			window.clearTimeout(first);
+			window.clearInterval(timer);
+		};
+	}, []);
 	return <SettingsDialog />;
 }

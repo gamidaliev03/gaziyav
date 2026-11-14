@@ -180,20 +180,22 @@ edit(
     regex=True,
 )
 
-# 4. the materials panel: no sound library, no captions; «AI» = the one card (or the browser AI module's panel)
+# 4. the materials panel: «AI» = the one card (or the browser AI module's panel)
 P = "src/components/editor/panels/assets/assets-panel-store.tsx"
 edit(P, 'import { HugeiconsIcon, type IconSvgElement } from "@/components/ui/icon";', 'import { HugeiconsIcon, type IconSvgElement } from "@/components/ui/icon";\nimport { DEMO } from "@/demo/flag";', '@/demo/flag')
 edit(
     P,
     r"export const TAB_GROUPS = \[(.*?)\] as const satisfies ReadonlyArray<\{ key: Tab; tabs: readonly Tab\[\] \}>;",
     r"""const ALL_TAB_GROUPS = [\1] as const satisfies ReadonlyArray<{ key: Tab; tabs: readonly Tab[] }>;
-// The browser edition: no sound library and no captions (both need the desktop app); «AI» is one card.
+// The browser edition: «AI» is one card. Captions are here (the speech model runs in the page:
+// services/transcription), so are Generators and Sounds (the site's own sound pack).
 export const TAB_GROUPS = (
 	DEMO
 		? [
 				{ key: "media", tabs: ["media"] },
-				{ key: "text", tabs: ["text"] },
-				{ key: "effects", tabs: ["effects", "transitions", "filters"] },
+				{ key: "sounds", tabs: ["sounds"] },
+				{ key: "text", tabs: ["text", "captions"] },
+				{ key: "effects", tabs: ["effects", "transitions", "filters", "generators"] },
 				{ key: "avatar", tabs: ["avatar"] },
 			]
 		: ALL_TAB_GROUPS

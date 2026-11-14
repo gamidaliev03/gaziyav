@@ -54,6 +54,10 @@ layer() {
 		dest="$WEB/${${f#./}%.in}"; mkdir -p "${dest:h}"; cp "$HERE/layer/payload/$f" "$dest"
 	done
 	python3 "$HERE/layer/apply.py" "$WEB"
+	# the speech recogniser's WebAssembly runtime (captions): served by the site itself — the page loads no code from a CDN
+	ORT=""; for d in "$WEB/node_modules/@huggingface/transformers/dist" "$COPY/node_modules/@huggingface/transformers/dist"; do [[ -f "$d/ort-wasm-simd-threaded.jsep.wasm" ]] && { ORT="$d"; break; }; done
+	[[ -n "$ORT" ]] || { echo "FAILED: the speech runtime (@huggingface/transformers) is not installed in the tree"; exit 1; }
+	mkdir -p "$WEB/public/ort" && cp "$ORT/ort-wasm-simd-threaded.jsep.mjs" "$ORT/ort-wasm-simd-threaded.jsep.wasm" "$WEB/public/ort/"
 	# the WebAssembly engine: the tree's own build of it (rust/wasm/pkg), whatever the installed copy holds
 	if [[ -d "$COPY/rust/wasm/pkg" ]]; then
 		find "$COPY/node_modules/.bun" -maxdepth 3 -type d -path '*opencut-wasm@*/node_modules/opencut-wasm' 2>/dev/null | while IFS= read -r w; do cp "$COPY"/rust/wasm/pkg/* "$w/"; done

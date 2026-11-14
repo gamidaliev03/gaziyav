@@ -20,7 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { type AppPrefs, LOUDNESS_TARGETS, PROJECT_FRAME_RATES, useAppPrefs } from "./app-prefs";
+import { type AppPrefs, CACHE_LIMITS_GB, LOUDNESS_TARGETS, PROJECT_FRAME_RATES, useAppPrefs } from "./app-prefs";
 import { PointMark } from "@/components/brand/point-mark";
 import { type LangChoice, setLanguage, useLang, useT } from "@/i18n";
 import { LanguageList } from "@/i18n/language-choice";
@@ -402,7 +402,7 @@ const formatSize = (bytes: number) =>
 /** The cache sizes from the app (and clearing them). */
 function useStorage() {
 	const [report, setReport] = useState<StorageReport | null>(null);
-	const refresh = useCallback(async (body?: { olderThanDays?: number }) => {
+	const refresh = useCallback(async (body?: { olderThanDays?: number; limitBytes?: number }) => {
 		try {
 			const response = await fetch("/api/settings/storage", {
 				method: body ? "POST" : "GET",
@@ -497,6 +497,28 @@ function DraftSection() {
 							<span className="text-sm">{t("days ago")}</span>
 						</div>
 					</RadioGroup>
+				</SettingRow>
+				<SettingRow label="Keep the cache under" help="When the cache passes this size, what was used longest ago is deleted to make room for the new.">
+					<Select
+						value={prefs.cacheLimitGb == null ? "none" : String(prefs.cacheLimitGb)}
+						onValueChange={(value) => {
+							const gb = value === "none" ? null : Number(value);
+							prefs.setPrefs({ cacheLimitGb: gb });
+							if (gb != null) void refresh({ limitBytes: gb * 1_000_000_000 });
+						}}
+					>
+						<SelectTrigger size="sm" className="w-28" aria-label={t("Keep the cache under")} data-setting="cache-limit">
+							<SelectValue />
+						</SelectTrigger>
+						<SelectContent>
+							{CACHE_LIMITS_GB.map((gb) => (
+								<SelectItem key={gb} value={String(gb)}>
+									{gb} GB
+								</SelectItem>
+							))}
+							<SelectItem value="none">{t("No limit")}</SelectItem>
+						</SelectContent>
+					</Select>
 				</SettingRow>
 				<SettingRow label="Cache size" help="AI layer and AI effect renders, speech transcripts, unsaved exports. They are made again when needed.">
 					<SizeWithBin

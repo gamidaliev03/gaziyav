@@ -1,3 +1,4 @@
+import { DEMO } from "@/demo/flag";
 import type {
 	TranscriptionLanguage,
 	TranscriptionResult,
@@ -155,6 +156,7 @@ class TranscriptionService {
 			this.worker.postMessage({
 				type: "init",
 				modelId: model.huggingFaceId,
+				...(DEMO ? { wasmBase: new URL("ort/", document.baseURI).href, words: true } : {}),
 			} satisfies WorkerMessage);
 		});
 	}

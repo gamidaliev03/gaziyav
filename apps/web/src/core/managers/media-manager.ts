@@ -10,6 +10,7 @@ import { BatchCommand, RemoveMediaAssetCommand } from "@/commands";
 import { canDecodeVideoFile } from "@/media/mediabunny";
 import { splitEditingOriginals, withExportOriginals } from "@/media/editing-originals";
 import { isStoring, trackStore } from "@/media/store-tracker";
+import { unusedToolCopies } from "@/media/unused-copies";
 
 export class MediaManager {
 	private assets: MediaAsset[] = [];
@@ -170,16 +171,18 @@ export class MediaManager {
 		this.editor.command.execute({ command });
 	}
 
-	async loadProjectMedia({ projectId }: { projectId: string }): Promise<void> {
+	/** `opening`: the project is being opened (nothing can be undone yet) — tool copies no clip uses any more go. */
+	async loadProjectMedia({ projectId, opening = false }: { projectId: string; opening?: boolean }): Promise<void> {
 		this.isLoading = true;
 		this.notify();
 
 		try {
 			await purgeRemovedMedia(projectId);
-			const mediaAssets = await storageService.loadAllMediaAssets({
+			const stored = await storageService.loadAllMediaAssets({
 				projectId,
 				opening: true,
 			});
+			const mediaAssets = opening ? this.withoutUnusedCopies(projectId, stored) : stored;
 			const { assets, originals } = splitEditingOriginals(mediaAssets);
 			this.originals = originals;
 			// an import whose copy is still being written (a relink reloads the list meanwhile) stays as it is shown
@@ -193,6 +196,21 @@ export class MediaManager {
 			this.isLoading = false;
 			this.notify();
 		}
+	}
+
+	/** Copies of on-device tools that no clip of the opened project uses any more leave it (media/unused-copies.ts). */
+	private withoutUnusedCopies(projectId: string, assets: MediaAsset[]): MediaAsset[] {
+		const project = this.editor.project.getActiveOrNull();
+		if (project?.metadata.id !== projectId) return assets;
+		const unused = unusedToolCopies({ project: [project, this.editor.scenes.getScenes()], assets });
+		if (unused.length === 0) return assets;
+		const gone = new Set(unused.map((asset) => asset.id));
+		for (const asset of unused) {
+			if (asset.url) URL.revokeObjectURL(asset.url);
+			if (asset.thumbnailUrl) URL.revokeObjectURL(asset.thumbnailUrl);
+			void storageService.deleteMediaAsset({ projectId, id: asset.id }).catch(() => {});
+		}
+		return assets.filter((asset) => !gone.has(asset.id));
 	}
 
 	async clearProjectMedia({ projectId }: { projectId: string }): Promise<void> {

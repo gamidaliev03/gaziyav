@@ -6,6 +6,8 @@ export interface TranscriptionSegment {
 	text: string;
 	start: number;
 	end: number;
+	/** Each word with its own time, when the recogniser heard them (the browser edition's speech model does). */
+	words?: Array<{ text: string; start: number; end: number }>;
 }
 
 export interface TranscriptionResult {

@@ -3,6 +3,7 @@
 // Media, Audio and AI avatar laid out like CapCut 9.5 (docs/capcut/materials.md): the section column on the left, the
 // section on the right. fal.ai sits where CapCut has its cloud AI (pictures, video, voice, lipsync); without a key its
 // places say where the key goes.
+import { DEMO } from "@/demo/flag";
 import { MaterialsLayout, type NavItem } from "./materials-nav";
 import { MediaView } from "./views/assets";
 import { LocalGenerator } from "@/generate/components/generate-view";
@@ -16,12 +17,15 @@ import { DownloadsView, useWithDownloads } from "@/platform/desktop-sections";
 // over them (polish3 D, 13.11): with one place there is no section column at all (MaterialsLayout).
 const MEDIA_NAV: NavItem[] = [{ key: "media", label: "Media" }];
 
-const AUDIO_NAV: NavItem[] = [
+const ALL_AUDIO_NAV: NavItem[] = [
 	{ key: "music", label: "Music" },
 	{ key: "sfx", label: "Sound effects" },
 	{ key: "tts", label: "Voice", badge: "AI" },
 	{ key: "mine", label: "Yours" },
 ];
+// (the browser edition: the site's own sound pack and the visitor's saved sounds; a music catalog and the voice
+// generator need the Mac app)
+const AUDIO_NAV: NavItem[] = ALL_AUDIO_NAV.filter((item) => !DEMO || item.key === "sfx" || item.key === "mine");
 
 // AI: the generators in one place — a picture, a video, a talking avatar, a translated video.
 const AVATAR_NAV: NavItem[] = [

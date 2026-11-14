@@ -144,9 +144,9 @@ An honest comparison of what each one asks of you. CapCut is a capable editor; t
 
 <img src="assets/screens/en/t-web.jpg" width="100%" alt="Gaziyav in a browser tab: the sample project on the timeline, Media, the player and the inspector">
 
-For every computer that is not a Mac — Windows, Linux, a Chromebook — Gaziyav is the browser edition. [Open the editor in your browser](https://gamidaliev03.github.io/gaziyav/editor/) — no install, no account, no server: it runs on your own hardware, your files never leave the tab, and after the first open it works offline. It has the timeline, titles, effects, transitions, looks, local import and export. [The tour as slides](https://gamidaliev03.github.io/gaziyav/tour/) opens there too.
+For every computer that is not a Mac — Windows, Linux, a Chromebook — Gaziyav is the browser edition. [Open the editor in your browser](https://gamidaliev03.github.io/gaziyav/editor/) — no install, no account, no server: it runs on your own hardware, your files never leave the tab, and after the first open it works offline. It has the timeline, titles, effects, transitions, filters, generators, sounds, looks, local import and export — and **captions from speech with pause removal**: the speech model runs right in the page (downloaded once; the sound goes nowhere). [The tour as slides](https://gamidaliev03.github.io/gaziyav/tour/) opens there too.
 - **Lipsync (beta), with your own fal.ai key** — the key stays in this browser and goes only to fal.ai.
-- **Desktop only:** Claude inside Gaziyav, the free on-device AI (captions from speech, pause removal and the rest), a clip by link, posting, and long, heavy exports.
+- **Desktop only:** Claude inside Gaziyav, the rest of the free on-device AI (background removal, voice clean-up, retouch and more), a clip by link, posting, and long, heavy exports.
 
 ## Install
 

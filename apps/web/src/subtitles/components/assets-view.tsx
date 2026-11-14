@@ -200,11 +200,14 @@ export function Captions() {
 					text: segment.text.trim(),
 					startTime: segment.start,
 					duration: Math.max(0.3, segment.end - segment.start),
-					words: spreadPhraseWords({
-						text: segment.text.trim(),
-						startTime: segment.start,
-						duration: Math.max(0.3, segment.end - segment.start),
-					}),
+					// (the browser edition's model times each word itself; a phrase-timed one gets its words spread)
+					words: segment.words?.length
+						? segment.words.map((word) => ({ text: word.text, startTime: word.start, endTime: word.end }))
+						: spreadPhraseWords({
+								text: segment.text.trim(),
+								startTime: segment.start,
+								duration: Math.max(0.3, segment.end - segment.start),
+							}),
 				}));
 
 			if (!(await finishCaptions(captionChunks, ac.signal, sceneId))) {

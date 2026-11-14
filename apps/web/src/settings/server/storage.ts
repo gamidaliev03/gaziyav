@@ -63,6 +63,73 @@ export function storageReport() {
 	return { support, data: dataDir(), sizes, total: sizes.render + sizes.transcripts + sizes.export };
 }
 
+/** Entries made or touched this recently are never trimmed (something may be writing or reading them). */
+const BUSY_MS = 15 * 60 * 1000;
+/** An unsaved export waits for its «Save» much longer than a render is in use. */
+const EXPORT_BUSY_MS = 24 * 3600 * 1000;
+
+/** Bytes under a path and the newest change inside it. */
+function measure(full: string): { bytes: number; newest: number } {
+	let stat: fs.Stats;
+	try {
+		stat = fs.statSync(full);
+	} catch {
+		return { bytes: 0, newest: 0 };
+	}
+	if (!stat.isDirectory()) return { bytes: stat.size, newest: stat.mtimeMs };
+	let bytes = 0;
+	let newest = stat.mtimeMs;
+	let names: string[] = [];
+	try {
+		names = fs.readdirSync(full);
+	} catch {}
+	for (const name of names) {
+		const inner = measure(path.join(full, name));
+		bytes += inner.bytes;
+		newest = Math.max(newest, inner.newest);
+	}
+	return { bytes, newest };
+}
+
+/**
+ * Keeps the cache under `limitBytes`: the entries used longest ago go first, until it fits (the owner, 14.11: «автоочистку
+ * кэша при достижении стольких-то гигов… старое чистилось, а новое записывалось»). What was made or used in the last
+ * minutes stays and is not counted.
+ */
+export function trimCaches({ limitBytes, now = Date.now() }: { limitBytes: number; now?: number }) {
+	const dirs = cacheDirs();
+	const entries: Array<{ full: string; bytes: number; newest: number; busy: number }> = [];
+	for (const kind of Object.keys(dirs) as CacheKind[]) {
+		for (const dir of dirs[kind]) {
+			let names: string[];
+			try {
+				names = fs.readdirSync(dir);
+			} catch {
+				continue;
+			}
+			for (const name of names) {
+				const full = path.join(dir, name);
+				entries.push({ full, ...measure(full), busy: kind === "export" ? EXPORT_BUSY_MS : BUSY_MS });
+			}
+		}
+	}
+	// (what is in use is neither deleted nor counted: a long export being written must not push everything else out)
+	const idle = entries.filter((entry) => now - entry.newest >= entry.busy).sort((a, b) => a.newest - b.newest);
+	let total = idle.reduce((sum, entry) => sum + entry.bytes, 0);
+	let removed = 0;
+	for (const entry of idle) {
+		if (total <= limitBytes) break;
+		try {
+			fs.rmSync(entry.full, { recursive: true, force: true });
+		} catch {
+			continue;
+		}
+		total -= entry.bytes;
+		removed++;
+	}
+	return { ...storageReport(), removed };
+}
+
 export function clearCaches({ kinds, olderThanDays }: { kinds?: CacheKind[]; olderThanDays?: number }) {
 	const dirs = cacheDirs();
 	for (const kind of kinds ?? (Object.keys(dirs) as CacheKind[])) clearDirs(dirs[kind], olderThanDays);

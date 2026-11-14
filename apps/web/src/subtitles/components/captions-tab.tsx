@@ -3,6 +3,7 @@
 // The Captions tab as in CapCut 9.5 (docs/capcut/compare/captions-*-capcut.*): Auto captions · Templates ▾ (CapCut's
 // fifteen groups, a search field, ☆ Favorites) · Auto lyrics · Add captions (Import file → the file's tile, «+» or a drag
 // puts its captions on the timeline). Everything runs on this Mac; Bilingual captions are translated by Gaziyav AI.
+import { DEMO } from "@/demo/flag";
 import { Search01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@/components/ui/icon";
 import type * as React from "react";
@@ -30,7 +31,7 @@ import { CaptionsField, CaptionsForm, FooterCheck } from "./captions-form";
 import { CaptionStyleGallery, TEMPLATE_GROUPS, type TemplateGroupKey } from "./caption-styles";
 import "../inspector";
 
-const CAPTIONS_NAV: NavItem[] = [
+const ALL_CAPTIONS_NAV: NavItem[] = [
 	{ key: "auto", label: "Auto captions" },
 	{
 		key: "templates",
@@ -42,6 +43,8 @@ const CAPTIONS_NAV: NavItem[] = [
 	{ key: "lyrics", label: "Auto lyrics" },
 	{ key: "add", label: "Add captions" },
 ];
+// (the browser edition hears speech in the page; a song's lyrics need the Mac app's models)
+const CAPTIONS_NAV: NavItem[] = ALL_CAPTIONS_NAV.filter((item) => !DEMO || item.key !== "lyrics");
 
 /** CapCut's Lyrics language list (its six, in its order), then the other languages the speech model knows. */
 const LYRICS_LANGUAGES = [

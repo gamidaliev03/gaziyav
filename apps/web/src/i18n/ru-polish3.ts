@@ -160,4 +160,7 @@ export const RU_POLISH3: Record<string, string> = {
 	"Applying to the clip": "Применяем к клипу",
 	"AI photo…": "ИИ-фото…",
 	"AI video…": "ИИ-видео…",
+	// the lead, 14.11: the cache keeps itself under a size
+	"Keep the cache under": "Держать кэш в пределах",
+	"When the cache passes this size, what was used longest ago is deleted to make room for the new.": "Когда кэш превышает этот размер, самое давнее удаляется и освобождает место новому.",
 };

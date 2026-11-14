@@ -200,7 +200,7 @@ export class ProjectManager {
 			}
 			this.contentSignature = this.signatureOf(this.editor.scenes.getScenes(), project.settings);
 
-			await this.editor.media.loadProjectMedia({ projectId: id });
+			await this.editor.media.loadProjectMedia({ projectId: id, opening: true });
 			// Clips whose file is lost say so at once (they played as black without a word).
 			void import("@/relink/offline").then(({ reportOfflineOnOpen }) => reportOfflineOnOpen(this.editor)).catch(() => {});
 

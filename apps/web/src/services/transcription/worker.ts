@@ -1,4 +1,5 @@
 import {
+	env,
 	pipeline,
 	type AutomaticSpeechRecognitionPipeline,
 	type AutomaticSpeechRecognitionOutput,
@@ -10,7 +11,11 @@ import {
 } from "@/transcription/audio";
 
 export type WorkerMessage =
-	| { type: "init"; modelId: string }
+	/**
+	 * `wasmBase`: where the recogniser's WebAssembly runtime is served from (the browser edition: the site itself).
+	 * `words`: the model variant that times every word («<model>_timestamped»); without it words are spread over a phrase.
+	 */
+	| { type: "init"; modelId: string; wasmBase?: string; words?: boolean }
 	| { type: "transcribe"; audio: Float32Array; language: string }
 	| { type: "cancel" };
 
@@ -29,6 +34,8 @@ export type WorkerResponse =
 
 let transcriber: AutomaticSpeechRecognitionPipeline | null = null;
 let cancelled = false;
+/** The loaded model times each word. */
+let wordTimes = false;
 let lastReportedProgress = -1;
 const fileBytes = new Map<string, { loaded: number; total: number }>();
 
@@ -37,7 +44,7 @@ self.onmessage = async (event: MessageEvent<WorkerMessage>) => {
 
 	switch (message.type) {
 		case "init":
-			await handleInit({ modelId: message.modelId });
+			await handleInit({ modelId: message.modelId, wasmBase: message.wasmBase, words: message.words });
 			break;
 		case "transcribe":
 			await handleTranscribe({
@@ -52,12 +59,15 @@ self.onmessage = async (event: MessageEvent<WorkerMessage>) => {
 	}
 };
 
-async function handleInit({ modelId }: { modelId: string }) {
+async function handleInit({ modelId, wasmBase, words }: { modelId: string; wasmBase?: string; words?: boolean }) {
 	lastReportedProgress = -1;
 	fileBytes.clear();
+	// (the browser edition's page loads no code from another host: the runtime's two files lie beside the editor)
+	if (wasmBase && env.backends.onnx.wasm) env.backends.onnx.wasm.wasmPaths = wasmBase;
+	wordTimes = !!words;
 
 	try {
-		transcriber = (await pipeline("automatic-speech-recognition", modelId, {
+		transcriber = (await pipeline("automatic-speech-recognition", words ? `${modelId}_timestamped` : modelId, {
 			dtype: "q4",
 			device: "auto",
 			progress_callback: (progressInfo: {
@@ -139,7 +149,7 @@ async function handleTranscribe({
 			stride_length_s: DEFAULT_STRIDE_SECONDS,
 			language: language === "auto" ? undefined : language,
 			task: "transcribe", // never translate (auto-detect otherwise turned Russian speech into English)
-			return_timestamps: true,
+			return_timestamps: wordTimes ? "word" : true,
 		});
 
 		if (cancelled) return;
@@ -148,9 +158,17 @@ async function handleTranscribe({
 			? rawResult[0]
 			: rawResult;
 
-		const segments: TranscriptionSegment[] = [];
+		let segments: TranscriptionSegment[] = [];
 
-		if (result.chunks) {
+		if (result.chunks && wordTimes) {
+			segments = phrasesOf(
+				result.chunks.flatMap((chunk) => {
+					const start = chunk.timestamp?.[0];
+					const text = chunk.text.trim();
+					return typeof start === "number" && text ? [{ text, start, end: Math.max(start + 0.05, chunk.timestamp?.[1] ?? start + 0.3) }] : [];
+				}),
+			);
+		} else if (result.chunks) {
 			for (const chunk of result.chunks) {
 				if (chunk.timestamp && chunk.timestamp.length >= 2) {
 					segments.push({
@@ -174,4 +192,25 @@ async function handleTranscribe({
 			error: error instanceof Error ? error.message : "Transcription failed",
 		} satisfies WorkerResponse);
 	}
+}
+
+/**
+ * Words with their own times → phrases, as the phrase-timed model gives them: a new phrase after a sentence's end, a
+ * pause of 0.7 s, or twelve words (the caption styles cut them into lines themselves).
+ */
+function phrasesOf(words: Array<{ text: string; start: number; end: number }>): TranscriptionSegment[] {
+	const phrases: TranscriptionSegment[] = [];
+	let current: Array<{ text: string; start: number; end: number }> = [];
+	const close = () => {
+		if (current.length === 0) return;
+		phrases.push({ text: current.map((w) => w.text).join(" "), start: current[0].start, end: current[current.length - 1].end, words: current });
+		current = [];
+	};
+	for (const word of words) {
+		const last = current[current.length - 1];
+		if (last && (word.start - last.end > 0.7 || /[.!?…]$/.test(last.text) || current.length >= 12)) close();
+		current.push(word);
+	}
+	close();
+	return phrases;
 }

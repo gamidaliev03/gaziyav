@@ -1,9 +1,12 @@
 {
-	"_": "Hosts the browser edition may talk to (CSP connect-src and the page's fetch guard); \u00ab*.x\u00bb = any sub-host of x. Without a pasted key nothing is sent to any of them.",
+	"_": "Hosts the browser edition may talk to (CSP connect-src and the page's fetch guard); «*.x» = any sub-host of x. fal: only with a pasted key. Hugging Face: the open speech model is DOWNLOADED from it on the first «Generate captions» (the sound itself never leaves the tab).",
 	"connect": [
 		"queue.fal.run",
 		"rest.fal.ai",
 		"fal.media",
-		"*.fal.media"
+		"*.fal.media",
+		"huggingface.co",
+		"*.huggingface.co",
+		"*.hf.co"
 	]
 }

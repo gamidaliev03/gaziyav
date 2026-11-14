@@ -30,6 +30,8 @@ export function answer(path: string, method = "GET", search = ""): Response {
 		if (head === "state") return json({ favourites: [], recent: [] });
 		if (head === "progress") return json({ downloading: {}, cached: [], offline: true });
 		if (head === "ensure") return json({ ok: false, failed: (params.get("ids") ?? "").split(",").filter(Boolean) });
+		// favourites and «recent» of the sound panel: accepted, nothing kept
+		if (method !== "GET") return json({ ok: true, favourites: [], recent: [] });
 	}
 	if (area === "settings" && head === "storage") return json({ ok: true, demo: true });
 	// the voice-over action first makes sure the word-timing model is on this computer (the desktop's on-device AI); the
@@ -61,6 +63,17 @@ export const allowedHost = (origin: string, list: readonly string[] = hosts.conn
 	}
 	return list.some((h) => (h.startsWith("*.") ? host.endsWith(h.slice(1)) : host === h));
 };
+
+/** The site's own sound pack (public/sfx, CC0) as the app's sound library lists it (library/server/index-store.ts). */
+async function bundledSounds(realFetch: typeof fetch): Promise<Response> {
+	try {
+		const rows = (await (await realFetch(new URL("sfx/index.json", document.baseURI))).json()) as Array<{ file: string; name: string; en?: string; cat: string; tags?: string[]; dur: number }>;
+		const items = rows.map((r) => ({ id: `b-${r.file.replace(/\.[^.]+$/, "")}`, kind: "sfx", name: r.en || r.name, cat: "Basic", tags: [r.name, r.cat, ...(r.tags ?? [])], dur: r.dur, src: "bundled" }));
+		return json({ items, sources: [{ src: "bundled", kind: "sfx", count: items.length }] });
+	} catch {
+		return json({ items: [], sources: [] });
+	}
+}
 
 let installed = false;
 const calls: ShimCall[] = [];
@@ -94,6 +107,10 @@ export function installDemoApi(): void {
 		if (ai?.handles(path, method)) {
 			calls.push({ method, path, status: -1 });
 			return ai.answer(path, init, url);
+		}
+		if (path === "/api/library/index" && method === "GET") {
+			calls.push({ method, path, status: 200 });
+			return bundledSounds(realFetch);
 		}
 		const response = answer(path, method, url.search);
 		calls.push({ method, path, status: response.status });

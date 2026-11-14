@@ -13,8 +13,9 @@ const [outDir, site, here, docs, hostsFile, webArg] = process.argv.slice(2);
 const webDir = webArg ?? path.join(here, "../..");
 if (!outDir || !site || !here) throw new Error("usage: post.mjs <out> <site> <here> <docs> <hosts>");
 const PREFIX = "/__GZDEMO__/";
-// public/ folders the browser edition never uses (motion graphics, sticker packs, the sound library, voice samples…)
-const PRUNE = new Set(["stickers", "montage-bundle", "montage-fonts", "sfx", "faces", "samples", "open-graph", "icons", "logos", "landing-page-dark.png", "_headers", "browserconfig.xml", "manifest.json", "favicon.ico", "404.html", "404"]);
+// public/ folders the browser edition never uses (motion graphics, sticker packs, voice samples…); the sound pack
+// (sfx/, 1.4 MB) stays: it is the Sounds tab of the browser edition
+const PRUNE = new Set(["stickers", "montage-bundle", "montage-fonts", "faces", "samples", "open-graph", "icons", "logos", "landing-page-dark.png", "_headers", "browserconfig.xml", "manifest.json", "favicon.ico", "404.html", "404"]);
 const PRUNE_DEEP = ["trending/voices", "mograph/covers", "mograph/tiles", "mograph/lottie"];
 // public/ folders the editor's code names by absolute path: made relative to the page (always <site>/editor/)
 const PUBLIC_DIRS = ["fonts", "effects", "text-tiles", "text-scenes", "trending", "shapes", "platform-guides", "brand", "mograph"];
@@ -230,7 +231,7 @@ fs.writeFileSync(path.join(site, ".nojekyll"), "");
 {
 	const files = walk(site)
 		.map((f) => path.relative(site, f).split(path.sep).join("/"))
-		.filter((f) => !f.startsWith(".") && f !== "sw.js" && f !== "404.html" && !f.startsWith("og-") && !f.startsWith("tour/")); // the tour (slides, PDFs) is read online, not kept
+		.filter((f) => !f.startsWith(".") && f !== "sw.js" && f !== "404.html" && !f.startsWith("og-") && !f.startsWith("tour/") && !f.startsWith("editor/ort/")); // the tour (slides, PDFs) is read online, not kept; the speech runtime (21 MB) is kept after its first use
 	const version = crypto.createHash("sha256").update(files.map((f) => `${f}:${fs.statSync(path.join(site, f)).size}`).join("\n")).digest("hex").slice(0, 12);
 	const list = files.map((f) => (f.endsWith("/index.html") ? f.slice(0, -"index.html".length) : f === "index.html" ? "./" : f));
 	fs.writeFileSync(path.join(site, "sw.js"), fs.readFileSync(path.join(S, "sw.template.js"), "utf8").replace("__VERSION__", version).replace("__FILES__", JSON.stringify(list)));

@@ -1,4 +1,5 @@
 // Calls to the local speech recognizer (/api/transcribe). Everything runs on this Mac, offline and free.
+import { DEMO } from "@/demo/flag";
 import { requireModel } from "@/ondevice/client";
 import type { JobState } from "@/studio/server/jobs";
 import type { Span, Word } from "./align";
@@ -41,6 +42,8 @@ let status: Promise<EngineStatus> | null = null;
 
 /** Whether the local recognizer (whisper-cli + model) is installed; a "yes" is remembered for the session. */
 export function engineStatus(): Promise<EngineStatus> {
+	// (the browser edition hears speech in the page itself: transcribe/in-page.ts)
+	if (DEMO) return Promise.resolve({ available: true, model: "whisper-small" });
 	if (!status) {
 		const asked = request<EngineStatus>("status").catch((error) => ({ available: false, reason: (error as Error).message }) as EngineStatus);
 		status = asked;
@@ -100,6 +103,7 @@ export interface TranscribeOptions {
  * (karaoke-ready), plus the stretches where there is speech. Cancel with `signal` (kills whisper-cli).
  */
 export async function transcribeWords({ media, name = "audio.wav", language = "auto", signal, onProgress }: TranscribeOptions): Promise<Transcript> {
+	if (DEMO) return (await import("./in-page")).transcribeInPage({ media, name, language, signal, onProgress });
 	const throwIfAborted = () => {
 		if (signal?.aborted) throw new DOMException("Cancelled", "AbortError");
 	};
