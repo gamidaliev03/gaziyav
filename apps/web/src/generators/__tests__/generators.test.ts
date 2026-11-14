@@ -4,6 +4,10 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { GENERATOR_PRESETS, GENERATORS, generatorSpec, presetParams } from "../catalog";
+
+// the presets whose picture is drawn here; the ready ones (library.ts) reuse these generators with effects on top, and
+// the outside palette (382 gradients) is data
+const OWN = GENERATOR_PRESETS.filter((preset) => /^(solid|gradient)\./.test(preset.id));
 import {
 	buildGeneratorParams,
 	CARRIER_DEFINITION,
@@ -34,7 +38,7 @@ describe("determinism", () => {
 	test("every preset: the same frame gives the same pixels, twice in a run and against the recorded run", () => {
 		const golden = JSON.parse(readFileSync(join(import.meta.dir, "golden.json"), "utf8")) as Record<string, string[]>;
 		const now: Record<string, string[]> = {};
-		for (const preset of GENERATOR_PRESETS) {
+		for (const preset of OWN) {
 			const a = FRAMES.map((f) => hashOf(preset, f));
 			const b = FRAMES.map((f) => hashOf(preset, f));
 			expect(b).toEqual(a);
@@ -45,7 +49,7 @@ describe("determinism", () => {
 	});
 
 	test("a still preset is the same at every frame; an animated one changes with the frame", () => {
-		for (const preset of GENERATOR_PRESETS) {
+		for (const preset of OWN) {
 			const spec = generatorSpec(preset.generator);
 			const hashes = new Set(FRAMES.map((f) => hashOf(preset, f)));
 			if (spec?.animated(presetParams(preset))) expect(hashes.size).toBe(FRAMES.length);

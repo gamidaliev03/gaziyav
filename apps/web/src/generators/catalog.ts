@@ -1,6 +1,7 @@
 // The generators the product has, their presets (the tiles of the Generators tab) and the ones planned per round.
 import type { ParamValues } from "@/params";
 import { gradientSpec, solidSpec } from "./engine/gradient";
+import { READY_PRESETS, UI_GRADIENT_PRESETS } from "./library";
 import type { GeneratorPreset, GeneratorSpec } from "./types";
 
 export const GENERATORS: readonly GeneratorSpec[] = [solidSpec, gradientSpec];
@@ -31,7 +32,8 @@ const s = (id: string, name: string, color: string, opacity = 100): GeneratorPre
 	params: { "gen.color": color, "gen.opacity": opacity },
 });
 
-export const GENERATOR_PRESETS: readonly GeneratorPreset[] = [
+/** The generators drawn here (solids, gradients), by hand. */
+const OWN_PRESETS: readonly GeneratorPreset[] = [
 	s("black", "Black", "#000000"),
 	s("white", "White", "#ffffff"),
 	s("blue", "Studio blue", "#2f6bff"),
@@ -62,6 +64,9 @@ export const GENERATOR_PRESETS: readonly GeneratorPreset[] = [
 	g("spin", "Spinning colours", { "gen.shape": "angular", "gen.stops": 3, "gen.c1": "#ff4d4d", "gen.p1": 0, "gen.c2": "#ff4d4d", "gen.p2": 100, "gen.c3": "#4d7bff", "gen.p3": 50, "gen.motion": "rotate" }),
 	g("pulse", "Breathing light", { "gen.shape": "radial", "gen.c1": "#ffb36b", "gen.c2": "#1a0b05", "gen.motion": "breathe", "gen.scale": 70 }),
 ];
+
+/** Every tile of the Generators tab that is a clip drawn here: our own, the ready ones (./library.ts), the outside palette. */
+export const GENERATOR_PRESETS: readonly GeneratorPreset[] = [...OWN_PRESETS, ...READY_PRESETS, ...UI_GRADIENT_PRESETS];
 
 /**
  */

@@ -168,7 +168,7 @@ export function libraryTools(): Tool[] {
 		id: `generator:${preset.id}`,
 		title: preset.name,
 		where: "Effects · Generators",
-		words: [ru(preset.name), "generator", "генератор", ...(generatorSpec(preset.generator)?.keywords ?? [])],
+		words: [preset.proper ? preset.name : ru(preset.name), preset.family ?? "", "generator", "генератор", ...(generatorSpec(preset.generator)?.keywords ?? [])].filter(Boolean),
 		target: { kind: "media", tab: "generators" } as const,
 	}));
 	library = [...effects, ...transitions, ...generators];

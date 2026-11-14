@@ -147,6 +147,7 @@ Gaziyav is MIT-licensed (see `LICENSE`). It is built on [OpenCut](https://github
 | `apps/web/public/fonts/bundled/` | 57 licence files | SIL Open Font License 1.1 | Google Fonts — each font's OFL text is beside it in `licenses/` |
 | `apps/web/public/montage-fonts/` | woff2 subsets | SIL Open Font License 1.1 (Noto Color Emoji: OFL 1.1) | Google Fonts |
 | `apps/web/public/sfx/` | 8 | CC0 1.0 | synthesised by `apps/web/scripts/generate-sfx.mjs` (no recordings) |
+| `apps/web/src/generators/data/uigradients.json` | 382 gradients | MIT (© 2017 Indrashish Ghosh) | uiGradients, github.com/ghosh/uiGradients — the licence text is beside it |
 | `apps/web/public/faces/`, `apps/web/public/trending/` | made-up faces, looks and voice samples | Gaziyav's own work (CC0), made with open models (FLUX.2 klein 4B, Qwen3-TTS) | nobody real |
 | `apps/web/public/stickers/*-preview/` | small previews | as their sets (Fluent Emoji MIT · Noto Animated Emoji CC BY 4.0) | the full files download from their publishers on first use |
 | `apps/web/public/logos/` | brand marks of OpenCut and the services the app connects to | their owners' trademarks, shown to name the service | — |

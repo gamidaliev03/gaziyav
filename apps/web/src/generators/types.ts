@@ -58,4 +58,18 @@ export interface GeneratorPreset {
 	/** English source text (i18n/ru-gen.ts). */
 	name: string;
 	params: ParamValues;
+	/**
+	 * Ready effects of the editor on the clip (effects/registry ids, at their defaults or with these settings): a look
+	 * drawn over the generator's own picture — snow, rain, a light leak or grain over a plain ground. Each keeps its own
+	 * settings in the inspector («Effects»), so a ready generator stays editable.
+	 */
+	effects?: ReadonlyArray<string | { type: string; params: ParamValues }>;
+	/** How the new clip lies over the film (an overlay on black: "screen"). Default: the generator's own. */
+	blend?: BlendMode;
+	/** The list it is shown in, when not its generator's own family. */
+	family?: GenFamily;
+	/** Into the row (ground) or a layer above (overlay). Default: the generator's own. */
+	role?: GenRole;
+	/** A name that is a name (an outside palette's own): shown as it is, never translated. */
+	proper?: boolean;
 }

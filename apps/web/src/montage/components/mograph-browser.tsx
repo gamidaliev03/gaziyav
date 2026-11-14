@@ -16,11 +16,12 @@ import { useT } from "@/i18n";
 import { ru } from "@/i18n/ru";
 import { cn } from "@/utils/ui";
 import { insertMograph } from "../mograph-insert";
+import { mographGeneratorFamily } from "@/generators/library";
 import { MOGRAPH_CATEGORIES, MOGRAPH_KINDS, MOGRAPH_THEMES, type MographKind, type Theme, themeName, themePhoto } from "../mograph";
 
 const MographPreview = dynamic(() => import("./mograph-preview"), { ssr: false });
 
-function MographTile({ kind, theme }: { kind: MographKind; theme?: Theme }) {
+export function MographTile({ kind, theme }: { kind: MographKind; theme?: Theme }) {
 	const editor = useEditor();
 	const t = useT();
 	const [hover, setHover] = useState(false);
@@ -111,7 +112,9 @@ export function MographBrowser() {
 	const [theme] = useState<Theme | null>(null);
 	// his edition has no stickers under any name (the owner, 12–13.11): the «Stickers» category of the animated graphics
 	// goes with the sticker packs (src/edition/cuts.ts); templates and old projects still play them
-	const offered = MOGRAPH_KINDS.filter((k) => !k.hidden && (EDITION.stickers || k.category !== "Stickers"));
+	// what the Generators tab lists (camera and tape, particles, light, grain — generators/library.ts) lives THERE: nothing
+	// is offered in two places
+	const offered = MOGRAPH_KINDS.filter((k) => !k.hidden && (EDITION.stickers || k.category !== "Stickers") && !mographGeneratorFamily(k.kind));
 	const items = theme ? offered.filter((k) => k.themes.includes(theme)) : offered;
 	return (
 		<div className="flex min-h-0 flex-1 flex-col">
