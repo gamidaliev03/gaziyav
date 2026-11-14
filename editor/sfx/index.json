@@ -1,0 +1,233 @@
+[
+	{
+		"file": "whoosh.wav",
+		"name": "Вжух",
+		"en": "Whoosh",
+		"cat": "transitions",
+		"tags": [
+			"whoosh",
+			"вжух",
+			"переход",
+			"transition",
+			"air"
+		],
+		"dur": 0.45
+	},
+	{
+		"file": "whoosh-long.wav",
+		"name": "Вжух длинный",
+		"en": "Long whoosh",
+		"cat": "transitions",
+		"tags": [
+			"whoosh",
+			"вжух",
+			"переход",
+			"slow"
+		],
+		"dur": 0.9
+	},
+	{
+		"file": "swoosh.wav",
+		"name": "Свуш",
+		"en": "Swoosh",
+		"cat": "transitions",
+		"tags": [
+			"swoosh",
+			"свуш",
+			"свайп",
+			"swipe",
+			"быстрый"
+		],
+		"dur": 0.22
+	},
+	{
+		"file": "impact.wav",
+		"name": "Удар",
+		"en": "Impact",
+		"cat": "impacts",
+		"tags": [
+			"impact",
+			"hit",
+			"удар",
+			"бум",
+			"boom"
+		],
+		"dur": 1.2
+	},
+	{
+		"file": "punch.wav",
+		"name": "Удар короткий",
+		"en": "Punch hit",
+		"cat": "impacts",
+		"tags": [
+			"punch",
+			"hit",
+			"удар",
+			"акцент"
+		],
+		"dur": 0.35
+	},
+	{
+		"file": "sub-drop.wav",
+		"name": "Саб-дроп",
+		"en": "Sub drop",
+		"cat": "impacts",
+		"tags": [
+			"sub",
+			"drop",
+			"бас",
+			"bass",
+			"бум"
+		],
+		"dur": 1.6
+	},
+	{
+		"file": "pop.wav",
+		"name": "Поп",
+		"en": "Pop",
+		"cat": "ui",
+		"tags": [
+			"pop",
+			"поп",
+			"пузырь",
+			"bubble"
+		],
+		"dur": 0.12
+	},
+	{
+		"file": "pop-high.wav",
+		"name": "Поп высокий",
+		"en": "High pop",
+		"cat": "ui",
+		"tags": [
+			"pop",
+			"поп",
+			"появление"
+		],
+		"dur": 0.09
+	},
+	{
+		"file": "click.wav",
+		"name": "Клик",
+		"en": "Click",
+		"cat": "ui",
+		"tags": [
+			"click",
+			"клик",
+			"щелчок",
+			"tap",
+			"кнопка"
+		],
+		"dur": 0.05
+	},
+	{
+		"file": "riser.wav",
+		"name": "Нарастание",
+		"en": "Riser",
+		"cat": "transitions",
+		"tags": [
+			"riser",
+			"нарастание",
+			"подъём",
+			"build",
+			"напряжение"
+		],
+		"dur": 2.6
+	},
+	{
+		"file": "downlifter.wav",
+		"name": "Спад",
+		"en": "Downlifter",
+		"cat": "transitions",
+		"tags": [
+			"downlifter",
+			"спад",
+			"падение",
+			"fall"
+		],
+		"dur": 2.2
+	},
+	{
+		"file": "glitch.wav",
+		"name": "Глитч",
+		"en": "Glitch",
+		"cat": "glitch",
+		"tags": [
+			"glitch",
+			"глитч",
+			"сбой",
+			"цифровой",
+			"digital"
+		],
+		"dur": 0.55
+	},
+	{
+		"file": "ding.wav",
+		"name": "Дзынь",
+		"en": "Ding",
+		"cat": "ui",
+		"tags": [
+			"bell",
+			"ding",
+			"колокольчик",
+			"звонок",
+			"дзынь"
+		],
+		"dur": 1.8
+	},
+	{
+		"file": "chime.wav",
+		"name": "Перезвон",
+		"en": "Chime",
+		"cat": "ui",
+		"tags": [
+			"chime",
+			"bell",
+			"колокольчик",
+			"успех",
+			"success"
+		],
+		"dur": 1.7
+	},
+	{
+		"file": "notification.wav",
+		"name": "Уведомление",
+		"en": "Notification",
+		"cat": "ui",
+		"tags": [
+			"notification",
+			"уведомление",
+			"сообщение",
+			"message"
+		],
+		"dur": 0.6
+	},
+	{
+		"file": "shutter.wav",
+		"name": "Затвор камеры",
+		"en": "Camera shutter",
+		"cat": "everyday",
+		"tags": [
+			"camera",
+			"shutter",
+			"камера",
+			"фото",
+			"затвор"
+		],
+		"dur": 0.3
+	},
+	{
+		"file": "typing.wav",
+		"name": "Печать на клавиатуре",
+		"en": "Keyboard typing",
+		"cat": "everyday",
+		"tags": [
+			"typing",
+			"keyboard",
+			"печать",
+			"клавиатура",
+			"текст"
+		],
+		"dur": 1.6
+	}
+]
