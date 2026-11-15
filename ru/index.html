@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' ; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; media-src 'self' blob: data:; font-src 'self' blob: data:; connect-src 'self' blob: data: https://queue.fal.run https://rest.fal.ai https://fal.media https://*.fal.media https://huggingface.co https://*.huggingface.co https://*.hf.co; worker-src 'self' blob:; manifest-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' ; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; media-src 'self' blob: data: https://queue.fal.run https://rest.fal.ai https://fal.media https://*.fal.media https://huggingface.co https://*.huggingface.co https://*.hf.co https://assets.mixkit.co; font-src 'self' blob: data:; connect-src 'self' blob: data: https://queue.fal.run https://rest.fal.ai https://fal.media https://*.fal.media https://huggingface.co https://*.huggingface.co https://*.hf.co https://assets.mixkit.co; worker-src 'self' blob:; manifest-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
-<title>Gaziyav — монтажка, переизобретённая с ИИ</title>
-<meta name="description" content="Бесплатная монтажка с открытым кодом, альтернатива CapCut, переделанная от самого таймлайна, — для рилсов, тиктоков и шортсов, снятых на телефон, и Claude монтирует прямо внутри. Откройте редактор прямо здесь: ничего не устанавливать, без аккаунта.">
+<title>Gaziyav — бесплатная монтажка для рилсов, тиктоков и шортсов</title>
+<meta name="description" content="Бесплатная монтажка с открытым кодом, альтернатива CapCut для рилсов, тиктоков и шортсов, снятых на телефон. На Mac в ней может монтировать Claude. Откройте редактор здесь же: ничего не нужно ставить, аккаунт не нужен.">
 <meta name="theme-color" content="#0e0f12">
 <link rel="icon" href="../icons/icon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="../icons/icon-180.png">
@@ -15,16 +15,16 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Gaziyav">
 <meta property="og:locale" content="ru_RU">
-<meta property="og:title" content="Gaziyav — монтажка, переизобретённая с ИИ">
-<meta property="og:description" content="Бесплатная монтажка с открытым кодом, альтернатива CapCut, переделанная от самого таймлайна, — для рилсов, тиктоков и шортсов, снятых на телефон, и Claude монтирует прямо внутри. Откройте редактор прямо здесь: ничего не устанавливать, без аккаунта.">
+<meta property="og:title" content="Gaziyav — бесплатная монтажка для рилсов, тиктоков и шортсов">
+<meta property="og:description" content="Бесплатная монтажка с открытым кодом, альтернатива CapCut для рилсов, тиктоков и шортсов, снятых на телефон. На Mac в ней может монтировать Claude. Откройте редактор здесь же: ничего не нужно ставить, аккаунт не нужен.">
 <meta property="og:url" content="https://gamidaliev03.github.io/gaziyav/ru/">
 <meta property="og:image" content="https://gamidaliev03.github.io/gaziyav/og-ru.png">
 <meta property="og:image:width" content="1280">
 <meta property="og:image:height" content="640">
 <meta property="og:image:alt" content="Gaziyav — монтажка, переизобретённая с ИИ. Бесплатно, открытый код, Claude монтирует внутри.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Gaziyav — монтажка, переизобретённая с ИИ">
-<meta name="twitter:description" content="Бесплатная монтажка с открытым кодом, альтернатива CapCut, переделанная от самого таймлайна, — для рилсов, тиктоков и шортсов, снятых на телефон, и Claude монтирует прямо внутри. Откройте редактор прямо здесь: ничего не устанавливать, без аккаунта.">
+<meta name="twitter:title" content="Gaziyav — бесплатная монтажка для рилсов, тиктоков и шортсов">
+<meta name="twitter:description" content="Бесплатная монтажка с открытым кодом, альтернатива CapCut для рилсов, тиктоков и шортсов, снятых на телефон. На Mac в ней может монтировать Claude. Откройте редактор здесь же: ничего не нужно ставить, аккаунт не нужен.">
 <meta name="twitter:image" content="https://gamidaliev03.github.io/gaziyav/og-ru.png">
 <link rel="stylesheet" href="../site.css">
 <script src="../site.js" defer></script>
@@ -33,29 +33,29 @@
 <header class="bar">
 	<a class="brand" href="../ru/"><img src="../icons/icon-32.png" width="22" height="22" alt=""> Gaziyav</a>
 	<nav>
-		<a href="../tour/ru.html">Все возможности</a>
+		<a href="../tour/ru.html">Экскурсия</a>
 		<a href="https://github.com/gamidaliev03/gaziyav">Код</a>
 		<a class="lang" href="../" data-lang="en" hreflang="en">English</a>
 	</nav>
 </header>
 <main>
 	<section class="hero">
-		<h1>Монтажка, переизобретённая с ИИ</h1>
-		<p class="lead">Бесплатная монтажка с открытым кодом, альтернатива CapCut, переделанная от самого таймлайна, — для рилсов, тиктоков и шортсов, снятых на телефон. Попробуйте прямо здесь, ничего не устанавливая.</p>
-		<p class="cta"><a class="primary" href="../editor/" data-open-editor>Открыть редактор</a> <a class="secondary" href="https://github.com/gamidaliev03/gaziyav/releases/latest">Скачать для macOS</a> <a class="plain" href="../tour/ru.html" data-tour>Все возможности →</a></p>
-		<p class="privacy">Всё происходит в вашем браузере — файлы никуда не отправляются (кроме липсинка, если вы сами запустите его своим ключом: тогда этот клип уходит провайдеру).</p>
+		<h1>Бесплатная монтажка для рилсов, тиктоков и шортсов</h1>
+		<p class="lead">Открытый код, альтернатива CapCut. Попробуйте прямо здесь: ничего не нужно ставить, аккаунт не нужен.</p>
+		<p class="cta"><a class="primary" href="../editor/" data-open-editor>Открыть редактор</a> <a class="secondary" href="https://github.com/gamidaliev03/gaziyav/releases/latest">Скачать для macOS</a> <a class="plain" href="../tour/ru.html" data-tour>Экскурсия →</a></p>
+		<p class="privacy">Ваши файлы остаются в этом браузере. Только липсинк, ИИ-фото и ИИ-видео, если вы запускаете их своим ключом, отправляют в fal.ai то, что им нужно.</p>
 		<p class="browser" data-browser-note hidden></p>
 		<img class="banner" src="../banner-ru.svg" width="1280" height="400" alt="Gaziyav — монтажка, переизобретённая с ИИ. Бесплатно, открытый код, Claude монтирует внутри.">
 	</section>
 	<section class="hooks">
-		<div><h2>Настоящий монтаж, продуманный заново</h2><p>Один таймлайн и одна грамматика для любого клипа: резка, подрезка, сдвиг, прилипание, отмена — титры, переходы, эффекты, образы, экспорт точно по кадрам.</p></div>
-		<div><h2>Claude монтирует прямо в Gaziyav</h2><p>В приложении: Claude монтирует прямо в открытом проекте через свой коннектор (MCP) — каждый шаг ложится на ваш таймлайн и отменяется ⌘Z. Бесплатно, без API-токенов.</p></div>
-		<div><h2>Бесплатно по-настоящему</h2><p>Без аккаунта, без водяного знака, открытый код. Проекты остаются в браузере или в файле на вашем диске, а после первого открытия редактор работает без интернета.</p></div>
+		<div><h2>Одни правила для любого клипа</h2><p>Резка, подрезка, сдвиг, прилипание и отмена работают одинаково для любого клипа. Титры, переходы, эффекты, 311 музыкальных треков и 2514 звуков, темы, экспорт точно до кадра.</p></div>
+		<div><h2>Claude монтирует прямо в Gaziyav</h2><p>В приложении для Mac Claude монтирует ваш открытый проект через коннектор (MCP). Каждый шаг появляется на таймлайне и отменяется ⌘Z. Без кредитов и API-ключа.</p></div>
+		<div><h2>Без аккаунта и водяного знака</h2><p>Открытый код. Проекты остаются в браузере или в файле на вашем диске. После первого открытия редактор работает без интернета.</p></div>
 	</section>
 	<section class="download" id="download">
-		<h2>Приложение для компьютера</h2>
-		<p>Всё то же плюс Claude внутри, клип по ссылке сразу на таймлайн, публикация прямо из редактора, голоса и ИИ на устройстве — для macOS.</p>
-		<p class="other">На Windows, Linux и любом другом компьютере — работайте прямо здесь, в браузере.</p>
+		<h2>Приложение для Mac</h2>
+		<p>Всё то же, плюс Claude, клип по ссылке, публикация из редактора, голос из текста и остальной ИИ на устройстве. Для Mac на Apple silicon с macOS 14 и новее. Файл для скачивания один — та же полная сборка, в которой монтирует сам автор.</p>
+		<p class="other">На Windows, Linux и любом другом компьютере работайте прямо здесь, в браузере.</p>
 		<p class="buttons">
 			<a class="secondary" href="https://github.com/gamidaliev03/gaziyav/releases/latest">Скачать для macOS</a>
 			<a class="plain" href="https://github.com/gamidaliev03/gaziyav">Исходный код на GitHub</a>
@@ -64,14 +64,14 @@
 	<section class="limits">
 		<h2>Ещё в браузере</h2>
 		<ul>
-			<li>Своим ключом fal.ai — бета: липсинк (напишите новую реплику — и то же лицо её произнесёт), ИИ-фото и ИИ-видео; цена видна до запуска, ключ остаётся в этом браузере. Липсинк в приложении дешевле — оно отправляет только речь.</li>
-			<li>Установите его из меню браузера, чтобы открывать как приложение, — работает и без интернета.</li>
+			<li>На вашем ключе fal.ai (бета): липсинк (напишите новую реплику, и то же лицо её произнесёт), ИИ-фото и ИИ-видео. Цена видна до каждого запуска. В приложении для Mac липсинк дешевле: оно отправляет только речь.</li>
+			<li>Установите редактор из меню браузера, чтобы открывать его как приложение. Он работает и без интернета.</li>
 		</ul>
-		<h2>В браузере</h2>
+		<h2>Какой браузер</h2>
 		<ul>
-			<li>Лучше всего в Chrome или Edge: они кодируют видео прямо на странице и пишут экспорт сразу на диск, любой длины.</li>
+			<li>Лучше всего Chrome или Edge: они кодируют видео прямо на странице и пишут экспорт сразу на диск, любой длины.</li>
 			<li>Safari и Firefox: страница сразу скажет, чего этот браузер не умеет и что работает.</li>
-			<li>Субтитры из речи работают прямо здесь: модель речи запускается на странице. Claude, голоса, клип по ссылке и публикация — в приложении для компьютера.</li>
+			<li>Субтитры из речи работают прямо на странице. Claude, голос из текста, клип по ссылке и публикация есть только в приложении для Mac.</li>
 		</ul>
 	</section>
 </main>
