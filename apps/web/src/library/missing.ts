@@ -1,3 +1,4 @@
+// A project never breaks when the library loses a sound (a build without Mixkit's catalog, a sound taken off the
 // library, offline for a remote one). The clip plays from the project's own copy (Media keeps one of every library
 // sound used: media/library-sync.tsx); with no copy either, the timeline marks the clip «Missing · Replace» and the
 // export goes on without it (silence there). In CapCut such a project just loses its music.

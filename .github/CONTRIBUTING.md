@@ -2,7 +2,7 @@
 
 **English** · [Русский](#по-русски)
 
-Thank you for wanting to help. The most valuable contributions right now, in order: bug reports with steps that repeat, fixes with a test, documentation.
+Thanks for helping. What helps most right now, in order: bug reports with steps that reproduce the bug, fixes with a test, documentation.
 
 ## The layout
 
@@ -23,11 +23,11 @@ bun install                      # at the repository root
 cd apps/web && bun run dev       # the editor in a browser at http://localhost:3000
 ```
 
-The browser runs the whole editor; the features that need the desktop app (import by link, local models, posting) say so.
+The whole editor runs in the browser. Features that need the Mac app (import by link, local models, posting) say so.
 
-## Build the desktop app (macOS, Apple silicon)
+## Build the Mac app (Apple silicon)
 
-As [BUILDING.md](../BUILDING.md) does it:
+The same steps as in [BUILDING.md](../BUILDING.md):
 
 ```sh
 bun install                      # the editor's dependencies (workspace root)
@@ -38,7 +38,7 @@ ARCHES=arm64 ./fetch-vendor.sh   # pinned third-party tools into desktop/vendor/
 ./make-dmg.sh                    # optional: → a DMG next to it
 ```
 
-`build.sh` explains its options at the top (Intel build, a smaller build). Nothing from your machine is needed at run time — no Homebrew, no other apps' folders.
+`build.sh` lists its options at the top (an Intel build, a smaller build). The built app needs nothing else from your machine: no Homebrew, no other apps' folders.
 
 ## Tests
 
@@ -58,9 +58,9 @@ STUDIO_APP_BUNDLE=dist/Gaziyav.app STUDIO_PORT=4021 STUDIO_DEBUG_PORT=10021 STUD
   node test/gaziyav-pro-core.mjs
 ```
 
-**AI is tested with stand-ins, never with real money.** `test/fake-fal.mjs` is a local server that speaks fal.ai's wire format (queue, storage, pricing, the LLM endpoint) and holds every request to fal's own schemas. The app is started with `STUDIO_FAKE_NET=<its address>`, so every request to the internet goes to the stand-in: nothing is paid and nothing leaves the computer. It can also play failures — no balance, a refused job, a timeout, a dropped connection — so the error paths are tested too. Judging the quality of real lips needs real paid runs; those are the maintainers' call, never a test's.
+**AI is tested with stand-ins, never with real money.** `test/fake-fal.mjs` is a local server that speaks fal.ai's wire format (queue, storage, pricing, the LLM endpoint) and checks every request against fal's own schemas. The app is started with `STUDIO_FAKE_NET=<its address>`, so every request to the internet goes to the stand-in: nothing is paid and nothing leaves the computer. The stand-in can also simulate failures (no balance, a refused job, a timeout, a dropped connection), so the error paths are tested too. Lipsync quality can only be judged on real paid runs; the maintainers decide when to make them, never a test.
 
-Rules that keep the suite honest:
+Test rules:
 
 - every timeline change keeps the engine invariants (`apps/web/src/timeline/invariants.ts`) after every step, ⌘Z and ⇧⌘Z;
 - a bug fix comes with the smallest test that failed before it;
@@ -68,10 +68,10 @@ Rules that keep the suite honest:
 
 ## Pull requests
 
-- One change per pull request; say what and why in two sentences.
+- One change per pull request. Say what and why in two sentences.
 - Run the tests of the folders you touched and the type check.
-- New interface text needs its Russian in `apps/web/src/i18n` — written as Russian, not machine-translated.
-- Pictures before / after for anything on screen. No API keys or personal files in them.
+- New interface text needs a Russian version in `apps/web/src/i18n`, written in natural Russian, not machine-translated.
+- Add before / after screenshots for any change on screen, with no API keys or personal files in them.
 - By contributing you agree that your contribution is licensed under the MIT licence of this repository.
 
 ## Reporting
@@ -83,10 +83,10 @@ Rules that keep the suite honest:
 
 ## По-русски
 
-Спасибо, что хотите помочь. Сейчас ценнее всего, по порядку: ошибки с повторимыми шагами, исправления с тестом, документация.
+Спасибо за помощь. Сейчас нужнее всего, по порядку: сообщения об ошибках с шагами, по которым ошибка повторяется, исправления с тестом, документация.
 
-- **Запустить редактор:** нужен [Bun](https://bun.sh) 1.2+; `bun install` в корне, затем `cd apps/web && bun run dev` — редактор на http://localhost:3000.
+- **Запустить редактор:** нужен [Bun](https://bun.sh) 1.2 или новее; `bun install` в корне, затем `cd apps/web && bun run dev` — редактор откроется на http://localhost:3000.
 - **Собрать приложение для Mac:** как в [BUILDING.md](../BUILDING.md): `bun install`, затем в `desktop/` — `npm install`, `ARCHES=arm64 ./fetch-vendor.sh`, `./build.sh` → `desktop/dist/Gaziyav.app` (и по желанию `./make-dmg.sh`).
-- **Тесты:** модульные и тесты движка — `bun test` в `apps/web`; сквозные — `node test/<тест>.mjs` в папке оболочки с `STUDIO_APP_BUNDLE`, `STUDIO_PORT`, `STUDIO_DEBUG_PORT`, `STUDIO_TEST_DIR` (скрытая копия приложения с одноразовым профилем, ваши проекты не трогаются).
-- **ИИ тестируется только на подставном сервере** `test/fake-fal.mjs`: он говорит на протоколе fal.ai и проверяет запросы по схемам fal; приложение запускается с `STUDIO_FAKE_NET`, и весь интернет уходит в подставку — ничего не оплачивается и не покидает компьютер. Качество настоящих губ оценивают только живые платные прогоны, и решают о них сопровождающие, а не тесты.
-- **Пулл-реквест:** одно изменение, «что и зачем» в двух предложениях, тесты затронутых папок и проверка типов, русский для новых строк (по-русски, не машинным переводом), картинки до / после. Вклад лицензируется по MIT, как и весь репозиторий.
+- **Тесты:** модульные и тесты движка — `bun test` в `apps/web`; сквозные — `node test/<тест>.mjs` в папке оболочки с `STUDIO_APP_BUNDLE`, `STUDIO_PORT`, `STUDIO_DEBUG_PORT`, `STUDIO_TEST_DIR`. Они запускают скрытую копию приложения с одноразовым профилем и ваши проекты не трогают.
+- **ИИ тестируется только на подставном сервере** `test/fake-fal.mjs`. Он работает по протоколу fal.ai и проверяет запросы по схемам fal. Приложение запускается с `STUDIO_FAKE_NET`, и все запросы в интернет идут на подставной сервер: ничего не оплачивается и не покидает компьютер. Качество липсинка можно оценить только на настоящих платных запусках; когда их делать, решают сопровождающие, а не тесты.
+- **Запрос на слияние (pull request):** одно изменение; «что и зачем» в двух предложениях; тесты затронутых папок и проверка типов; русский текст для новых строк, написанный по-русски, а не машинным переводом; скриншоты до и после. Вклад лицензируется по MIT, как и весь репозиторий.

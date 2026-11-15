@@ -35,7 +35,10 @@ const bolt = (n: number | null | undefined) => (n == null ? "" : usd(n));
 /** The generator. Placed where CapCut has its cloud AI (Media → Generate → AI image / AI video): `kind` fixes the
  * mode there and `title` names the place; without a fal key it says where the key goes. */
 export function PointView({ kind, title = "AI" }: { kind?: Kind; title?: string } = {}) {
-	const { status, jobs, refresh, start, poll } = usePoint();
+	const { status, jobs: allJobs, refresh, start, poll } = usePoint();
+	// Each project sees only the generations made in it (the owner, 16.11: no list of other projects' results).
+	const projectId = useEditor((e) => e.project.getActiveOrNull()?.metadata.id ?? "");
+	const jobs = useMemo(() => allJobs.filter((j) => j.projectId === projectId), [allJobs, projectId]);
 	// Settings is a dialog over this panel: a key saved there fires no window focus, the panel follows the key itself.
 	const keySet = useAnyKey();
 	const keys = useKeys();

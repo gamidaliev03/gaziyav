@@ -5,8 +5,8 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thank you. A bug with steps that repeat becomes an automated test, so it never comes back.
-        Спасибо. Ошибка с повторимыми шагами становится автоматическим тестом — и больше не возвращается.
+        Thank you. A bug with steps that reproduce it becomes an automated test, so it does not come back.
+        Спасибо. Ошибку с шагами, по которым она повторяется, мы превращаем в автоматический тест, чтобы она не вернулась.
         **Never paste API keys.** · **Не вставляйте API-ключи.**
   - type: textarea
     id: steps
@@ -46,7 +46,7 @@ body:
     attributes:
       label: Gaziyav version · Версия Gaziyav
       description: Gaziyav → About · Gaziyav → О программе
-      placeholder: "1.0.42"
+      placeholder: "1.0.48"
     validations:
       required: true
   - type: input

@@ -63,7 +63,8 @@ function RunOrProgress({ kind, disabled, onRun, label, needsFal = false }: { kin
 /** The generator's results, newest first, until taken (+ → Media; drag / double-click → timeline) or discarded. */
 function LastResult({ kind }: { kind: GeneratorKind }) {
 	const all = useGenerateStore((s) => s.results);
-	const results = useMemo(() => all.filter((r) => r.kind === kind), [all, kind]);
+	const projectId = useEditor((e) => e.project.getActiveOrNull()?.metadata.id ?? "");
+	const results = useMemo(() => all.filter((r) => r.kind === kind && r.projectId === projectId), [all, kind, projectId]);
 	// A new take comes into view (it lands under the form, often below the panel's edge).
 	const box = useRef<HTMLDivElement>(null);
 	const newest = results[0]?.id;

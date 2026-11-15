@@ -30,6 +30,8 @@ export interface GenResult {
 	id: string;
 	kind: GeneratorKind;
 	name: string;
+	/** The project it was made in (each project lists its own takes). */
+	projectId?: string;
 }
 
 export const useGenerateStore = create<GenerateState>(() => ({ running: {}, results: [] }));
@@ -133,7 +135,7 @@ export async function generate(
 		}
 		if (done.status !== "done") throw new Error(done.error || "The generator stopped");
 		const out = done.result as { fileId: string; name: string };
-		const result: GenResult = { id: out.fileId, kind, name: out.name };
+		const result: GenResult = { id: out.fileId, kind, name: out.name, projectId: editor.project.getActiveOrNull()?.metadata.id };
 		useGenerateStore.setState((s) => ({ results: [result, ...s.results].slice(0, 30) }));
 		jobCenter.finish(center, "Ready");
 		if (editor.project.getActiveOrNull()?.metadata.id === projectId) {

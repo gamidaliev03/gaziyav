@@ -118,7 +118,8 @@ function cspFor(html, { editorPage }) {
 		`script-src 'self' ${[...new Set(inline)].join(" ")}${editorPage ? " 'wasm-unsafe-eval' blob:" : ""}`,
 		"style-src 'self' 'unsafe-inline'",
 		"img-src 'self' blob: data:",
-		"media-src 'self' blob: data:",
+		// the library's files play straight from where they live (Hugging Face, Mixkit: connect-hosts.json)
+		`media-src ${connect}`,
 		"font-src 'self' blob: data:",
 		`connect-src ${connect}`,
 		"worker-src 'self' blob:",

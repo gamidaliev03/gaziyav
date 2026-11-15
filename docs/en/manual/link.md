@@ -2,16 +2,16 @@
 
 [← Manual](README.md)
 
-**What it is for.** A piece of a video from the web, straight into your edit — without downloading the whole thing.
+**What it is for.** Bringing a piece of a web video into your edit without downloading the whole video.
 
 **How.**
-1. In Media, open the link window (<kbd>⇧⌘Y</kbd>, or the menu item **Import from Link (YouTube)…**) and paste a link — YouTube, TikTok, Instagram and the other sites yt-dlp supports — or type words to search YouTube.
-2. Mark the piece: <kbd>I</kbd> for its start, <kbd>O</kbd> for its end, or drag the yellow ends on the bar; press the middle of the marked piece and drag to slide it whole.
-3. Add it. Only that piece is downloaded; its tile appears in Media at once and fills as it downloads; it is one drag from the timeline. Ask [Claude](claude.md) and it places the piece on the timeline itself.
+1. In Media, open the link window (<kbd>⇧⌘Y</kbd>, or the menu item **Import from Link (YouTube)…**). Paste a link from YouTube, TikTok, Instagram or another site yt-dlp supports, or type words to search YouTube.
+2. Mark the piece: <kbd>I</kbd> for its start, <kbd>O</kbd> for its end, or drag the yellow ends on the bar. Drag the middle of the marked piece to move it as a whole.
+3. Add it. Only that piece is downloaded. Its tile appears in Media at once and fills in as it downloads; drag it to the timeline. If you ask [Claude](claude.md), it places the piece on the timeline for you.
 
-**Rules that surprise people.**
-- A download survives a reload of the window: it comes back on its tile and can be retried.
-- When YouTube asks for a sign-in, Gaziyav can use the sign-in of a browser on this Mac (Chrome, Safari, Firefox, Edge, Brave, Opera) — you pick which.
-- The link goes to the site itself, through the built-in yt-dlp; nothing passes through any server of ours.
+**Good to know.**
+- A download is not lost when the window reloads: it comes back on its tile, and you can retry it.
+- If YouTube asks you to sign in, Gaziyav can use your sign-in from a browser on this Mac (Chrome, Safari, Firefox, Edge, Brave, Opera). You pick the browser.
+- The piece comes straight from the site through the built-in yt-dlp, not through a Gaziyav server.
 
-**Limits.** Use material you have the right to use. Desktop app only — not in the browser edition.
+**Limits.** Mac app only; not in the browser edition. Use only material you have the right to use.

@@ -2,21 +2,21 @@
 
 **English** · [Русский](../ru/lipsync.md)
 
-Lipsync is an optional extra on your own key — not needed to edit, and the strongest of the paid tools: the same clip, the same face, new words — in two clicks, for cents, without a scroll or a dialog in the way.
+Lipsync makes the same face in the same clip say new words. It is optional, runs on your own key and costs cents. You never need it to edit.
 
-You need a [fal.ai key](ai.md) in **Settings → AI**. Everything below is billed by fal at its list price; Gaziyav adds nothing.
+You need a [fal.ai key](ai.md) in **Settings → AI**. fal bills everything below at its list price; Gaziyav adds nothing.
 
 ## The podcast flow
 
-You have a guest's clip and want them to say something else — a correction, a call to action, a line in another language.
+You have a guest's clip and want them to say something else: a correction, a call to action, a line in another language.
 
-1. **Select the clip** on the timeline. Press <kbd>⌥L</kbd> — or the clip's right-click menu → **Lipsync…**, or <kbd>⌘K</kbd> → «lipsync». Lipsync is one of the tools in the inspector's **AI** tab; all three ways reveal it with the cursor in the words field.
+1. **Select the clip** on the timeline and press <kbd>⌥L</kbd>. Or use the clip's right-click menu → **Lipsync…**, or <kbd>⌘K</kbd> → «lipsync». Lipsync is one of the tools in the inspector's **AI** tab; each way opens it with the cursor in the text field.
 2. **Type the new words.** By default the voice is cloned from the clip itself.
-3. **Press <kbd>⌘</kbd><kbd>↵</kbd>** (or the button). The button already says the total — for example «Voice and lipsync ≈ 21 ¢».
+3. **Press <kbd>⌘</kbd><kbd>↵</kbd>** (or the button). The button already shows the total, for example «Voice and lipsync ≈ 21 ¢».
 
-Gaziyav speaks the line in the guest's voice, sends the speech to the lipsync model, and puts the result **in place of the clip's old speech**: the clip takes the voice's length, the rest of the old take is trimmed off like any trim (drag the edge or <kbd>⌘Z</kbd> to get it back), and the clips after it follow the magnet. The old words are never heard after the new line. One <kbd>⌘Z</kbd> undoes the whole thing.
+Gaziyav speaks the line in the guest's voice, sends the speech to the lipsync model and puts the result **in place of the clip's old speech**. The clip takes the length of the new voice. The rest of the old take is trimmed off like any trim (drag the edge or press <kbd>⌘Z</kbd> to get it back), and the clips after it follow the magnet. The old words are never heard after the new line. One <kbd>⌘Z</kbd> undoes the whole thing.
 
-The progress stays on the clip's run, the editor stays free: start a second clip while the first runs. Three clips run at once, the rest wait in a queue with their place shown. A paid run survives quitting the app — open it again and the result lands once, never charged twice.
+Progress shows on the clip, and you can keep editing or start a second clip. Three clips run at once; the rest wait in a queue with their place shown. A paid run survives quitting the app: open it again and the result lands once, never charged twice.
 
 ### Other sources of sound
 
@@ -28,23 +28,23 @@ The progress stays on the clip's run, the editor stays free: start a second clip
 
 | Choice | What happens |
 |---|---|
-| **Clip to the voice's length** (default for new words) | The result stands at the clip's start; the rest of the clip is trimmed off; later clips close up. |
+| **Clip to the voice's length** (default for new words) | The result starts at the clip's start; the rest of the clip is trimmed off; later clips close up. |
 | **Only a piece, the rest stays** | The result replaces only as much of the clip as the voice lasts; the rest of the original follows. |
 | **Whole clip** | The whole clip is sent; silence after the speech. |
-| **Above the clip** | The result goes on a track above, the clip under it is muted for that time. |
+| **Above the clip** | The result goes on a track above; the clip under it is muted for that time. |
 
-When the voice is longer than the clip, the video plays forward and back (no jump) by default, or loops, or holds the last frame. Your last choice is remembered.
+When the voice is longer than the clip, the video plays forward and back (no jump) by default, or loops, or holds the last frame. Gaziyav remembers your last choice.
 
 ## Try a sample, keep takes
 
 <img src="../../assets/screens/en/05-lipsync-sample.jpg" width="100%" alt="The lipsync panel with a 3-second sample made by VEED Lipsync: Before / After, «Make the whole · 20 ¢» and «Another model»; the button below reads «Lipsync · 20 ¢» and «Sample · 3 s ≈ 2.6 ¢»">
 
-- **A 3-second sample first.** Beside the run button, **Sample · 3 s** (about **2.6 ¢**) lipsyncs three seconds of the real face and plays them right in the panel — before and after. Nothing lands on the timeline. If it looks right, **Make the whole**; if not, **Another model**. When the chosen model is priced per clip (LatentSync), the sample is made by VEED Lipsync and the panel says so.
-- **The model list with prices.** The model line opens a list of every model with *its* price for this clip and a star on the one that suits the shot (a face to camera, a profile, a hand near the mouth…); a model that cannot take the clip is greyed out with the reason.
-- **Takes on the clip.** Every result is a take of the same clip, not a new clip: <kbd>⇧⌥L</kbd> (or the clip's menu) flips between the original and the lipsynced take, in place, one <kbd>⌘Z</kbd>. **Another take** under the result makes one more at the same price.
-- **Lips out of date.** If you later change the sound under the clip, an amber mark on the clip says the lips no longer match and offers **Redo the lipsync** with the price. <kbd>⌘Z</kbd> on the sound change makes the mark go by itself.
-- **Progress on the clip.** A running lipsync is drawn on the clip itself; × on the clip stops it; a failure shows «!» there with one sentence and **Retry**.
-- **No sound, no button.** With no words typed and no sound under the clip, the button is greyed and says why — you cannot pay for nothing.
+- **A 3-second sample first.** Next to the run button, **Sample · 3 s** (about **2.6 ¢**) lipsyncs three seconds of the real face and plays them in the panel, before and after. Nothing goes on the timeline. If it looks right, press **Make the whole**; if not, **Another model**. When the chosen model is priced per clip (LatentSync), VEED Lipsync makes the sample, and the panel says so.
+- **The model list with prices.** The model line opens a list of every model with *its* price for this clip. A star marks the one that suits the shot (a face to camera, a profile, a hand near the mouth…). A model that cannot take the clip is greyed out, with the reason.
+- **Takes on the clip.** Every result is a take of the same clip, not a new clip. <kbd>⇧⌥L</kbd> (or the clip's menu) switches between the original and the lipsynced take in place, one <kbd>⌘Z</kbd>. **Another take** under the result makes one more at the same price.
+- **Lips out of date.** If you later change the sound under the clip, an amber mark on the clip says the lips no longer match and offers **Redo the lipsync**, with the price. <kbd>⌘Z</kbd> on the sound change removes the mark.
+- **Progress on the clip.** A running lipsync is drawn on the clip itself; × on the clip stops it. A failure shows «!» there with one sentence and **Retry**.
+- **No sound, no button.** With no words typed and no sound under the clip, the button is greyed out and says why, so you can't pay for nothing.
 
 ## What it costs
 
@@ -59,11 +59,11 @@ The default model is **LatentSync** (ByteDance): **$0.20 per run up to 40 s, the
 
 Plus the voice: Qwen3 speech at $0.09 per 1,000 characters (a sentence ≈ half a cent) and the clone at $0.0008 per minute of sample, once.
 
-**Why it is cheap:** Gaziyav finds where somebody actually speaks, sends only those spans (with a quarter-second handle) and never sends silence. Pieces are split at your own cuts and never across them. For per-clip-priced models it packs short spans into one request. The price on the button is the server's plan for exactly what will be sent, so the button and the bill are the same number.
+**Why it is cheap:** Gaziyav finds where somebody actually speaks and sends only those parts (with a quarter-second margin), never the silence. Pieces are split at your own cuts, never across them. For per-clip-priced models it packs short parts into one request. The price on the button is the plan for exactly what will be sent, so the button and the bill show the same number.
 
-**The spending limit:** in **Settings → AI**, «Confirm spending above [1] $». Below it, the button itself is your consent; above it, one confirmation.
+**The spending limit:** in **Settings → AI**, «Confirm spending above [1] $». Below it, the button itself is your consent; above it, you confirm once.
 
-### Stronger models, same key
+### Other models, same key
 
 | Model | Price | Good for |
 |---|---|---|
@@ -80,19 +80,17 @@ Each model in the panel shows its price for *this* clip; a model that cannot tak
 
 Only when you press the button, and only this:
 
-- the **trimmed clip's speech spans** as a video file, re-encoded here to H.264 SDR (BT.709) at high quality — never the whole project, never the parts nobody speaks in;
+- the **speech parts of the trimmed clip** as a video file, re-encoded here to H.264 SDR (BT.709) at high quality; never the whole project, never the parts where nobody speaks;
 - the **sound** the lips should follow;
-- for the clone: the **voice sample** from the clip.
+- for the clone, the **voice sample** from the clip.
 
-They go to **fal.ai** (to its file storage, then the model). What comes back is used only inside the **face region**: Gaziyav composites the answer's mouth area onto your original frames, so the rest of the picture keeps your original pixels.  fal's own terms decide how long they keep the files.
-
-No watermark, no «AI-generated» stamp is added to the result.
+They go to **fal.ai** (to its file storage, then the model). Gaziyav uses only the **face region** of what comes back: it composites the mouth area onto your original frames, and the rest of the picture keeps your original pixels.  fal's own terms decide how long it keeps the files.
 
 ## When something goes wrong
 
-- **No key / no money on fal / a timeout:** one sentence on the run says what happened; nothing is lost, **Retry** runs it again in place. A failed piece of a long clip is retried once by itself.
-- **Several faces in the frame:** today the model picks; choosing the face on the picture is on the [roadmap](../../README.md#roadmap).
-- **The lips look wrong:** try a stronger model from the list (its price is shown) — Sync lipsync‑2 handles head turns and close-ups better.
+- **No key, no money on fal, or a timeout:** one sentence on the run says what happened. Nothing is lost; **Retry** runs it again in place. A failed piece of a long clip is retried once by itself.
+- **Several faces in the frame:** for now the model picks one. Choosing the face is on the [roadmap](../../README.md#roadmap).
+- **The lips look wrong:** try a stronger model from the list (its price is shown). Sync lipsync‑2 handles head turns and close-ups better.
 
 ## Coming next
 

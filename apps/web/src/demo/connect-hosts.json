@@ -1,5 +1,5 @@
 {
-	"_": "Hosts the browser edition may talk to (CSP connect-src and the page's fetch guard); «*.x» = any sub-host of x. fal: only with a pasted key. Hugging Face: the open speech model is DOWNLOADED from it on the first «Generate captions» (the sound itself never leaves the tab).",
+	"_": "Hosts the browser edition may talk to (CSP connect-src and the page's fetch guard); «*.x» = any sub-host of x. fal: only with a pasted key. Hugging Face: the open speech model is DOWNLOADED from it on the first «Generate captions» (the sound itself never leaves the tab). Mixkit: the library's files that come from their publisher (public/sound-library.json).",
 	"connect": [
 		"queue.fal.run",
 		"rest.fal.ai",
@@ -7,6 +7,7 @@
 		"*.fal.media",
 		"huggingface.co",
 		"*.huggingface.co",
-		"*.hf.co"
+		"*.hf.co",
+		"assets.mixkit.co"
 	]
 }

@@ -2,7 +2,7 @@
 
 [← Manual](README.md)
 
-**What it is for.** A finished file — for a platform, for a client, for an archive.
+**What it is for.** A finished file for a platform, a client or an archive.
 
 **How.**
 - <kbd>⌘E</kbd> or **Export** at the top right.
@@ -10,10 +10,10 @@
 - A range only: set in / out (<kbd>I</kbd> <kbd>O</kbd>) first.
 - Faster encoding on the graphics chip: Settings → Performance → «Speed up hardware encoding».
 
-**Rules that surprise people.**
+**Good to know.**
 - Every export is free: no watermark, no subscription for 4K, 8K or 60 fps.
-- Exact to the frame: 72 of 72 export cases (every frame rate, with and without frame smoothing) checked with `ffprobe`; a 10-minute 60 fps film came out with all 36 017 frames and the sound ending within 0.3 ms of the picture.
+- Exports are exact to the frame: 72 of 72 export cases (every frame rate, with and without frame smoothing) checked with `ffprobe`. A 10-minute 60 fps video came out with all 36,017 frames, and its sound ended within 0.3 ms of the picture.
 - Guides and markup in the player never reach the file.
-- When an export finishes while Gaziyav is in the background it can notify you (Settings → General).
+- If an export finishes while Gaziyav is in the background, Gaziyav can notify you (Settings → General).
 
 Then: [Post from the editor](post.md).

@@ -79,19 +79,30 @@ const hfFile = (repo: string, rev: string, file: string, dest: string, size: num
 	sha256,
 });
 /**
- * owner's other editor; a renamed one doesn't exist — at a pinned commit, mirrored by hf-mirror.com):
+ * Gaziyav's own copies on the owner's Hugging Face (adsfadfadsfadsf/gaziyav-models, mirrored by hf-mirror.com):
  * every file of every model, at `<model id>/<dest>` (docs/MODELS-MIRROR.md), so an author taking a file down can't
  * break an install — the original stays the fallback (`alt`). The lipsync UNet is there in the form the app runs
  * (half precision), so that download is smaller. Sizes and sha256 are the repo's MANIFEST.txt (copy:
  * ondevice/gaziyav-models.MANIFEST.txt, checked by a test).
  */
-const pcFile = (_file: string, _dest: string, _size: number, _sha256: string, alt: ModelFile): ModelFile => alt;
+const PC_REPO = "adsfadfadsfadsf/gaziyav-models";
+// main, not a pinned commit: every file is checked by its SHA-256 below, so a newer upload can never be taken for it
+export const PC_REV = "main";
+const pcFile = (file: string, dest: string, size: number, sha256: string, alt: ModelFile): ModelFile => ({ ...hfFile(PC_REPO, PC_REV, file, dest, size, sha256), alt });
 /**
  * Our copy of `original` (the same bytes at `<folder>/<dest>` of PC_REPO), the original as the fallback. One copy per
  * original file: Retouch shares Face swap's. A file that already is ours (the UNet) stays as it is.
  */
-function mirror(_folder: string, original: ModelFile): ModelFile {
-	return original;
+const mirrored = new Map<ModelFile, ModelFile>();
+function mirror(folder: string, original: ModelFile): ModelFile {
+	if (original.alt || original.optional) return original;
+	let ours = mirrored.get(original);
+	if (!ours) {
+		const file = `${folder}/${original.dest.replaceAll("\\", "/")}`;
+		ours = { ...original, url: hf(PC_REPO, PC_REV, file), mirrors: [hfMirror(PC_REPO, PC_REV, file)], alt: original };
+		mirrored.set(original, ours);
+	}
+	return ours;
 }
 
 /** Pinned source files of the lipsync engine (raw GitHub files are byte-stable for a commit). */

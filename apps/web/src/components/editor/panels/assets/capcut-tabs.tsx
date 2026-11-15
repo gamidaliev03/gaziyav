@@ -23,9 +23,9 @@ const ALL_AUDIO_NAV: NavItem[] = [
 	{ key: "tts", label: "Voice", badge: "AI" },
 	{ key: "mine", label: "Yours" },
 ];
-// (the browser edition: the site's own sound pack and the visitor's saved sounds; a music catalog and the voice
-// generator need the Mac app)
-const AUDIO_NAV: NavItem[] = ALL_AUDIO_NAV.filter((item) => !DEMO || item.key === "sfx" || item.key === "mine");
+// (the browser edition: the whole music and sound library, public/sound-library.json, and the visitor's saved sounds;
+// the voice generator needs the Mac app)
+const AUDIO_NAV: NavItem[] = ALL_AUDIO_NAV.filter((item) => !DEMO || item.key !== "tts");
 
 // AI: the generators in one place — a picture, a video, a talking avatar, a translated video.
 const AVATAR_NAV: NavItem[] = [

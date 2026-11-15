@@ -217,7 +217,10 @@ const preview = {
 	},
 	start(entry: LibraryEntry & { gain?: number }, from: number) {
 		this.audio?.pause();
-		const a = new Audio(entry.url);
+		const a = new Audio();
+		// the browser edition's files come from other sites (Hugging Face, Mixkit): asked with CORS, so the gain below still sounds
+		a.crossOrigin = "anonymous";
+		a.src = entry.url;
 		if (entry.gain && typeof AudioContext !== "undefined") {
 			try {
 				if (!this.context) this.context = new AudioContext();

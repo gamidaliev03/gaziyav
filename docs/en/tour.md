@@ -6,17 +6,17 @@ Fifteen slides, two minutes. One idea per slide.
 
 ---
 
-### 1 · The video editor, reinvented with AI
+### 1 · A free video editor with AI inside
 
 <img src="../../assets/brand/banner-en-dark.png" width="100%" alt="Gaziyav: a bubble says «remove the pauses» and the timeline closes up">
 
-- We did not reskin an editor: we rethought how one works — the timeline, the undo, the way AI touches your project.
-- AI edits **inside** the editor, with its own commands, on the timeline you see.
+- For Reels, TikToks and Shorts shot on a phone. On the Mac and in the browser.
+- AI edits **inside** the editor with the editor's own commands; you see every step on the timeline.
 - Free, open source (the editor's own code is MIT), no account, no watermark.
 
 ---
 
-### 2 · One timeline, one grammar
+### 2 · One timeline, one set of rules
 
 <img src="../../assets/screens/en/08-drag.jpg" width="100%" alt="A clip dragged from Media onto the timeline">
 
@@ -30,9 +30,9 @@ Fifteen slides, two minutes. One idea per slide.
 
 <img src="../../assets/screens/en/t-command.jpg" width="100%" alt="The command palette open over the editor">
 
-- Each change is exactly one history step: <kbd>⌘Z</kbd> brings back the state before it, byte for byte.
-- Checked over 930 automated runs of every command, zero broken timeline rules.
-- <kbd>⌘K</kbd> finds and runs every command by name; <kbd>⌘/</kbd> lists every key — CapCut's keymap or Final Cut Pro's.
+- Each change is one history step: <kbd>⌘Z</kbd> brings back the state before it, byte for byte.
+- 930 automated runs of every command broke no timeline rule.
+- <kbd>⌘K</kbd> finds and runs any command by name; <kbd>⌘/</kbd> lists every key, in CapCut's keymap or Final Cut Pro's.
 
 ---
 
@@ -40,23 +40,23 @@ Fifteen slides, two minutes. One idea per slide.
 
 <img src="../../assets/loops/claude-en.gif" width="100%" alt="The request «remove the pauses» appears over the editor; through the connector the two silent pieces are cut out of the clip and the rest closes up on the timeline (12 s → 8.8 s); one ⌘Z would bring them back">
 
-- Say what you want in Claude: «remove the pauses». Claude does it in your open project.
-- It uses the editor's own operations — cut by words, remove pauses, captions, titles, music levels, export.
-- Every step lands on the timeline you see and is undone with <kbd>⌘Z</kbd>.
+- Write to Claude what you want, for example «remove the pauses». Claude does it in your open project.
+- It uses the editor's own operations: cut by words, remove pauses, captions, titles, music levels, export.
+- Every step appears on your timeline, and <kbd>⌘Z</kbd> undoes it.
 
 ---
 
-### 5 · Free: nothing to buy, no API key
+### 5 · No credits, no API key
 
 <img src="../../assets/screens/en/t-settings-claude.jpg" width="100%" alt="Settings → AI → Claude: one Connect button and its status">
 
 - Gaziyav sells no credits for Claude and asks for no key: the connector is part of the app.
-- It attaches to the Claude app you already use — Claude for Mac (desktop extensions are open to all Claude Desktop users) or Claude Code.
+- It works with the Claude app you already use: Claude for Mac (extensions are open to all Claude Desktop users) or Claude Code.
 - **Settings → AI → Claude → Connect Claude**: one press.
 
 ---
 
-### 6 · Things to say
+### 6 · Things to write
 
 <img src="../../assets/screens/en/t-claude-before.jpg" width="100%" alt="The instruction shown over the editor before the edit">
 
@@ -66,7 +66,7 @@ Fifteen slides, two minutes. One idea per slide.
 
 ---
 
-### 7 · Free AI on your own Mac
+### 7 · Free AI on your Mac
 
 <img src="../../assets/screens/en/t-settings-ai.jpg" width="100%" alt="Settings → AI with the on-device features">
 
@@ -80,19 +80,19 @@ Fifteen slides, two minutes. One idea per slide.
 
 <img src="../../assets/screens/en/t-tab-captions.jpg" width="100%" alt="The Captions tab">
 
-- Word-timed captions recognised on your Mac; edit the words, pick a style.
-- Remove pauses: cuts land inside the silence; captions and titles follow.
+- Captions timed to the word, recognised on your Mac. Edit the words, pick a style.
+- Remove pauses: the cuts land inside the silence, and captions and titles move with them.
 - One <kbd>⌘Z</kbd> takes the whole pass back.
 
 ---
 
-### 9 · Titles, effects, transitions, filters
+### 9 · Titles, effects, music, sounds
 
 <img src="../../assets/screens/en/t-tab-text.jpg" width="100%" alt="The Text tab with title designs">
 
-- Title designs, effects, transitions and colour filters — drag onto the timeline or double-click.
-- Keyframes with easing on any animated parameter: <kbd>⌥⇧K</kbd>, <kbd>F9</kbd> for easy ease.
-- Speed, speed curves, freeze frame <kbd>⌥F</kbd>, reverse.
+- Title designs, effects, transitions and colour filters: drag onto the timeline or double-click.
+- 311 music tracks and 2,514 sound effects; each downloads the first time you use it.
+- Keyframes with easing (<kbd>⌥⇧K</kbd>, <kbd>F9</kbd> for easy ease), speed and speed curves, freeze frame <kbd>⌥F</kbd>, reverse.
 
 ---
 
@@ -100,7 +100,7 @@ Fifteen slides, two minutes. One idea per slide.
 
 <img src="../../assets/screens/en/looks.jpg" width="100%" alt="The editor in Minimal, the ten skins and Midnight">
 
-- Ten full skins — Pixel, Neon, Comic, Sakura, Rose, Arena, Film, Analog, Terminal, 95 — and quiet palettes.
+- Ten skins (Pixel, Neon, Comic, Sakura, Rose, Arena, Film, Analog, Terminal, 95) and quiet palettes.
 - A look changes the interface, never your picture: the player stays neutral.
 - Settings → Themes.
 
@@ -110,29 +110,29 @@ Fifteen slides, two minutes. One idea per slide.
 
 <img src="../../assets/screens/en/04-export.jpg" width="100%" alt="The Export window">
 
-- H.264, HEVC, AV1, ProRes, VP9 · MP4, MOV, WebM, GIF · up to 8K · 23.976–60 fps — free.
+- H.264, HEVC, AV1, ProRes, VP9 · MP4, MOV, WebM, GIF · up to 8K · 23.976–60 fps. Free.
 - 72 of 72 export cases exact to the frame.
 - <kbd>⌘E</kbd>.
 
 ---
 
-### 12 · A clip by link, straight into the edit
+### 12 · A clip by link
 
 <img src="../../assets/screens/en/t-link.jpg" width="100%" alt="The link window: paste a link, mark a piece">
 
-- Paste a YouTube, TikTok or Instagram link (or search YouTube) in Media.
-- Mark the piece with <kbd>I</kbd> / <kbd>O</kbd>: only that piece downloads, one drag from the timeline (Claude places it there itself).
-- For material you have the right to use. Desktop app.
+- Paste a YouTube, TikTok or Instagram link in Media, or search YouTube.
+- Mark the piece with <kbd>I</kbd> / <kbd>O</kbd>. Only that piece downloads, ready to drag onto the timeline (Claude places it there itself).
+- For material you have the right to use. Mac app.
 
 ---
 
-### 13 · Post straight from the editor
+### 13 · Post from the editor
 
 <img src="../../assets/screens/en/t-post.jpg" width="100%" alt="The Post sheet">
 
 - The arrow beside Export → **Post to Shorts, Reels, TikTok…**: YouTube, Instagram or TikTok.
-- The platform's own upload page opens inside the app; you sign in there.
-- Gaziyav never sees your password. Desktop app.
+- The platform's own upload page opens inside the app, and you sign in there.
+- Gaziyav never sees your password. Mac app.
 
 ---
 
@@ -140,16 +140,16 @@ Fifteen slides, two minutes. One idea per slide.
 
 <img src="../../assets/screens/en/t-web.jpg" width="100%" alt="Gaziyav in a browser tab: the sample project on the timeline, Media, the player and the inspector">
 
-- For Windows, Linux, a Chromebook, a phone or a tablet: the same editor as a page, no install, no account, works offline after the first open; on a phone, a layout for a finger.
-- Timeline, titles, effects, transitions, generators, sounds, looks, import and export; captions from speech and remove pauses, the model running in the page; AI image, AI video and lipsync (beta) on your own key.
+- For Windows, Linux, a Chromebook, a phone or a tablet. No install, no account; works offline after the first open; on a phone, a layout for a finger.
+- Timeline, titles, effects, transitions, generators, the music and sound library, looks, import and export. Captions from speech and pause removal, with the model running in the page. AI image, AI video and lipsync (beta) on your own key.
 - Only in the Mac app: Claude, the other on-device AI tools, a clip by link, posting, voice, motion graphics.
 
 ---
 
-### 15 · Extras with your own key — and how to start
+### 15 · Paid AI on your own key, and where to start
 
 <img src="../../assets/screens/en/05-lipsync.jpg" width="100%" alt="The lipsync panel with the model list open: every model with its price for this clip, LatentSync starred for a face to the camera">
 
-- Optional, never needed to edit: lipsync, voice, pictures and video, face swap — on your own fal.ai key, the price on the button. A line of lipsync is **20 ¢**, a 3-second sample first about 2.6 ¢.
+- Optional, never needed to edit: lipsync, voice, pictures and video, face swap on your own fal.ai key, with the price on the button. A line of lipsync costs **20 ¢**; a 3-second sample first, about 2.6 ¢.
 - Start: [download for macOS](https://github.com/gamidaliev03/gaziyav/releases/latest) or [open it in your browser](https://gamidaliev03.github.io/gaziyav/editor/).
 - Then: [the manual](manual/README.md).

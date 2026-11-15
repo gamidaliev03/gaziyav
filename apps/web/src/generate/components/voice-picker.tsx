@@ -115,6 +115,8 @@ export function VoicePicker({
 	const tile = "relative aspect-square min-w-0";
 	return (
 		<div className="flex flex-col gap-2" data-voice-picker={label ?? ""}>
+			{/* One kind of card only (the Voice changer's effects): no chips, «All» would say the same */}
+			{chips.length > 2 && (
 			<fieldset className="m-0 flex flex-wrap gap-1 border-0 p-0" aria-label={t("Voice categories")}>
 				{chips.map((c) => (
 					<button
@@ -129,6 +131,7 @@ export function VoicePicker({
 					</button>
 				))}
 			</fieldset>
+			)}
 			<div className="grid gap-1.5" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(72px, 1fr))" }} data-voice-grid>
 				{shown.map((v) => {
 					const picked = value === v.id;

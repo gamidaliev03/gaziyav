@@ -5,6 +5,7 @@
 //  - the folder the owner prepares for the upload (~/gaziyav-content, STUDIO_CONTENT_STAGING), so a new build can be
 //    checked before its files are on Hugging Face;
 //  - our Hugging Face dataset and its mirror hf-mirror.com — only files whose licence lets us share them (`hf`);
+//  - the place it was published (`url`), e.g. Mixkit's own server for Mixkit items (their licence forbids re-hosting).
 // A download the user asked for starts at once; background ones (a tab's top files, the rows in view) run at most two
 // at a time and wait while the timeline plays, a video exports or an AI job runs.
 import crypto from "node:crypto";
@@ -28,7 +29,8 @@ export interface CloudFile {
 	top?: number;
 }
 
-const DATASET = () => process.env.STUDIO_MEDIA_DATASET || "";
+// Gaziyav's own public dataset on the owner's Hugging Face (never another project's).
+const DATASET = () => process.env.STUDIO_MEDIA_DATASET || "adsfadfadsfadsf/gaziyav-media";
 const HOSTS = () => (process.env.STUDIO_MEDIA_HOSTS ?? "https://huggingface.co,https://hf-mirror.com").split(",").filter(Boolean);
 export const stagingRoot = () => process.env.STUDIO_CONTENT_STAGING ?? path.join(os.homedir(), "gaziyav-content");
 export const cacheRoot = () => path.join(supportDir(), "MediaLibrary");
@@ -44,7 +46,7 @@ const encodePath = (p: string) => p.split("/").map(encodeURIComponent).join("/")
 /** Every place the file may come from, in order (a path is the upload folder's copy). */
 export function sourcesOf(f: CloudFile): string[] {
 	const out: string[] = [];
-	if (f.hf && DATASET()) {
+	if (f.hf) {
 		const staged = path.join(stagingRoot(), f.part, f.file);
 		if (fs.existsSync(staged)) out.push(staged);
 		for (const host of HOSTS()) out.push(`${host}/datasets/${DATASET()}/resolve/main/${encodePath(keyOf(f))}`);

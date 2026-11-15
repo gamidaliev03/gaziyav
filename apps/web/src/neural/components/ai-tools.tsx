@@ -14,8 +14,7 @@ import type { NumberParamDefinition } from "@/params";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useEditor } from "@/editor/use-editor";
-import { useSavedVoices } from "@/generate/components/my-voices";
-import { myCards, readyCards, type VoiceCard, VoicePicker } from "@/generate/components/voice-picker";
+import { type VoiceCard, VoicePicker } from "@/generate/components/voice-picker";
 import { useT } from "@/i18n";
 import { etaSeconds, formatDuration, jobCenter, useJobsStore } from "@/jobs/store";
 import type { TimelineElement } from "@/timeline";
@@ -296,20 +295,14 @@ export function SeparateVoice({ element, trackId }: { element: TimelineElement; 
 	);
 }
 
-/** Audio → Voice changer: voice effects (no download) and voices (ready-made and My voices; one download). */
+/** Audio → Voice changer: voice effects only — phone, walkie-talkie, deep and the rest (the owner, 16.11: other people's
+ * voices belong to text to speech, not here). No download; the words and timing stay. */
 export function VoiceChanger({ element, trackId }: { element: TimelineElement; trackId: string }) {
 	const t = useT();
 	const [voice, setVoice] = useState("deep");
-	const mine = useSavedVoices();
-	// One grid as everywhere a voice is picked: the effects (each with its sample: a ready voice through it), the ready
-	// voices and My voices — the words and timing stay.
 	const cards = useMemo<VoiceCard[]>(
-		() => [
-			...VOICE_EFFECTS.map((v) => ({ id: v.id, name: t(v.name), sample: `/api/voice-sample/fx:${v.id}`, groups: ["filters" as const] })),
-			...readyCards().map((c) => ({ ...c, id: `ready:${c.id}` })),
-			...myCards(mine).map((c) => ({ ...c, id: `my:${c.id}` })),
-		],
-		[mine, t],
+		() => VOICE_EFFECTS.map((v) => ({ id: v.id, name: t(v.name), sample: `/api/voice-sample/fx:${v.id}`, groups: ["filters" as const] })),
+		[t],
 	);
 	return (
 		<div className="flex flex-col gap-2 px-4 pb-3" data-ai-tool="voiceChange">

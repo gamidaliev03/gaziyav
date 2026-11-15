@@ -70,6 +70,8 @@ export interface PointJob {
 	replaces?: { trackId: string; elementId: string };
 	/** What was asked (Retry runs it again). */
 	input?: PointInput;
+	/** The project it was made in: each project's panel lists only its own generations (the owner, 16.11). */
+	projectId?: string;
 }
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
@@ -171,6 +173,8 @@ export const usePoint = create<State>()(
 				}
 				const { jobId, cost } = await api<{ jobId: string; cost: number }>("generate", { method: "POST", body: JSON.stringify(allowed === undefined ? input : { ...input, allowed }) });
 				const job: PointJob = { id: jobId, kind: input.kind, model: input.model, prompt: input.prompt, cost, state: "queued", progress: 0, error: null, files: [], at: Date.now(), input, ...(input.duration_seconds ? { duration: input.duration_seconds } : {}), ...(options?.quiet ? { quiet: true } : {}), ...(options?.replaces ? { replaces: options.replaces } : {}) };
+				const projectId = EditorCore.getInstance().project.getActiveOrNull()?.metadata.id;
+				if (projectId) job.projectId = projectId;
 				set({ jobs: [job, ...get().jobs].slice(0, 40) });
 				void get().refresh();
 				return job;
@@ -207,6 +211,7 @@ export const usePoint = create<State>()(
 				const old = get().jobs.find((j) => j.id === id);
 				if (!old?.input) throw new Error("This generation can't be repeated: start it again from the form.");
 				const job = await get().start(old.input);
+				if (old.projectId) job.projectId = old.projectId;
 				// The new run takes the old card's place.
 				set({ jobs: get().jobs.filter((j) => j.id !== id) });
 				return job;

@@ -1,3 +1,4 @@
+import { soundUrls } from "@/demo/sound-urls";
 import { DEMO } from "@/demo/flag";
 // Shared between the library server and the Sounds panel.
 export type LibraryKind = "sfx" | "music";
@@ -52,4 +53,8 @@ export interface LibraryUserState {
 
 /** Where a library file is served. The browser edition has no server: its own sound pack lies beside the page (sfx/). */
 export const libraryFileUrl = (id: string) =>
-	DEMO && id.startsWith("b-") ? new URL(`sfx/${encodeURIComponent(id.slice(2))}.wav`, document.baseURI).href : `/api/library/file/${encodeURIComponent(id)}`;
+	DEMO && id.startsWith("b-")
+		? new URL(`sfx/${encodeURIComponent(id.slice(2))}.wav`, document.baseURI).href
+		: DEMO && soundUrls.has(id)
+			? (soundUrls.get(id) as string)
+			: `/api/library/file/${encodeURIComponent(id)}`;

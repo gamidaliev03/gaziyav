@@ -4,6 +4,7 @@
 // «not in the browser» at once (AI requests go to one adapter: ai-adapter.ts) — no request ever leaves the tab. Requests to any other host are refused too: the demo
 // sends nothing anywhere (the page's Content-Security-Policy says the same to the browser).
 
+import { soundUrls } from "@/demo/sound-urls";
 import { browserAi, isAiPath } from "./ai-adapter";
 import hosts from "./connect-hosts.json";
 
@@ -29,8 +30,9 @@ export function answer(path: string, method = "GET", search = ""): Response {
 	if (area === "library") {
 		if (head === "index") return json({ items: [], sources: [] });
 		if (head === "state") return json({ favourites: [], recent: [] });
-		if (head === "progress") return json({ downloading: {}, cached: [], offline: true });
-		if (head === "ensure") return json({ ok: false, failed: (params.get("ids") ?? "").split(",").filter(Boolean) });
+		// every file of the library is one address away (Hugging Face or its publisher): «here», nothing to download first
+		if (head === "progress") return json({ downloading: {}, cached: (params.get("ids") ?? "").split(",").filter(Boolean), offline: false });
+		if (head === "ensure") return json({ ok: true, failed: [] });
 		// favourites and «recent» of the sound panel: accepted, nothing kept
 		if (method !== "GET") return json({ ok: true, favourites: [], recent: [] });
 	}
@@ -65,15 +67,33 @@ export const allowedHost = (origin: string, list: readonly string[] = hosts.conn
 	return list.some((h) => (h.startsWith("*.") ? host.endsWith(h.slice(1)) : host === h));
 };
 
-/** The site's own sound pack (public/sfx, CC0) as the app's sound library lists it (library/server/index-store.ts). */
-async function bundledSounds(realFetch: typeof fetch): Promise<Response> {
-	try {
-		const rows = (await (await realFetch(new URL("sfx/index.json", document.baseURI))).json()) as Array<{ file: string; name: string; en?: string; cat: string; tags?: string[]; dur: number }>;
-		const items = rows.map((r) => ({ id: `b-${r.file.replace(/\.[^.]+$/, "")}`, kind: "sfx", name: r.en || r.name, cat: "Basic", tags: [r.name, r.cat, ...(r.tags ?? [])], dur: r.dur, src: "bundled" }));
-		return json({ items, sources: [{ src: "bundled", kind: "sfx", count: items.length }] });
-	} catch {
-		return json({ items: [], sources: [] });
-	}
+/**
+ * The library as the app's sound panel lists it (library/server/index-store.ts): the site's own sound pack (public/sfx,
+ * CC0, ids b-) and the desktop's whole music and sound catalog (public/sound-library.json, ids ks-/km-, each with the
+ * address of its file: scripts/web-demo/sound-library.mjs).
+ */
+async function librarySounds(realFetch: typeof fetch): Promise<Response> {
+	const read = async <T,>(file: string): Promise<T[]> => {
+		try {
+			return (await (await realFetch(new URL(file, document.baseURI))).json()) as T[];
+		} catch {
+			return [];
+		}
+	};
+	const [rows, catalog] = await Promise.all([
+		read<{ file: string; name: string; en?: string; cat: string; tags?: string[]; dur: number }>("sfx/index.json"),
+		read<{ id: string; kind: "sfx" | "music"; url: string }>("sound-library.json"),
+	]);
+	const bundled = rows.map((r) => ({ id: `b-${r.file.replace(/\.[^.]+$/, "")}`, kind: "sfx", name: r.en || r.name, cat: "Basic", tags: [r.name, r.cat, ...(r.tags ?? [])], dur: r.dur, src: "bundled" }));
+	const kadr = catalog.map(({ url, ...item }) => {
+		soundUrls.set(item.id, url);
+		return item;
+	});
+	const sources = [
+		...(bundled.length ? [{ src: "bundled", kind: "sfx", count: bundled.length }] : []),
+		...(["sfx", "music"] as const).map((kind) => ({ src: "kadr", kind, count: kadr.filter((i) => i.kind === kind).length })).filter((s) => s.count),
+	];
+	return json({ items: [...bundled, ...kadr], sources });
 }
 
 let installed = false;
@@ -111,7 +131,7 @@ export function installDemoApi(): void {
 		}
 		if (path === "/api/library/index" && method === "GET") {
 			calls.push({ method, path, status: 200 });
-			return bundledSounds(realFetch);
+			return librarySounds(realFetch);
 		}
 		const response = answer(path, method, url.search);
 		calls.push({ method, path, status: response.status });

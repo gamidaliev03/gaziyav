@@ -2,13 +2,13 @@
 
 [← Manual](README.md)
 
-**What it is for.** The editor's own appearance — never your picture.
+**What it is for.** How the editor itself looks. A look never changes your video.
 
-**How.** Settings → **Themes**: pick a tile. Light or dark where the look has both.
+**How.** Settings → **Themes**: pick a tile. Choose light or dark where the look has both.
 
 - Ten full skins: **Pixel**, **Neon**, **Comic**, **Sakura**, **Rose**, **Arena**, **Film**, **Analog**, **Terminal**, **95**.
-- Quiet palettes: Liquid glass, Frosted glass, Strict, Midnight, Sand, High contrast — and the calm default, Minimal.
+- Six palettes: Liquid glass, Frosted glass, Strict, Midnight, Sand, High contrast. The default is Minimal.
 
-**Rules that surprise people.**
-- A look changes every surface, icon and motion of the interface — never the layout, the keys or the colours of your picture.
+**Good to know.**
+- A look changes the surfaces, icons and animations of the interface. It never changes the layout, the keys or the colours of your video.
 - The player and thumbnails stay neutral in every look.
