@@ -30,6 +30,18 @@ Gaziyav — бесплатная монтажка с открытым кодом
 
 <p align="center"><a href="docs/ru/tour.md"><b>Экскурсия на две минуты →</b></a> · <a href="https://gamidaliev03.github.io/gaziyav/tour/">та же экскурсия слайдами</a></p>
 
+## Сделано в Gaziyav руками ИИ
+
+Три клипа для LINDA 4EVER — группы, которой не существует: ИИ-монтажёр собрал их в Gaziyav от начала до конца — персонажи, липсинк, монтаж в долю, — человек таймлайн не трогал. Нажмите на кадр, чтобы смотреть клип целиком.
+
+<table>
+<tr>
+<td width="33%"><a href="https://gamidaliev03.github.io/portfolio/linda-mama-full.mp4"><img src="https://gamidaliev03.github.io/portfolio/linda-mama.jpg" width="100%" alt="LINDA 4EVER — «Мама», клип, который ИИ смонтировал в Gaziyav"></a><br><b>«Мама»</b> · 3:10</td>
+<td width="33%"><a href="https://gamidaliev03.github.io/portfolio/linda-nas-ne-bylo-full.mp4"><img src="https://gamidaliev03.github.io/portfolio/linda-nas-ne-bylo.jpg" width="100%" alt="LINDA 4EVER — «Нас не было», клип, который ИИ смонтировал в Gaziyav"></a><br><b>«Нас не было»</b> · 2:25</td>
+<td width="33%"><a href="https://gamidaliev03.github.io/portfolio/linda-dnevnik-full.mp4"><img src="https://gamidaliev03.github.io/portfolio/linda-dnevnik.jpg" width="100%" alt="LINDA 4EVER — «Дневник» (live), клип, который ИИ смонтировал в Gaziyav"></a><br><b>«Дневник» (live)</b> · 1:48</td>
+</tr>
+</table>
+
 ## Почему Gaziyav
 
 - **Монтажка, переизобретённая заново.** Мы не перекрасили чужой редактор — мы заново продумали, как он работает. Любой клип подчиняется одной грамматике, любая правка — ровно один шаг отмены, речь на таймлайне — это слова, которые можно резать, а в экспорте ровно то, что вы видели. Выучил один раз — и он больше не удивляет и не тяжелеет на обычном Mac ([замеры](#быстро-на-обычном-mac)).
