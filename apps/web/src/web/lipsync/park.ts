@@ -3,15 +3,17 @@
 // completes; localStorage lost the last writes on a killed process in the desktop's own test), a Map in unit tests.
 import type { QueuedRequest } from "./provider";
 
-export type StageId = "sample" | "speech" | "words" | "prepare" | "lipsync";
+/** A job's stage (the lipsync's: sample, speech, words, prepare, lipsync; the other kinds name their own). */
+export type StageId = string;
 
 export interface ParkedJob {
 	id: string;
-	kind: "voiceover" | "lipsync";
+	/** voiceover, lipsync, or a kind another browser module registered (generate-voice, voice-clone, faceswap). */
+	kind: string;
 	/** What this run makes (inputs + model): a second run of the same thing follows the paid request, never pays again. */
 	runKey: string;
 	at: number;
-	/** The provider's requests, by stage, with the answer once it came (the file link). */
+	/** The provider's requests, by stage (or a slot of a stage), with the answer once it came (the file link). */
 	reqs: Partial<Record<StageId, QueuedRequest & { answer?: unknown }>>;
 	/** What collecting needs without the page's memory: the words, the language, the model, the voice already made. */
 	input: Record<string, unknown>;

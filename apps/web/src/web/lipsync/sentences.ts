@@ -23,6 +23,23 @@ export const SENTENCES = {
 	"web.too_long": { ru: "Кусок длиннее, чем берёт модель: выберите кусок короче или другую модель.", en: "The piece is longer than the model takes: pick a shorter piece or another model." },
 	"web.unknown_job": { ru: "Эта задача больше не известна странице.", en: "This job is no longer known to the page." },
 	"web.no_text": { ru: "Напишите, что должен сказать голос.", en: "Type what the voice should say." },
+	// voices (web/voice), face swap (web/faceswap), the AI editor and the script writer (web/agent)
+	"web.voice_gone": { ru: "Этого голоса больше нет в этом браузере — клонируйте его заново в «Мои голоса».", en: "This voice is no longer in this browser — clone it again in My voices." },
+	"web.trend_app_only": { ru: "Трендовые голоса обрабатываются в приложении: выберите готовый голос или свой.", en: "Trending voice looks are treated in the app: pick a ready voice or one of yours." },
+	"web.no_speech": { ru: "В записи не слышно речи — возьмите 10–30 с, где говорит один человек.", en: "No speech found in this recording — use 10–30 s of one person talking." },
+	"web.little_speech": { ru: "Здесь слишком мало речи — возьмите 10–30 с, где говорит один человек, чтобы голос был похож.", en: "Too little speech here — use 10–30 s of one person talking, so the voice sounds like them." },
+	"web.no_face": { ru: "Сначала выберите лицо.", en: "Pick a face first." },
+	"web.face_gone": { ru: "Этого лица больше нет в этом браузере — добавьте его снова.", en: "That face is no longer in this browser. Add it again." },
+	"web.no_consent": { ru: "Подтвердите, что у вас есть право использовать лицо этого человека.", en: "Confirm you have the right to use this person's face." },
+	"web.look_app_only": { ru: "Образы лица делает модель на устройстве — её нет ни здесь, ни в приложении: выберите лицо для замены.", en: "Face looks need the on-device face model, which this edition doesn't carry. Pick a face to swap instead." },
+	"web.photo_bad": { ru: "Это фото не читается: выберите JPEG или PNG.", en: "That photo can't be read: pick a JPEG or PNG." },
+	"web.photo_big": { ru: "Фото слишком большое (не больше 40 МБ).", en: "The photo is too big (40 MB at most)." },
+	"web.llm_empty": { ru: "ИИ Gaziyav вернул пустой ответ. Попробуйте ещё раз.", en: "Gaziyav AI returned an empty answer. Try again." },
+	"web.llm_length": { ru: "ИИ Gaziyav не уложился в длину ответа. Попробуйте ещё раз — обычно со второго раза получается.", en: "Gaziyav AI ran out of answer length. Try again: it usually works the second time." },
+	"web.llm_text": { ru: "ИИ Gaziyav не прислал годного текста. Нажмите «Повторить».", en: "Gaziyav AI sent no usable text. Press Retry." },
+	"web.empty_chat": { ru: "Пустой разговор.", en: "Empty conversation" },
+	"web.busy": { ru: "fal.ai сейчас занят (слишком много запросов): подождите минуту и нажмите «Повторить».", en: "fal.ai is busy right now (too many requests): wait a minute, then press Retry." },
+	"web.bad_model": { ru: "Эта модель здесь не предлагается.", en: "This model isn't offered for that." },
 } as const satisfies Record<string, Record<Lang, string>>;
 
 export type SentenceKey = keyof typeof SENTENCES;

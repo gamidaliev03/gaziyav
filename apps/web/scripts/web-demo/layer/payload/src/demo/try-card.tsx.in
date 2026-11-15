@@ -79,8 +79,9 @@ export function TryCard() {
 		};
 	}, [editor]);
 	if (state.closed) return null;
+	// In the panel's flow under the content, never over it (16.11: as an overlay it covered «Generate» of the captions)
 	return (
-		<div className="bg-background/95 absolute inset-x-2 bottom-2 z-10 rounded-md border p-3 shadow-sm" data-demo-try>
+		<div className="bg-background/95 mx-2 mb-2 shrink-0 rounded-md border p-3 shadow-sm" data-demo-try>
 			<div className="mb-2 flex justify-between items-center">
 				<span className="text-foreground text-[12px] font-semibold">{tr("Try it in a minute")}</span>
 				<button type="button" aria-label={tr("Close")} className="text-muted-foreground hover:text-foreground -mr-1 h-5 w-5 rounded text-[14px] leading-none" onClick={() => write({ ...read(), closed: true })} data-demo-try-close>

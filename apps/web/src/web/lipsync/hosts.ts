@@ -1,8 +1,11 @@
 // The provider's hosts the page talks to (and nobody else). The key goes ONLY to KEY_HOSTS, in the Authorization
 // header; storage (the signed upload link and the result files) is reached without it, as the desktop does.
 
-/** The queue (submit, status, answer, cancel) and the storage's ticket desk: these carry «Authorization: Key …». */
-export const KEY_HOSTS = ["queue.fal.run", "rest.fal.ai"] as const;
+/**
+ * The queue (submit, status, answer, cancel), the storage's ticket desk, the agent's model (OpenRouter through fal:
+ * fal.run) and the account (the balance: api.fal.ai) — these carry «Authorization: Key …».
+ */
+export const KEY_HOSTS = ["queue.fal.run", "rest.fal.ai", "fal.run", "api.fal.ai"] as const;
 
 /** Where uploads are PUT and results are fetched from (fal's CDN; the ticket names the exact host). */
 export const STORAGE_HOSTS = ["v3.fal.media", "v3b.fal.media", "fal.media"] as const;

@@ -9,54 +9,22 @@ import { StudioError } from "@/studio/server/errors";
 import { probe } from "@/studio/server/media";
 import { studioHome } from "@/studio/server/settings";
 import { findTool, reason, run } from "@/studio/server/tools";
-import { falModel, isQwenVoice, MINIMAX_VOICES, price } from "./models";
-import { referenceFor } from "./reference";
+import { falModel, isQwenVoice, price } from "./models";
+import { BOOST, falReadyVoice, falSpeechRequest } from "./speech";
 import { addSpend, chosenTts, liveUnitPrice, modelFor, type RunOptions, runFal, uploadFile } from "./server";
-import { minimaxCloneInput, minimaxSpeechInput, qwenCloneInput, qwenSpeechInput } from "./wire";
+import { minimaxCloneInput, qwenCloneInput } from "./wire";
 import { kieSpeechInput } from "../kie/catalog";
 import { provider } from "@/ai/provider";
 
-/** ISO code → MiniMax's language_boost name. */
-const BOOST: Record<string, string> = {
-	ru: "Russian", en: "English", de: "German", fr: "French", es: "Spanish", it: "Italian", pt: "Portuguese", ja: "Japanese", ko: "Korean", zh: "Chinese",
-	tr: "Turkish", uk: "Ukrainian", ar: "Arabic", pl: "Polish", nl: "Dutch", hi: "Hindi", vi: "Vietnamese", id: "Indonesian", th: "Thai", cs: "Czech",
-	ro: "Romanian", el: "Greek", fi: "Finnish", sv: "Swedish", da: "Danish", he: "Hebrew", hu: "Hungarian", bg: "Bulgarian",
-	// The names local-tts used («russian», «english»…) map too.
-	russian: "Russian", english: "English", german: "German", french: "French", spanish: "Spanish", italian: "Italian", portuguese: "Portuguese", japanese: "Japanese", korean: "Korean", chinese: "Chinese",
-};
-
 export const speaksLanguage = (code?: string) => !code || !!BOOST[code.toLowerCase()];
-
-/** The old ready voices (and the trending looks built on them) speak in the closest MiniMax voice. */
-const READY_TO_MINIMAX: Record<string, string> = {
-	ryan: "Determined_Man",
-	aiden: "Friendly_Person",
-	eric: "Patient_Man",
-	dylan: "Casual_Guy",
-	uncle_fu: "Deep_Voice_Man",
-	vivian: "Lively_Girl",
-	serena: "Calm_Woman",
-	ono_anna: "Exuberant_Girl",
-	sohee: "Wise_Woman",
-};
-
-/** The ready voices of the app are Qwen3-TTS's own speakers (Resources/voices holds their recordings). */
-const READY_TO_QWEN: Record<string, string> = { ryan: "Ryan", aiden: "Aiden", eric: "Eric", dylan: "Dylan", uncle_fu: "Uncle_Fu", vivian: "Vivian", serena: "Serena", ono_anna: "Ono_Anna", sohee: "Sohee" };
 
 /** A ready voice as the chosen speech model names it (null when it isn't one). */
 export function systemVoice(id: string | undefined, qwen = isQwenVoice(modelFor("tts").id)): string | null {
 	if (!id) return null;
 	// kie.ai's speech models take the app's own names (src/kie/catalog.ts turns them into its voices).
 	if (modelFor("tts").api === "kie") return id;
-	if (qwen) return READY_TO_QWEN[id] ?? (MINIMAX_VOICES.some((v) => v.id === id) ? "Ryan" : null);
-	if (MINIMAX_VOICES.some((v) => v.id === id)) return id;
-	return READY_TO_MINIMAX[id] ?? null;
+	return falReadyVoice(id, qwen);
 }
-
-/** Qwen's language names. */
-const QWEN_LANG: Record<string, string> = { Russian: "Russian", English: "English", Chinese: "Chinese", Spanish: "Spanish", French: "French", German: "German", Italian: "Italian", Japanese: "Japanese", Korean: "Korean", Portuguese: "Portuguese" };
-
-const EMOTION: Record<string, string> = { energetic: "happy", calm: "neutral", serious: "neutral", neutral: "neutral" };
 
 // ───────────────────────── clones ─────────────────────────
 
@@ -171,7 +139,6 @@ export async function speak(s: SpeakInput, o: RunOptions = {}): Promise<{ second
 	const model = s.cloned ? chosenTts() : modelFor("tts");
 	const text = s.text.trim().slice(0, 5000);
 	if (!text) throw new StudioError("Type what the voice should say.");
-	const boost = BOOST[(s.language ?? "").toLowerCase()] ?? (/[а-яё]/i.test(text) ? "Russian" : "auto");
 	let url: string | undefined;
 	const api = provider(model.api);
 	o.onStatus?.(`voicing on ${api.label}`);
@@ -181,21 +148,12 @@ export async function speak(s: SpeakInput, o: RunOptions = {}): Promise<{ second
 		const r = await api.run(model.id, kieSpeechInput({ text, voice: s.voiceId, speed: s.speed, language: /^[a-z]{2}$/i.test(s.language ?? "") ? s.language : undefined }), "audio", { expectSeconds: 5 + text.length / 60, ...o });
 		url = r.audio?.url;
 		charged = r.usd;
-	} else if (isQwenVoice(model.id)) {
-		const r = await runFal<{ audio?: { url?: string } }>(
-			model.id,
-			qwenSpeechInput({ text, language: QWEN_LANG[boost] ?? "Auto", voice: s.voiceId, cloned: s.cloned, reference: referenceFor(text, s.referenceText), style: s.style }),
-			{ expectSeconds: 6 + text.length / 25, ...o },
-		);
-		url = r.audio?.url;
 	} else {
-		const r = await runFal<{ audio?: { url?: string } }>(
-			model.id,
-			minimaxSpeechInput({ endpoint: model.id, text, voice: s.voiceId, speed: s.speed, emotion: s.style ? EMOTION[s.style] : undefined, boost }),
-			{ expectSeconds: 5 + text.length / 60, ...o },
-		);
+		// fal's speech models: the request is fal/speech.ts's, the one the browser edition sends too
+		const req = falSpeechRequest(model, { text, voiceId: s.voiceId, cloned: s.cloned, referenceText: s.referenceText, language: s.language, style: s.style, speed: s.speed });
+		const r = await runFal<{ audio?: { url?: string } }>(req.endpoint, req.input, { expectSeconds: req.expectSeconds, ...o });
 		url = r.audio?.url;
-		if (s.cloned) touchClone(s.voiceId);
+		if (s.cloned && !isQwenVoice(model.id)) touchClone(s.voiceId);
 	}
 	const raw = `${s.out}.download`;
 	try {

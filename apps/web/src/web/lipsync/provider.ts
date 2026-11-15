@@ -96,6 +96,8 @@ export function createProvider(o: ProviderOptions) {
 			if (!o.key()) return;
 			await call(req.cancelUrl, { method: "PUT" }).then((r) => r.body?.cancel()).catch(() => {});
 		},
+		/** Any other call to the provider's own hosts (the agent's model, the account): the key only where it may go. */
+		request: (url: string, init: RequestInit & { headers?: Record<string, string> }, signal?: AbortSignal) => call(url, init, signal),
 		/** A finished file (the provider's links are public and short-lived: fetched at once, no key). */
 		async download(url: unknown, signal?: AbortSignal): Promise<Blob> {
 			if (typeof url !== "string" || !/^https:\/\//.test(url)) throw new WebLipError("web.no_file", "no link", true);

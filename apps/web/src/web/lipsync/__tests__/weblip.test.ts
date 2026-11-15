@@ -54,7 +54,7 @@ describe("request shapes", () => {
 		expect(mayCarryKey("https://v3.fal.media/files/x")).toBe(false);
 		expect(mayCarryKey("http://queue.fal.run/x")).toBe(false);
 		expect(mayCarryKey("https://queue.fal.run.evil.example/x")).toBe(false);
-		expect(CONNECT_HOSTS).toEqual(["queue.fal.run", "rest.fal.ai", "v3.fal.media", "v3b.fal.media", "fal.media"]);
+		expect(CONNECT_HOSTS).toEqual(["queue.fal.run", "rest.fal.ai", "fal.run", "api.fal.ai", "v3.fal.media", "v3b.fal.media", "fal.media"]);
 	});
 	test("the key: one slot, forget removes it", () => {
 		expect(readKey()).toBe(KEY);

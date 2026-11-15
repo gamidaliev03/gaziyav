@@ -2,8 +2,10 @@
 // from the clip's own sound + speech) and the lipsync job (the used span → the provider → the result file), with the
 // same stages and JobState the app's client already follows. Money: every provider request id is parked (park.ts)
 // before the page waits on it; after a reload GET jobs/<id> COLLECTS the parked request instead of submitting again,
-// and a new run of the same thing follows a request that was paid but not delivered.
+// and a new run of the same thing follows a request that was paid but not delivered. Other browser modules run their
+// own kinds of jobs on the same machinery (register: web/voice, web/faceswap) — one job list, one GET jobs/<id>.
 import { falModel, type FalModel } from "@/fal/models";
+import { referenceFor } from "@/fal/reference";
 import { lipsyncInput, qwenCloneInput, qwenSpeechInput } from "@/fal/wire";
 import type { JobState, StageState } from "@/studio/server/jobs";
 import type { Preflight, Segment } from "@/studio/server/pipeline";
@@ -13,6 +15,7 @@ import type { Park, ParkedJob, StageId } from "./park";
 import { CLONE_MODEL, cloneUsd, lipUsd, runPrice, TTS_MODEL, voiceUsd, webLipModel } from "./price";
 import type { Provider, QueuedRequest } from "./provider";
 import { APP_CHEAPER, keyOf, type Lang, say, WebLipError } from "./sentences";
+import { keepClone, knownClone } from "../voice/clones";
 
 export interface EngineDeps {
 	provider: Provider;
@@ -24,9 +27,11 @@ export interface EngineDeps {
 	pollMs?: number;
 	uid?: () => string;
 	now?: () => number;
+	/** One of «My voices» (`local:<id>`, web/voice/store.ts): its sample, what it says and its hash. */
+	myVoice?: (id: string) => Promise<{ blob: Blob; text: string; seconds: number; hash: string } | null>;
 }
 
-interface Held {
+export interface Held {
 	blob: Blob;
 	name: string;
 	type: string;
@@ -37,6 +42,19 @@ interface Live {
 	abort: AbortController;
 	done: Promise<void>;
 }
+
+/** What a registered kind's body gets: the engine's own steps (a step done once, a paid request followed once). */
+export interface KindTools {
+	step<T>(rec: ParkedJob, id: StageId, body: () => Promise<T>): Promise<T>;
+	/** `slot`: the request's own name when one stage pays for two (a clone, then the speech). */
+	follow<T>(rec: ParkedJob, stage: StageId, signal: AbortSignal, submit: () => Promise<QueuedRequest>, expectSeconds: number, slot?: string): Promise<T>;
+	patchStage(rec: ParkedJob, id: StageId, patch: Partial<StageState>): void;
+	keepResult(blob: Blob, name: string): Promise<string>;
+	getBlob(id: string): Promise<Held | undefined>;
+	save(rec: ParkedJob): Promise<void>;
+}
+
+export type KindBody = (rec: ParkedJob, signal: AbortSignal, tools: KindTools) => Promise<unknown>;
 
 const CLONE_DAYS = 6;
 const READY_TO_QWEN: Record<string, string> = { ryan: "Ryan", aiden: "Aiden", eric: "Eric", dylan: "Dylan", uncle_fu: "Uncle_Fu", vivian: "Vivian", serena: "Serena", ono_anna: "Ono_Anna", sohee: "Sohee" };
@@ -85,7 +103,7 @@ export function createEngine(d: EngineDeps) {
 	}
 
 	// ── the job's record ──
-	function newJob(kind: "voiceover" | "lipsync", stages: Array<{ id: StageId; title: string; timeout: number }>, runKey: string, input: Record<string, unknown>): ParkedJob {
+	function newJob(kind: string, stages: Array<{ id: StageId; title: string; timeout: number }>, runKey: string, input: Record<string, unknown>): ParkedJob {
 		const state: JobState = { id: uid(), kind, status: "running", stages: stages.map((s) => ({ ...s, status: "pending" as const })), cost: 0, startedAt: now() };
 		return { id: state.id, kind, runKey, at: now(), reqs: {}, input, state };
 	}
@@ -111,7 +129,7 @@ export function createEngine(d: EngineDeps) {
 	}
 
 	/** A request paid for by another run of the same thing and not delivered yet (a Retry after a failed download). */
-	async function paidElsewhere(rec: ParkedJob, stage: StageId) {
+	async function paidElsewhere(rec: ParkedJob, stage: string) {
 		for (const other of await d.park.jobs()) {
 			if (other.id === rec.id || other.runKey !== rec.runKey || other.input.delivered || other.state.status === "cancelled") continue;
 			const req = other.reqs[stage];
@@ -121,11 +139,11 @@ export function createEngine(d: EngineDeps) {
 	}
 
 	/** Submit (once), park the id, poll to the end, park the answer. Every paid request of the page goes through here. */
-	async function follow<T>(rec: ParkedJob, stage: StageId, signal: AbortSignal, submit: () => Promise<QueuedRequest>, expectSeconds: number): Promise<T> {
-		let req = rec.reqs[stage];
+	async function follow<T>(rec: ParkedJob, stage: StageId, signal: AbortSignal, submit: () => Promise<QueuedRequest>, expectSeconds: number, slot: string = stage): Promise<T> {
+		let req = rec.reqs[slot];
 		if (req?.answer) return req.answer as T;
 		if (!req) {
-			const found = await paidElsewhere(rec, stage);
+			const found = await paidElsewhere(rec, slot);
 			if (found) {
 				counts.reusedPaid++;
 				req = { ...found.req };
@@ -134,10 +152,10 @@ export function createEngine(d: EngineDeps) {
 			} else {
 				if (signal.aborted) throw new DOMException("cancelled", "AbortError");
 				const fresh = await submit();
-				counts.submits[stage] = (counts.submits[stage] ?? 0) + 1;
+				counts.submits[slot] = (counts.submits[slot] ?? 0) + 1;
 				req = { ...fresh };
 			}
-			rec.reqs[stage] = req;
+			rec.reqs[slot] = req;
 			// parked before the first wait: a reload from here on collects this request, never submits again
 			await save(rec);
 			if (req.answer) return req.answer as T;
@@ -166,7 +184,7 @@ export function createEngine(d: EngineDeps) {
 			} else if (s.state === "done") break;
 			else {
 				// the provider failed or stopped it: not billed, nothing to come back to — a Retry is a new request
-				delete rec.reqs[stage];
+				delete rec.reqs[slot];
 				await save(rec);
 				throw new WebLipError(s.state === "failed" && s.refused ? "web.refused" : "web.failed", s.state === "failed" ? s.error : s.status);
 			}
@@ -234,10 +252,36 @@ export function createEngine(d: EngineDeps) {
 
 	async function voiceBody(rec: ParkedJob, signal: AbortSignal) {
 		const text = String(rec.input.text ?? "");
-		const voice = await step(rec, "sample", async () => {
+		const voice: { url: string; cloned: boolean; reference?: string } = await step(rec, "sample", async () => {
 			const given = String(rec.input.voiceId ?? "");
 			if (given.startsWith("webclone:")) return { url: given.slice(9), cloned: true };
 			if (READY_TO_QWEN[given]) return { url: READY_TO_QWEN[given], cloned: false };
+			if (given.startsWith("local:")) {
+				// one of «My voices»: cloned from its own sample (and its words) once, shared with AI → Voice (web/voice)
+				const mine = await d.myVoice?.(given);
+				if (!mine) throw new WebLipError("web.voice_gone");
+				const known = await knownClone(d.park, "qwen", mine.hash, now());
+				if (known) {
+					patchStage(rec, "sample", { detail: "the voice was cloned before — no clone fee" });
+					return { url: known, cloned: true, reference: mine.text };
+				}
+				const answer = await follow<{ speaker_embedding?: { url?: string } }>(
+					rec,
+					"sample",
+					signal,
+					async () => {
+						patchStage(rec, "sample", { detail: "taking the voice from the sample" });
+						const url = await d.provider.upload(mine.blob, `gz_voice_${uid().slice(0, 8)}.wav`, signal);
+						return d.provider.submit(CLONE_MODEL, qwenCloneInput(url, mine.text), signal);
+					},
+					10,
+				);
+				const url = answer.speaker_embedding?.url;
+				if (!url) throw new WebLipError("web.failed", "no voice");
+				rec.state.cost += cloneUsd(mine.seconds || 30);
+				await keepClone(d.park, "qwen", mine.hash, url, now());
+				return { url, cloned: true, reference: mine.text };
+			}
 			const factKey = `clone:${rec.input.sampleKey}`;
 			const known = await d.park.getFact<{ url: string; used: number }>(factKey);
 			if (known && now() - known.used < CLONE_DAYS * 86_400_000) {
@@ -272,7 +316,7 @@ export function createEngine(d: EngineDeps) {
 				rec,
 				"speech",
 				signal,
-				() => d.provider.submit(TTS_MODEL, qwenSpeechInput({ text: spoken, language: QWEN_LANG[language] ?? "Auto", voice: voice.url, cloned: voice.cloned }), signal),
+				() => d.provider.submit(TTS_MODEL, qwenSpeechInput({ text: spoken, language: QWEN_LANG[language] ?? "Auto", voice: voice.url, cloned: voice.cloned, reference: referenceFor(spoken, voice.reference) }), signal),
 				6 + spoken.length / 25,
 			);
 			const blob = await d.provider.download(answer.audio?.url, signal);
@@ -283,7 +327,8 @@ export function createEngine(d: EngineDeps) {
 			return { fileId, name, duration: (await d.media.probe(typed)).duration };
 		});
 		patchStage(rec, "words", { status: "skipped", detail: "no word timings in the browser" });
-		return { voiceId: voice.cloned ? `webclone:${voice.url}` : String(rec.input.voiceId), fileId: file.fileId, name: file.name, duration: file.duration, words: [], text };
+		const given = String(rec.input.voiceId ?? "");
+		return { voiceId: given.startsWith("local:") ? given : voice.cloned ? `webclone:${voice.url}` : given, fileId: file.fileId, name: file.name, duration: file.duration, words: [], text };
 	}
 
 	// ── the lipsync: the used span as it is, the sound the lips follow ──
@@ -318,10 +363,28 @@ export function createEngine(d: EngineDeps) {
 		return result;
 	}
 
-	const bodyOf = (rec: ParkedJob) => (signal: AbortSignal) => (rec.kind === "voiceover" ? voiceBody(rec, signal) : lipBody(rec, signal));
+	const kinds = new Map<string, KindBody>();
+	const tools: KindTools = { step, follow, patchStage, keepResult, getBlob, save };
+	const bodyOf = (rec: ParkedJob) => (signal: AbortSignal) => {
+		if (rec.kind === "voiceover") return voiceBody(rec, signal);
+		if (rec.kind === "lipsync") return lipBody(rec, signal);
+		const body = kinds.get(rec.kind);
+		return body ? body(rec, signal, tools) : Promise.reject(new WebLipError("web.unknown_job"));
+	};
 
 	return {
 		counts,
+		/** Another module's kind of job (its body runs with the engine's steps; GET jobs/<id> collects it after a reload too). */
+		register(kind: string, body: KindBody) {
+			kinds.set(kind, body);
+		},
+		/** Starts a job of a registered kind; its state at once (the client polls jobs/<id>). */
+		async start(kind: string, stages: Array<{ id: StageId; title: string; timeout: number }>, runKey: string, input: Record<string, unknown>): Promise<JobState> {
+			const rec = newJob(kind, stages, runKey, input);
+			await save(rec);
+			launch(rec, bodyOf(rec));
+			return rec.state;
+		},
 		/** The app's upload: kept in this page's memory only (inputs are never stored). */
 		async upload(blob: Blob, name: string) {
 			const info = await d.media.probe(blob).catch(() => null);
@@ -376,7 +439,7 @@ export function createEngine(d: EngineDeps) {
 			if (!text) throw new WebLipError("web.no_text");
 			if (!d.hasKey()) throw new WebLipError("web.no_key");
 			const given = String(body.voiceId ?? "");
-			if (!given.startsWith("webclone:") && !READY_TO_QWEN[given] && !body.source) throw new WebLipError("web.no_sound");
+			if (!given.startsWith("webclone:") && !given.startsWith("local:") && !READY_TO_QWEN[given] && !body.source) throw new WebLipError("web.no_sound");
 			const src = body.source ? await getBlob(body.source.fileId) : undefined;
 			const srcId = src ? await identity(src.blob) : "";
 			const start = body.source?.start ?? 0;
