@@ -38,6 +38,11 @@ export interface TProjectSettings {
 	canvasSizeMode?: "preset" | "custom";
 	lastCustomCanvasSize?: TCanvasSize | null;
 	originalCanvasSize?: TCanvasSize | null;
+	/**
+	 * The shape came from the first clip (CapCut's «Original»), not from a choice on the start page: when the timeline
+	 * is emptied, the next first clip gives its own (commands/timeline/element/insert-element.ts).
+	 */
+	canvasFromClip?: boolean;
 	background: TBackground;
 }
 

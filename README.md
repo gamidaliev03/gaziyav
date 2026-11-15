@@ -30,18 +30,6 @@ Gaziyav is the free, open-source alternative to CapCut, rebuilt from the timelin
 
 <p align="center"><a href="docs/en/tour.md"><b>The two-minute tour →</b></a> · <a href="https://gamidaliev03.github.io/gaziyav/tour/">the same tour as slides</a></p>
 
-## Made in Gaziyav by the AI
-
-Three music videos for LINDA 4EVER, a band that does not exist: the AI editor made them in Gaziyav from start to finish — characters, lip-sync, cuts to the beat — and no one touched the timeline by hand. Click a frame to watch the whole clip.
-
-<table>
-<tr>
-<td width="33%"><a href="https://gamidaliev03.github.io/portfolio/linda-mama-full.mp4"><img src="https://gamidaliev03.github.io/portfolio/linda-mama.jpg" width="100%" alt="LINDA 4EVER — «Mama», a music video the AI made in Gaziyav"></a><br><b>«Mama»</b> · 3:10</td>
-<td width="33%"><a href="https://gamidaliev03.github.io/portfolio/linda-nas-ne-bylo-full.mp4"><img src="https://gamidaliev03.github.io/portfolio/linda-nas-ne-bylo.jpg" width="100%" alt="LINDA 4EVER — «We Weren't There», a music video the AI made in Gaziyav"></a><br><b>«We Weren't There»</b> · 2:25</td>
-<td width="33%"><a href="https://gamidaliev03.github.io/portfolio/linda-dnevnik-full.mp4"><img src="https://gamidaliev03.github.io/portfolio/linda-dnevnik.jpg" width="100%" alt="LINDA 4EVER — «Diary» (live), a music video the AI made in Gaziyav"></a><br><b>«Diary» (live)</b> · 1:48</td>
-</tr>
-</table>
-
 ## Why Gaziyav
 
 - **The video editor, reinvented.** We did not reskin an editor — we rethought how one works. Every kind of clip obeys one grammar, every edit is exactly one undo step, speech on the timeline is words you can cut, and the export is exactly what you saw. You learn it once, it never surprises you, and it stays light on an ordinary Mac ([measured](#fast-on-an-ordinary-mac)).

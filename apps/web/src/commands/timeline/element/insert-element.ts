@@ -22,6 +22,7 @@ import {
 import { roundMediaTime } from "@/wasm";
 import { endOnFrame } from "@/timeline/frame-grid";
 import { generatorOf } from "@/generators/document";
+import { canvasIsChosen } from "@/canvas/first-clip";
 
 type InsertElementPlacement =
 	| { mode: "explicit"; trackId: string }
@@ -105,11 +106,11 @@ export class InsertElementCommand extends Command {
 		const isVisualMedia =
 			newElement.type === "video" || newElement.type === "image";
 
-		// A format picked on the start page (originalCanvasSize already set) is kept as chosen.
-		const formatChosen = !!editor.project.getActiveOrNull()?.settings.originalCanvasSize;
+		// A format picked on the start page (originalCanvasSize set at creation), or a size picked by hand since, is kept
+		// as chosen. The shape the first clip gave is not a choice: on an emptied timeline the next first clip gives its own.
+		const formatChosen = canvasIsChosen(editor.project.getActiveOrNull()?.settings);
 		if (isFirstElement && isVisualMedia && !formatChosen) {
 			const mediaAssets = editor.media.getAssets();
-			const activeProject = editor.project.getActive();
 			const asset = mediaAssets.find(
 				(item: MediaAsset) => item.id === newElement.mediaId,
 			);
@@ -124,15 +125,8 @@ export class InsertElementCommand extends Command {
 			if (assetSize) {
 				const scale = Math.max(1, 1920 / Math.max(assetSize.width, assetSize.height));
 				const nextCanvasSize = { width: 2 * Math.round((assetSize.width * scale) / 2), height: 2 * Math.round((assetSize.height * scale) / 2) };
-				const shouldSetOriginalCanvasSize =
-					!activeProject?.settings.originalCanvasSize;
 				editor.project.updateSettings({
-					settings: {
-						canvasSize: nextCanvasSize,
-						...(shouldSetOriginalCanvasSize
-							? { originalCanvasSize: nextCanvasSize }
-							: {}),
-					},
+					settings: { canvasSize: nextCanvasSize, originalCanvasSize: nextCanvasSize, canvasFromClip: true },
 					pushHistory: false,
 				});
 			}
@@ -204,7 +198,7 @@ export class InsertElementCommand extends Command {
 	}): TimelineElement {
 		const settings = editor.project.getActiveOrNull()?.settings;
 		const firstVideo =
-			isFirstElement && !settings?.originalCanvasSize && element.type === "video"
+			isFirstElement && !canvasIsChosen(settings) && element.type === "video"
 				? editor.media.getAssets().find((item: MediaAsset) => item.id === element.mediaId)
 				: undefined;
 		const fps = firstVideo?.type === "video" && firstVideo.fps ? floatToFrameRate(firstVideo.fps) : settings?.fps;

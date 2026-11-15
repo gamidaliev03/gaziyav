@@ -324,11 +324,20 @@ export function useHotkeyActions() {
 		});
 		if (side === "start") {
 			// Q moves the playhead to the cut; ⌘Z gives back the clip and the playhead where Q was pressed (it stayed at the
-			// cut, so a second try meant finding the spot again).
+			// cut, so a second try meant finding the spot again), ⇧⌘Z the cut and the playhead at it. The step SAYS it
+			// navigates: the history's «⌘Z leaves the playhead where the hand put it» (commands.ts keepPlayhead, 14.11) took
+			// this undo's seek back and the playhead stayed at the cut (the timeline night test's red, found 15.11).
+			(command as { navigates?: boolean }).navigates = true;
 			const undoCut = command.undo.bind(command);
 			command.undo = () => {
 				undoCut();
 				seekTicks(editor, time);
+			};
+			const redoCut = command.redo.bind(command);
+			command.redo = () => {
+				const result = redoCut();
+				seekTicks(editor, firstStart);
+				return result;
 			};
 		}
 		editor.command.execute({ command });
