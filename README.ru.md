@@ -36,13 +36,13 @@ Gaziyav — бесплатная монтажка с открытым кодом
 
 <table>
 <tr>
-<td width="33%"><a href="https://gamidaliev03.github.io/portfolio/linda-mama-full.mp4"><img src="https://gamidaliev03.github.io/portfolio/linda-mama.jpg" width="100%" alt="LINDA 4EVER — «Мама», клип, который ИИ смонтировал в Gaziyav"></a><br><b>«Мама»</b> · 3:10</td>
-<td width="33%"><a href="https://gamidaliev03.github.io/portfolio/linda-nas-ne-bylo-full.mp4"><img src="https://gamidaliev03.github.io/portfolio/linda-nas-ne-bylo.jpg" width="100%" alt="LINDA 4EVER — «Нас не было», клип, который ИИ смонтировал в Gaziyav"></a><br><b>«Нас не было»</b> · 2:25</td>
-<td width="33%"><a href="https://gamidaliev03.github.io/portfolio/linda-dnevnik-full.mp4"><img src="https://gamidaliev03.github.io/portfolio/linda-dnevnik.jpg" width="100%" alt="LINDA 4EVER — «Дневник» (live), клип, который ИИ смонтировал в Gaziyav"></a><br><b>«Дневник» (live)</b> · 1:48</td>
+<td width="33%"><a href="https://gamidaliev03.github.io/portfolio/linda-mama-full.mp4"><img src="https://gamidaliev03.github.io/portfolio/linda-mama-play.jpg" width="100%" alt="LINDA 4EVER — «Мама», клип, который ИИ смонтировал в Gaziyav"></a><br><b>«Мама»</b> · 3:10</td>
+<td width="33%"><a href="https://gamidaliev03.github.io/portfolio/linda-nas-ne-bylo-full.mp4"><img src="https://gamidaliev03.github.io/portfolio/linda-nas-ne-bylo-play.jpg" width="100%" alt="LINDA 4EVER — «Нас не было», клип, который ИИ смонтировал в Gaziyav"></a><br><b>«Нас не было»</b> · 2:25</td>
+<td width="33%"><a href="https://gamidaliev03.github.io/portfolio/linda-dnevnik-full.mp4"><img src="https://gamidaliev03.github.io/portfolio/linda-dnevnik-play.jpg" width="100%" alt="LINDA 4EVER — «Дневник» (live), клип, который ИИ смонтировал в Gaziyav"></a><br><b>«Дневник» (live)</b> · 1:48</td>
 </tr>
 <tr>
-<td width="33%"><a href="https://gamidaliev03.github.io/portfolio/karlson-dark-full.mp4"><img src="https://gamidaliev03.github.io/portfolio/karlson-dark.jpg" width="100%" alt="Карлсон: тёмная сторона — мультфильм, который ИИ сделал в Gaziyav по одному промпту"></a><br><b>«Карлсон: тёмная сторона»</b> · 1:01</td>
-<td width="33%"><a href="https://gamidaliev03.github.io/portfolio/prostokvashino-trio-full.mp4"><img src="https://gamidaliev03.github.io/portfolio/prostokvashino-trio.jpg" width="100%" alt="Трое из Простоквашино — мультфильм, который ИИ сделал в Gaziyav по одному промпту"></a><br><b>«Трое из Простоквашино»</b> · 1:07</td>
+<td width="33%"><a href="https://gamidaliev03.github.io/portfolio/karlson-dark-full.mp4"><img src="https://gamidaliev03.github.io/portfolio/karlson-dark-play.jpg" width="100%" alt="Карлсон: тёмная сторона — мультфильм, который ИИ сделал в Gaziyav по одному промпту"></a><br><b>«Карлсон: тёмная сторона»</b> · 1:01</td>
+<td width="33%"><a href="https://gamidaliev03.github.io/portfolio/prostokvashino-trio-full.mp4"><img src="https://gamidaliev03.github.io/portfolio/prostokvashino-trio-play.jpg" width="100%" alt="Трое из Простоквашино — мультфильм, который ИИ сделал в Gaziyav по одному промпту"></a><br><b>«Трое из Простоквашино»</b> · 1:07</td>
 <td width="33%" valign="middle"><b>Один промпт.<br>~10 минут.<br>~65 центов на ИИ.</b><br>Оба мультфильма сделаны в Gaziyav от начала до конца.</td>
 </tr>
 </table>
