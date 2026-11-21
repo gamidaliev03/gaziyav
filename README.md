@@ -32,13 +32,18 @@ Gaziyav is a free, open-source video editor for the Mac and the browser, with Cl
 
 ## Made in Gaziyav by AI
 
-Three music videos for LINDA 4EVER, a band that does not exist. An AI made them in Gaziyav from start to finish: the characters, the lipsync, the cuts to the beat. Nobody touched the timeline by hand. Click a frame to watch the whole clip.
+Three music videos for LINDA 4EVER, a band that does not exist, and two AI cartoons made from a single prompt in about 10 minutes for about $0.65. An AI made them in Gaziyav from start to finish: the characters, the lipsync, the cuts to the beat. Nobody touched the timeline by hand. Click a frame to watch the whole clip.
 
 <table>
 <tr>
 <td width="33%"><a href="https://gamidaliev03.github.io/portfolio/linda-mama-full.mp4"><img src="https://gamidaliev03.github.io/portfolio/linda-mama.jpg" width="100%" alt="LINDA 4EVER — «Mama», a music video the AI made in Gaziyav"></a><br><b>«Mama»</b> · 3:10</td>
 <td width="33%"><a href="https://gamidaliev03.github.io/portfolio/linda-nas-ne-bylo-full.mp4"><img src="https://gamidaliev03.github.io/portfolio/linda-nas-ne-bylo.jpg" width="100%" alt="LINDA 4EVER — «We Weren't There», a music video the AI made in Gaziyav"></a><br><b>«We Weren't There»</b> · 2:25</td>
 <td width="33%"><a href="https://gamidaliev03.github.io/portfolio/linda-dnevnik-full.mp4"><img src="https://gamidaliev03.github.io/portfolio/linda-dnevnik.jpg" width="100%" alt="LINDA 4EVER — «Diary» (live), a music video the AI made in Gaziyav"></a><br><b>«Diary» (live)</b> · 1:48</td>
+</tr>
+<tr>
+<td width="33%"><a href="https://gamidaliev03.github.io/portfolio/karlson-dark-full.mp4"><img src="https://gamidaliev03.github.io/portfolio/karlson-dark.jpg" width="100%" alt="Karlsson: the dark side — an AI cartoon made in Gaziyav from one prompt"></a><br><b>«Karlsson: the dark side»</b> · 1:01</td>
+<td width="33%"><a href="https://gamidaliev03.github.io/portfolio/prostokvashino-trio-full.mp4"><img src="https://gamidaliev03.github.io/portfolio/prostokvashino-trio.jpg" width="100%" alt="Three from Prostokvashino — an AI cartoon made in Gaziyav from one prompt"></a><br><b>«Three from Prostokvashino»</b> · 1:07</td>
+<td width="33%" valign="middle"><b>One prompt.<br>~10 minutes.<br>~$0.65 of AI.</b><br>Both cartoons were made in Gaziyav, start to finish.</td>
 </tr>
 </table>
 
