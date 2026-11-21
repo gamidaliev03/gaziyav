@@ -16,8 +16,8 @@ From what the video contains, write:
 - title: up to 70 characters, a hook that says what the video is about (YouTube shows it);
 - description: 1–3 short sentences, natural, no hashtags inside, at most {max} characters;
 - hashtags: 5–10 relevant hashtags, mixing broad and specific, without spaces.
-Write in the language of the video's speech or text (if there is none, in {lang}). Don't invent prices, facts or names
-that aren't in the material. No emoji in the title.
+Write the title, the description and the hashtags' words in {lang}, whatever language the material is in (names stay as
+they are). Don't invent prices, facts or names that aren't in the material. No emoji in the title.
 Answer with JSON only: {"title": "...", "description": "...", "hashtags": ["#...", "..."]}`;
 
 /** Turns the model's JSON into the sheet's fields; throws a readable error when it is unusable. */
@@ -57,6 +57,7 @@ export async function writeCaption({ material, platforms, lang, signal }: { mate
 		maxTokens: 600,
 		thinking: false,
 		signal,
+		lang,
 	});
 	return parseCaption(answer, sites);
 }

@@ -346,6 +346,7 @@ async function startServer() {
 				return req?.json && r.json !== undefined ? JSON.stringify(r.json) : String(r.text ?? "");
 			},
 			status: () => agentHost.oneShotStatus(),
+			language: () => menuCode(),
 		});
 	} catch {}
 	// The fal.ai key goes to the server as a message (never in its environment, never in a file in clear).

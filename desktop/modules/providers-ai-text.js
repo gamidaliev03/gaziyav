@@ -5,7 +5,8 @@
 //   server → app  { type: "ai-status-request" }                         app → server  { type: "ai-status", connected }
 // Hooked up by one line in main.js, after the server starts (each time it starts), by the chat worker:
 //   require("./modules/providers-ai-text").attachServer(server, { text: (req) => <one-shot>(req), status: () => <status>() });
-// `text({ task, prompt, json })` resolves to the answer's text; `status()` resolves to { connected } (or a boolean).
+// `text({ task, prompt, json })` resolves to the answer's text; `status()` resolves to { connected } (or a boolean);
+// `language()` (optional) the interface's language code, said to Claude when the feature names none.
 const OFF = "Gaziyav AI isn't connected: open the chat on the right and connect Claude.";
 const MISS = "Gaziyav AI didn't manage this one: nothing was changed. Press the button once more.";
 
@@ -33,8 +34,23 @@ async function connected() {
  * JSON is checked by the server (brain.ts), so the call is made as plain text; the feature's own system text goes as
  * the call's system prompt.
  */
+const NAMES = { ru: "Russian", en: "English", av: "Avar", ce: "Chechen", dar: "Dargwa", kum: "Kumyk", lbe: "Lak", lez: "Lezgian", tg: "Tajik", hy: "Armenian" };
+
+/** The language the user's words are written in: the feature's own (`lang`), else the interface's (`options.language`). */
+function languageLine(m) {
+	let code = typeof m.lang === "string" && m.lang ? m.lang : "";
+	if (!code) {
+		try {
+			code = String(options.language?.() ?? "");
+		} catch {}
+	}
+	code = code.toLowerCase().split(/[-_]/)[0];
+	const name = NAMES[code];
+	return name ? `\n\nLanguage: every word meant for the user (titles, texts, descriptions, labels, hashtags) is in ${name}, whatever language the material or these instructions are in; names stay as they are.` : "";
+}
+
 async function ask(m) {
-	const r = await options.text({ task: String(m.task ?? "text").slice(0, 40), system: String(m.system ?? ""), prompt: String(m.prompt ?? ""), json: false });
+	const r = await options.text({ task: String(m.task ?? "text").slice(0, 40), system: `${String(m.system ?? "")}${languageLine(m)}`.trim(), prompt: String(m.prompt ?? ""), json: false });
 	if (typeof r === "string") return { ok: true, text: r };
 	if (r && typeof r === "object") {
 		if (r.ok === false) return { ok: false, error: typeof r.error === "string" ? r.error : "", code: r.code };

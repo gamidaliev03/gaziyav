@@ -391,10 +391,20 @@ export function projectMaterial(editor: EditorCore): string {
 		.join("\n");
 }
 
+/** The post's language: the one the person already wrote the title / description in, else the interface's. */
+export function postLanguage(existing: Partial<PostText> | undefined, ui: string): "ru" | "en" {
+	// the title is prefilled with the project's name (often Latin): only a description the person wrote speaks for them
+	const own = existing?.description ?? "";
+	const cyr = (own.match(/[а-яё]/gi) ?? []).length;
+	const lat = (own.match(/[a-z]/gi) ?? []).length;
+	if (cyr + lat >= 12) return cyr >= lat ? "ru" : "en";
+	return ui === "en" ? "en" : "ru";
+}
+
 /** Title, description and hashtags from Gaziyav AI; `setup` when no AI is set up (the sheet offers Settings → AI). */
-export async function writeWithAgent(editor: EditorCore, platforms: Platform[]): Promise<PostText> {
+export async function writeWithAgent(editor: EditorCore, platforms: Platform[], existing?: Partial<PostText>): Promise<PostText> {
 	try {
-		const r = await post<PostText>("write", { material: projectMaterial(editor), platforms, lang: useLang.getState().lang });
+		const r = await post<PostText>("write", { material: projectMaterial(editor), platforms, lang: postLanguage(existing, useLang.getState().lang) });
 		return { title: r.title ?? "", description: r.description ?? "", hashtags: r.hashtags ?? "" };
 	} catch (error) {
 		// Gaziyav AI's own «has no AI yet» line: the sheet offers Settings → AI instead of Retry.

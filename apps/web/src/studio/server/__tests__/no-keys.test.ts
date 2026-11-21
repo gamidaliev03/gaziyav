@@ -63,7 +63,7 @@ describe("no API keys", () => {
 			expect(JSON.stringify(setup)).not.toContain("0123456789");
 			const pub = publicSettings(loadSettings());
 			expect(pub.agent).toBe(true);
-			expect(pub.brain?.name).toBe("fal.ai");
+			expect(pub.brain?.name).toBe("Gaziyav AI"); // one brain: no model or provider name outside the chat (21.11)
 			expect(JSON.stringify(pub)).not.toContain("0123456789");
 		} finally {
 			slot.__gaziyavFalKey = before;

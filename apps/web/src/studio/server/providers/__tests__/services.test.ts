@@ -127,3 +127,18 @@ test("Create with Gaziyav AI: the kit for what it draws as it is, its own animat
 	expect(classify({ ...base, brief: "дерево с текстом" } as never).mode).toBe("full");
 	expect(classify({ ...base, brief: "карта маршрута" } as never).mode).toBe("full");
 });
+
+test("the Post sheet's writer carries its language to Claude, whatever the material's language", async () => {
+	const { setBrainForTests } = await import("../../brain");
+	const { writeCaption } = await import("@/share/server/caption-writer");
+	let seen: { lang?: string; system?: string } = {};
+	setBrainForTests(async (r) => {
+		seen = r;
+		return '{"title":"Как экспортировать за 30 секунд","description":"Коротко.","hashtags":["#рилс"]}';
+	});
+	const w = await writeCaption({ material: "Clips: Chat clip, short text-based video", platforms: ["instagram"] as never, lang: "ru" });
+	expect(seen.lang).toBe("ru");
+	expect(seen.system).toContain("in Russian, whatever language the material is in");
+	expect(w.title).toContain("Как");
+	setBrainForTests(null);
+});

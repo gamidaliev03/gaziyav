@@ -25,6 +25,9 @@ export interface BrainRequest {
 	system?: string;
 	prompt: string;
 	json?: boolean;
+	/** The language the user's words are wanted in ("ru", "en"…), when the feature knows it; else the app adds the
+	 * interface's (providers-ai-text.js). */
+	lang?: string;
 }
 
 const port = () => (process as unknown as { parentPort?: Port }).parentPort;
@@ -164,7 +167,7 @@ export const BRAIN_MISS = "Gaziyav AI didn't manage this one: nothing was change
  */
 export async function brainAsk(r: BrainRequest, { signal, timeout = 240 }: { signal?: AbortSignal; timeout?: number } = {}): Promise<string> {
 	if (signal?.aborted) throw new CancelledError();
-	const ask: BrainRequest = { task: r.task || "text", ...(r.system ? { system: r.system } : {}), prompt: r.prompt, json: !!r.json };
+	const ask: BrainRequest = { task: r.task || "text", ...(r.system ? { system: r.system } : {}), prompt: r.prompt, json: !!r.json, ...(r.lang ? { lang: r.lang } : {}) };
 	const text = (await once(ask, signal, timeout)).trim();
 	if (!ask.json) {
 		if (!text) throw new StudioError(BRAIN_MISS);
@@ -196,5 +199,5 @@ export function promptOf(messages: Turn[], json?: boolean): { system: string; pr
 }
 
 /** The text features' old shape (system + messages): one brain behind it. */
-export const brainChat = (task: string, messages: Turn[], o: { json?: boolean; signal?: AbortSignal; timeout?: number } = {}) =>
-	brainAsk({ task, ...promptOf(messages, o.json), json: o.json }, { signal: o.signal, timeout: o.timeout });
+export const brainChat = (task: string, messages: Turn[], o: { json?: boolean; signal?: AbortSignal; timeout?: number; lang?: string } = {}) =>
+	brainAsk({ task, ...promptOf(messages, o.json), json: o.json, ...(o.lang ? { lang: o.lang } : {}) }, { signal: o.signal, timeout: o.timeout });

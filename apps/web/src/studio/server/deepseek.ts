@@ -21,6 +21,7 @@ export class DeepSeek {
 		maxTokens = 4000,
 		thinking = true,
 		signal,
+		lang,
 	}: {
 		system: string;
 		user: string;
@@ -29,6 +30,8 @@ export class DeepSeek {
 		maxTokens?: number;
 		thinking?: boolean;
 		signal?: AbortSignal;
+		/** The language the answer is wanted in, when the feature knows it. */
+		lang?: string;
 	}): Promise<string> {
 		// One brain (brain.ts): the connected Claude writes these, with the same instructions. Claude not connected and an
 		// earlier AI set up (1.0.58's keys): that one, as before, so nothing that worked stops.
@@ -37,7 +40,7 @@ export class DeepSeek {
 			{ role: "user" as const, content: user },
 		];
 		try {
-			return await brainChat("text", messages, { json, signal });
+			return await brainChat("text", messages, { json, signal, lang });
 		} catch (error) {
 			const a = (error as Error)?.message === BRAIN_OFF ? activeAgent() : null;
 			if (!a) throw error;

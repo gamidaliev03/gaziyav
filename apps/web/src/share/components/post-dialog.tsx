@@ -178,7 +178,7 @@ function PostSheet({ close }: { close: () => void }) {
 		setNeedsAi(false);
 		const before = text;
 		try {
-			const r = await writeWithAgent(editor, targets.length ? targets : LATE_PLATFORMS);
+			const r = await writeWithAgent(editor, targets.length ? targets : LATE_PLATFORMS, before);
 			setText({
 				title: r.title || before.title,
 				description: r.description || before.description,
