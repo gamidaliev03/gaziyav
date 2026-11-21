@@ -29,7 +29,9 @@ const Toaster = ({ ...props }: ToasterProps) => {
 			mobileOffset={{ top: 44, left: 16, right: 16 }}
 			duration={2000}
 			// over the player wherever the layout puts it (--player-centre, app/editor/[project_id]/page.tsx); the window's centre elsewhere
-			style={{ "--width": "300px", left: "var(--player-centre, 50%)" } as React.CSSProperties}
+			// Above dialogs (z 250/260) so a dialog's own notice shows, under open lists, menus and popovers (z 300): a
+			// notice never covers the rows of a list that is open (Sonner's own z-index is 999999999).
+			style={{ "--width": "300px", left: "var(--player-centre, 50%)", zIndex: 280 } as React.CSSProperties}
 			// Neutral cards with a coloured icon, not filled green/red slabs: a toast sits over the editor's panels,
 			// so it should cover as little and as quietly as possible. Errors keep a red edge.
 			toastOptions={{

@@ -25,6 +25,7 @@ import { isRunning, resolveKey, useStudioStore } from "@/studio/client/studio-st
 import { RunProgress } from "@/studio/components/run-status";
 import { AddYourVoice, useSavedVoices } from "./my-voices";
 import { myCards, readyCards, trendCards, useVoiceLang, type VoiceCard, VoicePicker } from "./voice-picker";
+import { followVoiceModel, useLibraryCards, useVoiceFitsModel } from "../service-voices";
 
 const LANG_KEY = "gaziyav.dub.language";
 const LANGUAGES = DUB_LANGUAGES.filter((l) => l.local);
@@ -69,15 +70,13 @@ export function VideoTranslator() {
 	const lang = useVoiceLang();
 	const own = useMemo(() => (clip?.asset.file ? URL.createObjectURL(clip.asset.file) : null), [clip]);
 	useEffect(() => () => (own ? URL.revokeObjectURL(own) : undefined), [own]);
+	// one picker everywhere: this clip's own voice, his clones, then the library by key route (as Voice-over)
+	const library = useLibraryCards(lang.ui);
 	const cards = useMemo<VoiceCard[]>(
-		() => [
-			{ id: "clone", name: t("Original voice"), hint: "The person's own voice, cloned from the clip", sample: own, groups: [] },
-			...trendCards(lang.ui),
-			...readyCards(),
-			...myCards(saved),
-		],
-		[own, lang.ui, saved, t],
+		() => [{ id: "clone", name: t("Original voice"), hint: "The person's own voice, cloned from the clip", sample: own, groups: ["clip"] }, ...myCards(saved), ...library],
+		[own, library, saved, t],
 	);
+	useVoiceFitsModel(voice, setVoice);
 	const cloning = voice === "clone";
 	const [dubbing, setDubbing] = useState(false);
 	const [confirm, setConfirm] = useState(false);
@@ -242,7 +241,7 @@ export function VideoTranslator() {
 							</label>
 						)}
 						<span className="text-xs font-medium">{t("Voice")}</span>
-						<VoicePicker label="translator" cards={cards} value={voice} onPick={setVoice} onAdd={() => addRef.current?.click()} />
+						<VoicePicker label="translator" cards={cards} value={voice} onPick={(id) => { followVoiceModel(id); setVoice(id); }} onAdd={() => addRef.current?.click()} />
 						<AddYourVoice inputRef={addRef} onAdded={setVoice} />
 						{cloning && (
 							<label htmlFor="translator-consent" className="flex items-start gap-2 text-xs leading-snug">

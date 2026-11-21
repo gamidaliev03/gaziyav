@@ -1,4 +1,5 @@
 import type { TActionWithOptionalArgs } from "./types";
+import { t } from "@/i18n";
 
 /**
  * Shortcut strings are `[ctrl+][alt+][shift+][cmd+]<key>` (Apple order ⌃⌥⇧⌘).
@@ -137,7 +138,9 @@ export function getShortcutParts({
 	if (!parsed) return [shortcut];
 	const glyphs = isMac ? MAC_MODIFIER_GLYPHS : PC_MODIFIER_GLYPHS;
 	const key = isKey(parsed.key)
-		? (KEY_GLYPHS[parsed.key] ?? parsed.key.toUpperCase())
+		? parsed.key === "space"
+			? t("Space") // the key's own word in the interface's language («Пробел»)
+			: (KEY_GLYPHS[parsed.key] ?? parsed.key.toUpperCase())
 		: parsed.key;
 	return [...parsed.modifiers.map((m) => glyphs[m]), key];
 }

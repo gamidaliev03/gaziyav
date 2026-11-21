@@ -14,6 +14,7 @@ import { useEditor } from "@/editor/use-editor";
 import type { GraphicElement } from "@/timeline/types";
 import { patchAiLayer } from "../compositions";
 import { JSON_PREFIX, type PropValue } from "../types";
+import { joinColor, splitColor } from "../color-value";
 import { useT } from "@/i18n";
 
 export interface AiField {
@@ -64,7 +65,7 @@ export function aiFields(params: Record<string, unknown>): AiField[] {
 	for (const [key, v] of Object.entries(params)) {
 		if (seen.has(key) || typeof v !== "string" || !v.startsWith(JSON_PREFIX)) continue;
 		const walk = (x: unknown, path: (string | number)[], name: string) => {
-			if (typeof x === "string" && /\p{L}/u.test(x) && !/^#[0-9a-f]{3,8}$/i.test(x)) out.push({ key, label: name, type: "text", path });
+			if (typeof x === "string" && /\p{L}/u.test(x) && !splitColor(x)) out.push({ key, label: name, type: "text", path });
 			else if (Array.isArray(x)) x.forEach((y, i) => {
 				walk(y, [...path, i], `${name} ${i + 1}`);
 			});
@@ -175,15 +176,20 @@ function TextField({ value, onSet }: { value: string; onSet: (v: string) => void
 }
 
 function ColorField({ value, onSet }: { value: string; onSet: (v: string) => void }) {
+	const c = splitColor(value) ?? { hex: "#ffffff", alpha: 1 };
 	return (
 		<div className="flex items-center gap-2">
-			<input type="color" value={/^#[0-9a-f]{6}$/i.test(value) ? value : "#ffffff"} className="h-7 w-9 cursor-pointer rounded border bg-transparent" onChange={(e) => onSet(e.target.value)} />
-			<span className="text-muted-foreground font-mono text-[11px]">{value}</span>
+			<input type="color" value={c.hex} className="h-7 w-9 cursor-pointer rounded border bg-transparent" onChange={(e) => onSet(joinColor(e.target.value, c.alpha))} />
+			<span className="text-muted-foreground font-mono text-[11px]" data-no-translate>
+				{c.hex.toUpperCase()}
+				{c.alpha < 1 ? ` · ${Math.round(c.alpha * 100)} %` : ""}
+			</span>
 		</div>
 	);
 }
 
 function NumberField({ value, field, onSet }: { value: number; field: AiField; onSet: (v: number) => void }) {
+	const t = useT();
 	const [draft, setDraft] = useState(String(value));
 	useEffect(() => setDraft(String(value)), [value]);
 	const commit = () => {
@@ -207,7 +213,7 @@ function NumberField({ value, field, onSet }: { value: number; field: AiField; o
 					e.stopPropagation();
 				}}
 			/>
-			{field.type === "time" && <span className="text-muted-foreground text-[11px]">s from the layer start</span>}
+			{field.type === "time" && <span className="text-muted-foreground text-[11px]">{t("s from the layer start")}</span>}
 		</div>
 	);
 }

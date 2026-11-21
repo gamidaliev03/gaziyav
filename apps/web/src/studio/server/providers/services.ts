@@ -8,9 +8,10 @@ import path from "node:path";
 import { falKey } from "@/fal/server";
 import { kieKey } from "@/kie/server";
 import { argoKey } from "@/argo/server";
+import { clearEmpty, noteEmpty } from "@/ai/empty";
 import { CancelledError, StudioError } from "../errors";
 import { studioHome } from "../settings";
-import { type Ability, isAbility, type Option, optionOf, optionsOf, OWN_KEYS } from "./registry";
+import { type Ability, isAbility, needsKeyLine, type Option, optionOf, optionsOf, OWN_KEYS } from "./registry";
 import azure from "./openfilm/azure.mjs";
 import brave from "./openfilm/brave.mjs";
 import cartesia from "./openfilm/cartesia.mjs";
@@ -75,12 +76,25 @@ function listen() {
 	for (const provider of OWN_KEYS) port.postMessage({ type: "provider-key-request", provider });
 }
 
+/**
+ * The keys the app keeps, asked for once and waited for (at most `ms`): the app answers each request as a message, so a
+ * first look right after the server started saw none (a service with its key read as «needs a key»).
+ */
+export async function keysReady(ms = 800): Promise<void> {
+	if (g.__gaziyavServiceKeysTest) return;
+	listen();
+	const port = (process as unknown as { parentPort?: Port }).parentPort;
+	if (!port) return;
+	const until = Date.now() + ms;
+	while (Date.now() < until && OWN_KEYS.some((id) => !(id in (g.__gaziyavServiceKeys ?? {})))) await new Promise((r) => setTimeout(r, 40));
+}
+
 /** Tests: these keys instead of the app's (null: back to the app). */
 export function setServiceKeysForTests(keys: Record<string, string> | null) {
 	g.__gaziyavServiceKeysTest = keys;
 }
 
-/** The key of a service ("" when none): fal.ai, kie.ai and ArgoLink are Settings → AI's own. */
+/** The key of a service ("" when none): fal.ai, kie.ai and ArgoLink are Settings → Services's own. */
 export function serviceKey(id: string): string {
 	if (g.__gaziyavServiceKeysTest) return g.__gaziyavServiceKeysTest[id] ?? "";
 	if (id === "fal") return falKey() ?? "";
@@ -152,9 +166,9 @@ export function plainLine(error: unknown): string {
 	if (/could not be reached|fetch failed|ENOTFOUND|ECONN|network|timed? ?out|TimeoutError/i.test(text)) return "The service can't be reached: check the internet connection.";
 	if (/found no (pictures|clips)/i.test(text)) return "Nothing found for that: try other words.";
 	if (/paid plan/i.test(text)) return "This needs a paid plan at the service.";
-	if (/429|rate limit|too many/i.test(text)) return "The service is busy: try again in a minute.";
+	if (/429|rate limit|too many/i.test(text)) return "The service is busy right now — nothing was changed.";
 	if (/takes no|needs? (a|an) (clip|recording|picture)|--video|--audio|--first-frame/i.test(text)) return "This model needs a clip or a recording to start from: pick another model.";
-	return "The service didn't make it: try again, or pick another service.";
+	return "The service didn't make it — nothing was changed. Another service can be picked in Settings → Services.";
 }
 
 /**
@@ -170,7 +184,7 @@ export async function runService(
 	const provider = PORTED[providerId];
 	if (!provider) throw new StudioError("This service isn't offered for that.");
 	const key = serviceKey(providerId);
-	if (!key && !provider.keyless) throw new StudioError("Add the service's key first: Settings → Services.");
+	if (!key && !provider.keyless) throw new StudioError(needsKeyLine(providerId));
 	const root = fs.mkdtempSync(path.join(os.tmpdir(), "gz-service-"));
 	const signal = o.signal ?? new AbortController().signal;
 	try {
@@ -196,8 +210,11 @@ export async function runService(
 			});
 		} catch (error) {
 			if (signal.aborted) throw new CancelledError();
+			// an empty account is remembered for its key row (ai/empty.ts), as fal's, kie's and Argo's are
+			if ((error as { code?: string })?.code === "balance") noteEmpty(providerId);
 			throw new StudioError(plainLine(error));
 		}
+		clearEmpty(providerId);
 		const into = o.into;
 		fs.mkdirSync(into, { recursive: true });
 		const files = result.files.map((f, i) => {

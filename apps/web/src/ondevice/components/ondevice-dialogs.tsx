@@ -1,6 +1,6 @@
 "use client";
 
-// Settings → AI → AI on this Mac: the free features that run on this Mac (download size, progress, cancel, remove).
+// Settings → Services → AI on this Mac: the free features that run on this Mac (download size, progress, cancel, remove).
 // LibraryRow (the user's own library folder) is exported for Settings → Draft. Also the one question requireModel()
 // can ask: the disk has no room for a model.
 // The models have this one place: a feature's own progress carries the download, Settings shows the same one.

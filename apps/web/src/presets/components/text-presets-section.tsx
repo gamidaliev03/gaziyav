@@ -49,9 +49,9 @@ export function MyTemplates() {
 					previewClassName="h-16"
 					create={async ({ description, signal, onStep }) => {
 						const preset = await designLayerPreset({ editor, description, signal, onStep });
+						// kept in «My templates» with its live preview on the card; the timeline gets it on a double-click
+						// (the owner, 21.11: never dropped there by itself from this place)
 						addText(preset);
-						// on the timeline right away, at the playhead, as layers of its own
-						await insertUserTextPreset({ editor, preset });
 					}}
 				/>
 				{presets.map((preset) => (

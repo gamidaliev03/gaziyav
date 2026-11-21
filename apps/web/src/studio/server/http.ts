@@ -105,14 +105,14 @@ const lower = (name: string) => (name.startsWith("The ") ? `the ${name.slice(4)}
 
 function statusLine(service: string, status: number, detail: string): string {
 	const who = serviceName(service);
-	if (status === 401) return `${who} couldn't connect: access was refused. Update the app, then press Retry.`;
-	if (status === 402) return `${who} couldn't start: the account balance is empty. Top it up, then press Retry. Nothing was charged.`;
+	if (status === 401) return `${who} couldn't connect: access was refused. Update the app.`;
+	if (status === 402) return `${who} couldn't start: the account balance is empty. Top it up on its site. Nothing was charged.`;
 	if (status === 403) return `${who} refused the request: no access to this model or region.`;
-	if (status === 404) return `${who} doesn't know this request (it may have expired). Press Retry; if it repeats, pick another model.`;
-	if (status === 408 || status === 504) return `${who} didn't answer in time. Press Retry in a minute.`;
+	if (status === 404) return `${who} no longer knows this request: it may have expired.`;
+	if (status === 408 || status === 504) return `${who} didn't answer in time.`;
 	if (status === 413) return `The file is too large for ${lower(who)}. Use a shorter piece.`;
-	if (status === 429) return `${who} is busy right now (too many requests). Wait a minute, then press Retry.`;
-	if (status >= 500) return `${who} failed on its side. Press Retry in a couple of minutes.`;
+	if (status === 429) return `${who} is busy right now (too many requests): wait a minute.`;
+	if (status >= 500) return `${who} failed on its side.`;
 	return `${who} rejected the request${detail ? `: ${detail.replace(/[.\s]+$/, "")}.` : ` (HTTP ${status}).`}`;
 }
 
@@ -132,7 +132,7 @@ export function networkError(service: string, error: unknown, timeout?: number):
 	const who = serviceName(service);
 	const vpn = vpnWhy();
 	if ((error as Error)?.name === "TimeoutError") {
-		return new StudioError(`${who} didn't answer within ${timeout ?? "the allowed"} s. Press Retry in a minute.`, { transient: true });
+		return new StudioError(`${who} didn't answer within ${timeout ?? "the allowed"} s.`, { transient: true });
 	}
 	const code = networkCode(error);
 	// The VPN is the cause when it is off or down: the connection is cut at once, and «check the network» would send the
@@ -140,10 +140,10 @@ export function networkError(service: string, error: unknown, timeout?: number):
 	if (vpn) return new StudioError(`${who} couldn't connect: ${vpn}\n\nDetails: ${code ?? (error as Error)?.message ?? "no answer"}`, { transient: true });
 	const why =
 		code === "ENOTFOUND" || code === "EAI_AGAIN"
-			? "there is no internet connection (or a VPN/firewall blocks it). Check the network, then press Retry."
+			? "there is no internet connection (or a VPN/firewall blocks it). Check the network."
 			: code === "UND_ERR_CONNECT_TIMEOUT" || code === "ETIMEDOUT"
-				? "the server didn't answer. Check the network, then press Retry."
-					: "the connection dropped. Check the network, then press Retry.";
+				? "the server didn't answer. Check the network."
+					: "the connection dropped. Check the network.";
 	return new StudioError(`${who} couldn't connect: ${why}\n\nDetails: ${code ?? (error as Error)?.message ?? "no answer"}`, { transient: true });
 }
 
@@ -224,7 +224,7 @@ async function readText(res: Response, cap: number, service: string, truncate = 
 }
 
 function tooLarge(service: string) {
-	return new StudioError(`${serviceName(service)} sent an answer far larger than expected. Press Retry; if it repeats, try again later.`);
+	return new StudioError(`${serviceName(service)} sent an answer far larger than expected.`);
 }
 
 async function readJson(res: Response, service: string): Promise<Json> {
@@ -262,12 +262,12 @@ export async function postJson(url: string, headers: Record<string, string>, bod
 }
 
 function parse(text: string, service: string): Json {
-	if (!text.trim()) throw new StudioError(`${serviceName(service)} sent an empty answer. Press Retry.`);
+	if (!text.trim()) throw new StudioError(`${serviceName(service)} sent an empty answer.`);
 	try {
 		const value = JSON.parse(text);
 		if (value && typeof value === "object") return value;
 	} catch {}
-	throw new StudioError(`${serviceName(service)} sent an answer Gaziyav can't read. Press Retry.\n\nDetails: ${brief(text) || "not JSON"}`);
+	throw new StudioError(`${serviceName(service)} sent an answer Gaziyav can't read.\n\nDetails: ${brief(text) || "not JSON"}`);
 }
 
 /**
@@ -279,10 +279,10 @@ export async function download(url: string, dest: string, opts: { signal?: Abort
 	try {
 		for (let attempt = 1; ; attempt++) {
 			const res = await call(url, { headers: opts.headers }, { timeout: 900, retry: "poll", ...opts });
-			if (!res.body) throw new StudioError(`${serviceName(opts.service)} sent an empty file. Press Retry.`);
+			if (!res.body) throw new StudioError(`${serviceName(opts.service)} sent an empty file.`);
 			try {
 				await pipeline(Readable.fromWeb(res.body as any), fs.createWriteStream(part));
-				if (fs.statSync(part).size === 0) throw new StudioError(`${serviceName(opts.service)} sent an empty file. Press Retry.`);
+				if (fs.statSync(part).size === 0) throw new StudioError(`${serviceName(opts.service)} sent an empty file.`);
 				fs.renameSync(part, dest);
 				return;
 			} catch (error) {

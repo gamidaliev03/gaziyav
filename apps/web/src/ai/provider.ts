@@ -1,6 +1,6 @@
 // The one place the server asks «which API runs this?». Every paid call goes through a provider: fal.ai as it always
 // was (the same requests, byte for byte), or kie.ai. Which one comes from the model itself, so a job that already runs
-// is never touched by flipping the switch in Settings → AI.
+// is never touched by flipping the switch in Settings → Services.
 import { addSpend, falKey, fetchResult, runFal, type RunOptions, uploadFile } from "@/fal/server";
 import type { FalTask } from "@/fal/models";
 import type { AiApi } from "@/fal/video";

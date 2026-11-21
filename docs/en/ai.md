@@ -7,15 +7,15 @@ Gaziyav sells no AI. The editing AI (captions, pause removal, voice clean-up and
 ## Set up your key (2 minutes)
 
 1. Create an account at [fal.ai](https://fal.ai), add a few dollars of credit, and create an API key in its dashboard.
-2. In Gaziyav: **Settings → AI → fal.ai**, paste the key, **Save**.
+2. In Gaziyav: **Settings → Services → fal.ai**, paste the key, **Save**.
 
-On macOS the key is encrypted with the system Keychain (Electron `safeStorage`) and saved in the app's own data folder with owner-only permissions. It never goes to logs or the environment, and the app shows only its last four characters. With the key in place, Settings also shows fal's **live** price for each model and your balance.
+On macOS the key is stored encrypted on your Mac, in the app's own data folder, with owner-only permissions. It never goes to logs or the environment, and the app shows only its last four characters. With the key in place, Settings also shows fal's **live** price for each model and your balance.
 
 Optional, in the same place: a **kie.ai** key (ByteDance's own lipsync, ElevenLabs voices, more picture and video models) and an **ArgoLink** key (the Seedance 2.0 family). Each model in the pickers says which provider it runs on. If the provider of your pick has no key, Gaziyav falls back to one that has. You can also add free stock-video keys for **Pexels** and **Pixabay** (Wikimedia Commons needs none).
 
 ## The spending limit
 
-**Settings → AI → «Confirm spending above [1] $».** Below the limit, pressing a priced button *is* your consent; there is no dialog. Above it, Gaziyav asks once, with the exact total. Spending is added up per provider, by its price list.
+**Settings → Services → «Confirm spending above [1] $».** Below the limit, pressing a priced button *is* your consent; there is no dialog. Above it, Gaziyav asks once, with the exact total. Spending is added up per provider, by its price list.
 
 ## Prices
 

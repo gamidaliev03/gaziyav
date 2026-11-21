@@ -1,6 +1,6 @@
 "use client";
 
-// Settings → AI: the limit under which a paid step of the Lipsync panel runs on the button alone (rule B: the button is
+// Settings → Services: the limit under which a paid step of the Lipsync panel runs on the button alone (rule B: the button is
 // the consent); a total above it asks once. Default 1 $.
 import { Input } from "@/components/ui/input";
 import { useT } from "@/i18n";

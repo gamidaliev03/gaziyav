@@ -2,6 +2,7 @@
 // tested: a scheduled post spun as «Post · TikTok · … · 2%» until its time — once Late has it, its line ends
 // («Scheduled for 14:30»); waiting is not progress.
 import type { Post } from "./types";
+import { uiLocale } from "@/i18n/locale";
 
 export type PostJob =
 	/** Going up / being published now: progress, and Cancel while nothing is posted yet. */
@@ -31,7 +32,7 @@ export function postJob(p: Post, known: boolean): PostJob {
 /** «14:30» today, «Thu, 6 Nov, 14:30» another day (this Mac's time zone). */
 export function scheduledTime(at: number, now = Date.now()): string {
 	const d = new Date(at);
-	const time = d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+	const time = d.toLocaleTimeString(uiLocale(), { hour: "2-digit", minute: "2-digit" });
 	if (d.toDateString() === new Date(now).toDateString()) return time;
-	return `${d.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" })}, ${time}`;
+	return `${d.toLocaleDateString(uiLocale(), { weekday: "short", day: "numeric", month: "short" })}, ${time}`;
 }

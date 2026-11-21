@@ -71,9 +71,9 @@ export function ScriptButton({ projectId, seconds, context, className }: { proje
 				{!hasKey ? (
 					// (check-ai D4, 06.11: it sent to «Settings → Gaziyav AI», a tab that doesn't exist)
 					<div className="flex flex-col gap-2" data-script-no-key>
-						<p className="text-sm">{t("Gaziyav AI writes on your fal.ai key: add it in Settings → AI.")}</p>
+						<p className="text-sm">{t("Gaziyav AI writes on your fal.ai key: add it in Settings → Services.")}</p>
 						<Button size="sm" variant="outline" className="self-start" onClick={openFalSettings}>
-							{t("Open Settings → AI")}
+							{t("Open Settings → Services")}
 						</Button>
 					</div>
 				) : (

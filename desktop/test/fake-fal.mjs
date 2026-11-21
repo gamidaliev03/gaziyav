@@ -59,6 +59,7 @@ export async function startFakeFal({ ffmpeg = "ffmpeg", dir = fs.mkdtempSync(pat
 		if (/qwen-3-tts\/clone-voice/.test(e)) return { speaker_embedding: { url: `${base("v3.fal.media")}/files/embedding-${job.id}.safetensors`, content_type: "application/octet-stream" } };
 		if (/qwen-3-tts\/text-to-speech/.test(e)) return { audio: { url: `${base("v3.fal.media")}/files/speech.mp3`, duration: 3.2 } };
 		if (/minimax\/speech/.test(e)) return { audio: { url: `${base("v3.fal.media")}/files/speech.mp3` }, duration_ms: 3200 };
+		if (/elevenlabs\/tts/.test(e)) return { audio: { url: `${base("v3.fal.media")}/files/speech.mp3` } };
 		if (/latentsync|sync-lipsync|lipsync|veed/.test(e)) {
 			// The «lipsynced» clip: the very video that was sent (the stand-in can't move lips) — cut to whole 16-frame
 			// chunks at 25 fps like the real LatentSync, which drops the rest (it took the last word, 05.11).

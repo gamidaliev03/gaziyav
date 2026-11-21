@@ -104,7 +104,7 @@ export const useOndeviceStore = create<Store>((set) => ({
 	},
 }));
 
-/** Opens Settings → AI → AI on this Mac (the one place the models are managed; Settings is mounted for the whole app). */
+/** Opens Settings → Services → AI on this Mac (the one place the models are managed; Settings is mounted for the whole app). */
 export function openOndevice() {
 	openSettings("ondevice");
 }

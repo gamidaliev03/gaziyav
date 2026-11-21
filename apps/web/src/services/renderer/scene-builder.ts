@@ -17,6 +17,8 @@ import { GraphicNode } from "./nodes/graphic-node";
 import { ColorNode } from "./nodes/color-node";
 import { BlurBackgroundNode } from "./nodes/blur-background-node";
 import { EffectLayerNode } from "./nodes/effect-layer-node";
+import { markCompoundGroups, nestCompoundGroups } from "./compound-group";
+import { compoundGroupsOf } from "@/montage/compound-group";
 import type { AnyBaseNode } from "./nodes/base-node";
 import { applyTrackTransitions, getTrackTransitions } from "@/transitions/scene";
 import { getTransitionDefinition } from "@/transitions/definitions";
@@ -135,6 +137,7 @@ function buildTrackNodes({
 		const trackNodes: AnyBaseNode[] = hasTransitions ? [] : nodes;
 		const nodeByElementId = new Map<string, AnyBaseNode>();
 		const lanes = decoderLanes({ track, isMain: track === mainTrack });
+		const startIndex = nodes.length;
 
 		for (const element of elements) {
 			const extension = side ? sideExtension({ element, window: side.window, side: side.side }) : null;
@@ -158,6 +161,9 @@ function buildTrackNodes({
 			applyTrackTransitions({ track, nodes: trackNodes, nodeByElementId });
 			nodes.push(...trackNodes);
 		}
+		// a compound drawn as one picture: its tracks' layers are marked with it (services/renderer/compound-group.ts)
+		const groups = compoundGroupsOf(track);
+		if (groups.length > 0) for (const node of hasTransitions ? trackNodes : nodes.slice(startIndex)) markCompoundGroups(node, groups);
 	}
 
 	return nodes;
@@ -506,7 +512,7 @@ export function buildScene({
 		rootNode.add(new ColorNode({ color: background.color }));
 	}
 
-	for (const node of allNodes) {
+	for (const node of nestCompoundGroups(allNodes)) {
 		rootNode.add(node);
 	}
 

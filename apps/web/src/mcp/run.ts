@@ -6,7 +6,9 @@
 import { EditorCore } from "@/core";
 import { CAPTION_STYLES } from "@/subtitles/styles";
 import { isCaptionElement } from "@/subtitles/apply-style";
-import { VOICES } from "@/generate/voices";
+import { voiceListing } from "@/agent/voice-choice";
+import { chosenModel } from "@/fal/models";
+import { keysOf, useFal } from "@/fal/client";
 import { TEMPLATES } from "@/templates/catalog";
 import type { TimelineElement, TimelineTrack } from "@/timeline";
 import { TICKS_PER_SECOND } from "@/wasm";
@@ -426,7 +428,7 @@ function resolveArgs(args: Args): Args {
 
 /** Ops that take `ids` themselves; the rest run once per target when a word names several. */
 // (look takes Media ids itself: one look per id would join their text and lose the pictures)
-const TAKES_IDS = new Set(["set_element", "delete", "duplicate", "split", "make_vertical", "playhead", "action", "look"]);
+const TAKES_IDS = new Set(["set_element", "delete", "duplicate", "split", "make_vertical", "playhead", "action", "look", "sync_waveform"]);
 
 // ───────────────────────── the router ─────────────────────────
 
@@ -514,6 +516,10 @@ async function place(args: Args, ctx: McpCtx): Promise<McpAnswer> {
 		}
 		case "stock":
 			return addMedia(await importStock(id));
+		case "webaudio": {
+			const media = await importWebAudio(id);
+			return runAny("add_media", { media, start: at, duration: args.duration, sourceFrom: args.sourceFrom }, ctx);
+		}
 		case "transition":
 			return runAny("add_transition", { type: id, at }, ctx);
 		case "effect":
@@ -581,8 +587,9 @@ async function findContent(args: Args, ctx: McpCtx): Promise<McpAnswer> {
 		return { ok: true, content: `${head}edit op captions {style}: ${list.map((s) => `${s.id} (${s.name})`).join(" · ")}${more}` };
 	}
 	if (kind === "voice") {
+		// the picker's own voices for the chosen speech model, by language (agent/voice-choice.ts)
 		const saved = (await readMemory().catch(() => ({ voices: [] as Array<{ name: string; speaker: string }> }))).voices;
-		return { ok: true, content: `generate {kind:"voice", text, speaker}: ${VOICES.map((v) => `${v.id} (${v.tone})`).join(" · ")}${saved.length ? ` · saved: ${saved.map((v) => `${v.name}=${v.speaker}`).join(", ")}` : ""}` };
+		return { ok: true, content: await voiceListing(query, ttsModel(), saved) };
 	}
 	if (kind === "template") {
 		const hits = TEMPLATES.filter((t) => match(`${t.id} ${t.name} ${t.category} ${t.themes.join(" ")}`)).slice(0, 24);
@@ -592,14 +599,14 @@ async function findContent(args: Args, ctx: McpCtx): Promise<McpAnswer> {
 		if (!query) return fail("Say what footage to look for, e.g. 'city night', 'ocean waves'.");
 		const c = ed().project.getActiveOrNull()?.settings.canvasSize;
 		const res = await fetch(`/api/mcp/stock?q=${encodeURIComponent(query)}&vertical=${c && c.width > c.height ? 0 : 1}`, { headers: { "X-Studio": "1" }, signal: ctx.signal });
-		const data = (await res.json().catch(() => ({}))) as { items?: Array<{ item: string; title: string; source: string; seconds?: number; width?: number; height?: number; mb?: number }>; notes?: string[]; error?: string };
-		let notes = data.notes?.length ? ` (${data.notes.join(" ")})` : "";
+		const data = (await res.json().catch(() => ({}))) as { items?: Array<{ item: string; title: string; source: string; seconds?: number; width?: number; height?: number; mb?: number }>; notes?: string[]; searched?: string[]; error?: string };
+		let notes = `${data.searched?.length ? ` (searched: ${data.searched.join(" → ")})` : ""}${data.notes?.length ? ` (${data.notes.join(" ")})` : ""}`;
 		if (!stockKeySaid) {
 			stockKeySaid = true;
 			const keys = (await fetch("/api/mcp/stock/keys", { headers: { "X-Studio": "1" } }).then((r) => r.json()).catch(() => null)) as Record<string, unknown> | null;
-			if (keys && !Object.values(keys).some((v) => (v as { key?: boolean } | null)?.key === true)) notes += " (No Pexels/Pixabay key: Wikimedia only — free but few clips; web pictures, YouTube pieces or AI find more.)";
+			if (keys && !Object.values(keys).some((v) => (v as { key?: boolean } | null)?.key === true)) notes += " (No Pexels/Pixabay key: Wikimedia and the Internet Archive only — free but fewer clips; web pictures, YouTube pieces or AI find more.)";
 		}
-		if (!data.items?.length) return fail(`${data.error || "No free stock video for that: try other words, or find_content image / youtube."}${notes}`);
+		if (!data.items?.length) return fail(`${data.error || "No free stock video for that: try other words, or find_content image (stills) / youtube."}${notes}`);
 		return { ok: true, content: `Free stock video (place {item, at, duration?} imports it)${notes}: ${data.items.map((x) => `${x.item} (${x.source}${x.seconds ? `, ${Math.round(x.seconds)} s` : ""}${x.width ? `, ${x.width}×${x.height}` : ""}${x.mb ? `, ${x.mb} MB` : ""})`).join(" · ")}` };
 	}
 	const source = FIND_SOURCES[kind as keyof typeof FIND_SOURCES];
@@ -607,9 +614,10 @@ async function findContent(args: Args, ctx: McpCtx): Promise<McpAnswer> {
 		if (kind === "image") {
 			if (!query) return fail("Say what picture to look for.");
 			const res = await fetch(`/api/images/search?q=${encodeURIComponent(query)}&page=1`, { signal: ctx.signal });
-			const data = (await res.json()) as { items?: Array<{ title: string; author: string; license: string }>; error?: string };
-			if (!data.items?.length) return fail(data.error || "No pictures found: try other words.");
-			return { ok: true, content: `Free pictures (place {item, at} imports it): ${data.items.slice(0, 10).map((x, i) => `image:${query}#${i} «${x.title.slice(0, 50)}» ${x.license}`).join(" · ")}` };
+			const data = (await res.json()) as { items?: Array<{ title: string; author: string; license: string; provider?: string }>; searched?: string[]; note?: string; error?: string };
+			const head = `${data.searched?.length ? ` (searched: ${data.searched.join(" → ")})` : ""}${data.note ? ` (${data.note})` : ""}`;
+			if (!data.items?.length) return fail(`${data.error || (data.searched && !data.searched.length ? "The picture search is set to My media (Media panel switch): find_content local, or switch it to All." : "No pictures found: try other words.")}${head}`);
+			return { ok: true, content: `Pictures (place {item, at} imports it)${head}: ${data.items.slice(0, 12).map((x, i) => `image:${query}#${i} «${x.title.slice(0, 50)}» ${x.provider ?? ""} ${x.license}`).join(" · ")}` };
 		}
 		const r = await runAny(source, kind === "local" ? { query, kind: args.type } : { query }, ctx);
 		if (kind === "local" && r.ok) {
@@ -622,7 +630,46 @@ async function findContent(args: Args, ctx: McpCtx): Promise<McpAnswer> {
 		const note = kind === "local" ? ' place {item:"local:<path>", at} imports and places one; import_media {paths} only imports.' : kind === "youtube" ? ' place {item:"youtube:<url>", from?, to?, at} downloads a piece and places it.' : "";
 		return { ...r, content: `${clip(r.content, 4000)}${r.ok ? note : ""}` };
 	}
+	if ((kind === "music" || kind === "sound") && query.length >= 2) return withWebAudio(kind, query, ctx);
 	return runAny("find_content", { kind, query }, ctx);
+}
+
+/**
+ * Music and sounds by the source switch the panels keep (principle 1): the library (All, My library) and the free web
+ * (All, Free web: Openverse — Jamendo, ccMixter, Freesound, Wikimedia). Pixabay and Pexels have no audio API.
+ */
+async function withWebAudio(kind: "music" | "sound", query: string, ctx: McpCtx): Promise<McpAnswer> {
+	const view = (await fetch(`/api/images/sources?kind=${kind}`).then((r) => r.json()).catch(() => null)) as { pick?: string } | null;
+	const pick = view?.pick ?? "all";
+	const lib = pick === "web" ? null : await runAny("find_content", { kind, query }, ctx);
+	if (pick === "library") return lib as McpAnswer;
+	const res = await fetch(`/api/images/audio?q=${encodeURIComponent(query)}&kind=${kind}&source=web`, { signal: ctx.signal }).catch(() => null);
+	const data = ((await res?.json().catch(() => null)) ?? {}) as { items?: Array<{ title: string; author: string; license: string; source: string; seconds: number }>; error?: string };
+	const site: Record<string, string> = { jamendo: "Jamendo", ccmixter: "ccMixter", freesound: "Freesound", wikimedia_audio: "Wikimedia" };
+	const web = (data.items ?? []).slice(0, 8).map((x, i) => `webaudio:${kind}:${query}#${i} «${x.title.slice(0, 40)}» ${site[x.source] ?? x.source}${x.seconds ? ` ${Math.round(x.seconds)} s` : ""} ${x.license}`);
+	const webLine = web.length ? `From the free web (place {item, at} downloads it into Media): ${web.join(" · ")}` : data.error ? `Free web: ${data.error}` : "";
+	if (!lib) return web.length ? { ok: true, content: webLine } : fail(data.error || `No ${kind} on the free web for that: try other words.`);
+	return { ...lib, ok: lib.ok || web.length > 0, content: [lib.ok ? `Library: ${lib.content}` : "", webLine].filter(Boolean).join("\n") || lib.content };
+}
+
+/** A music or sound of the free web (find_content's webaudio:<kind>:<query>#n) into Media: its Media id. */
+async function importWebAudio(id: string): Promise<string> {
+	const m = /^(music|sound):(.+)#(\d+)$/.exec(id);
+	if (!m) throw new Error("Not a web sound: use an item from find_content music / sound.");
+	const res = await fetch(`/api/images/audio?q=${encodeURIComponent(m[2])}&kind=${m[1]}&source=web`);
+	const data = (await res.json().catch(() => ({}))) as { items?: Array<{ title: string; author: string; license: string; sourceUrl: string; url: string; source: string }> };
+	const item = data.items?.[Number(m[3])];
+	if (!item) throw new Error("That web sound isn't found any more: find_content again.");
+	const file = await fetch(`/api/images/audio-file?u=${encodeURIComponent(item.url)}`);
+	if (!file.ok) throw new Error(((await file.json().catch(() => ({}))) as { error?: string }).error || "The sound didn't download.");
+	const blob = await file.blob();
+	const { processMediaAssets } = await import("@/media/processing");
+	const ext = blob.type.includes("ogg") ? "ogg" : blob.type.includes("wav") ? "wav" : "mp3";
+	const [processed] = await processMediaAssets({ files: [new File([blob], `${item.title.slice(0, 60).replace(/[/\\:]/g, " ")}.${ext}`, { type: blob.type || "audio/mpeg" })] });
+	if (!processed) throw new Error("The editor couldn't read this sound.");
+	const asset = await ed().media.addMediaAsset({ projectId: openProject(), asset: { ...processed, origin: "source", attribution: { title: item.title, author: item.author, license: item.license, sourceUrl: item.sourceUrl } } });
+	if (!asset) throw new Error("Not enough disk space.");
+	return asset.id.slice(0, 8);
 }
 
 async function importMedia(args: Args, ctx: McpCtx): Promise<McpAnswer> {
@@ -645,7 +692,7 @@ async function importMedia(args: Args, ctx: McpCtx): Promise<McpAnswer> {
 		ok &&= r.ok;
 		lines.push(`Picture: ${oneLine(r.content, 200)}`);
 	}
-	if (!lines.length) return fail("Give paths (find_content local), a youtube link or an image query.");
+	if (!lines.length) return fail('import_media needs one of: paths:["/absolute/file.mp4"] (from find_content local), youtube:"<link>" or image:"<words>". A stock clip or a library item needs no import: place {item:"stock:…"} imports and places it.');
 	return { ok, content: `${lines.join("\n")}${ok ? '\nIn Media. Place with edit {op:"add_media", media, start}.' : ""}` };
 }
 
@@ -712,12 +759,20 @@ async function editOps(args: Args, ctx: McpCtx): Promise<McpAnswer> {
 	return { ok: true, content: `${ops.length} steps done (${[...count].map(([k, n]) => (n > 1 ? `${k} ×${n}` : k)).join(", ")}).${fresh.length ? ` New ids: ${fresh.join(", ")}.` : ""}${remarks.length ? `\n${remarks.join("\n")}` : ""}${warn}`, images };
 }
 
+/** The speech model chosen in Settings (the voice picker lists its voices). */
+const ttsModel = () => chosenModel("tts", useFal.getState().status?.choices, keysOf(useFal.getState().status));
+
 async function generate(args: Args, ctx: McpCtx): Promise<McpAnswer> {
 	const kind = String(args.kind ?? "") as keyof typeof GENERATE_TOOL;
 	const tool = GENERATE_TOOL[kind];
 	if (!tool) return fail(`kind: ${Object.keys(GENERATE_TOOL).join(", ")}.`);
 	const { kind: _k, ...rest } = args;
 	const a: Args = tool === "ai_generate" ? { ...rest, kind } : rest;
+	if (kind === "voice" && !String(args.text ?? "").trim()) {
+		// no words: the voices to choose from (for the language asked), not a guess
+		const saved = (await readMemory().catch(() => ({ voices: [] as Array<{ name: string; speaker: string }> }))).voices;
+		return { ok: true, content: await voiceListing(String(args.language ?? ""), ttsModel(), saved) };
+	}
 	if (kind === "voice") {
 		// A character's voice, or a saved voice by its name.
 		if (args.cast && !a.speaker) a.speaker = (await castOf(Array.isArray(args.cast) ? args.cast.slice(0, 1) : args.cast))[0]?.voice;
@@ -725,12 +780,34 @@ async function generate(args: Args, ctx: McpCtx): Promise<McpAnswer> {
 		if (saved) a.speaker = saved.speaker;
 	}
 	const r = await runAny(tool, a, ctx);
+	// Principle 1: a picture or clip that can't be made for money (empty balance, no key) — one line and the nearest free
+	// thing ready for place: web pictures for a picture, stock clips (then stills) for a clip. Never bought elsewhere.
+	if (!r.ok && (kind === "image" || kind === "video") && /balance|EMPTY|top (it )?up|no money|needs? (a|an) [^.]{0,40}key|no key|didn't accept the key|402/i.test(r.content)) {
+		const nearest = await nearestFree(kind, String(args.prompt ?? args.text ?? ""), ctx).catch(() => "");
+		if (nearest) return { ok: false, content: `${r.content}\n${nearest}` };
+	}
 	try {
 		const j = JSON.parse(r.content) as { media?: string; costUsd?: number };
 		const words = String(args.prompt ?? args.text ?? "").trim().split(/\s+/).filter(Boolean);
 		if (r.ok && j.media) made.set(j.media.slice(0, 8), { prompt: `${words.slice(0, 6).join(" ")}${words.length > 6 ? "…" : ""}`, ...(typeof j.costUsd === "number" ? { usd: j.costUsd } : {}) });
 	} catch {}
 	return r;
+}
+
+/** The free stand-in for a generation that can't run: «Free instead (nothing was spent): …» with place-ready items. */
+async function nearestFree(kind: "image" | "video", prompt: string, ctx: McpCtx): Promise<string> {
+	const words = prompt.replace(/[.,!?;:"'«»()[\]{}<>…—–/\\|*#@$%^&+=~`]+/g, " ").split(/\s+/).filter((w) => w.length > 2).slice(0, 5).join(" ");
+	if (!words) return "";
+	if (kind === "video") {
+		const c = ed().project.getActiveOrNull()?.settings.canvasSize;
+		const res = await fetch(`/api/mcp/stock?q=${encodeURIComponent(words)}&vertical=${c && c.width > c.height ? 0 : 1}&source=all`, { headers: { "X-Studio": "1" }, signal: ctx.signal });
+		const data = (await res.json().catch(() => ({}))) as { items?: Array<{ item: string; source: string; seconds?: number }> };
+		if (data.items?.length) return `Free instead (nothing was spent; topping up brings the generated clip back): stock clips for «${words}» — ${data.items.slice(0, 6).map((x) => `${x.item} (${x.source}${x.seconds ? `, ${Math.round(x.seconds)} s` : ""})`).join(" · ")}; place {item, at, duration}.`;
+	}
+	const res = await fetch(`/api/images/search?q=${encodeURIComponent(words)}&page=1&source=all`, { signal: ctx.signal });
+	const data = (await res.json().catch(() => ({}))) as { items?: Array<{ title: string; provider?: string }> };
+	if (!data.items?.length) return "";
+	return `Free instead (nothing was spent; topping up brings the generated ${kind === "video" ? "clip" : "picture"} back): web pictures for «${words}» — ${data.items.slice(0, 6).map((x, i) => `image:${words}#${i} «${x.title.slice(0, 40)}» ${x.provider ?? ""}`).join(" · ")}; place {item, at, duration}.`;
 }
 
 /** Pictures for Claude: small unless it asked for large (a frame ~300 px wide is enough to judge a cut). */

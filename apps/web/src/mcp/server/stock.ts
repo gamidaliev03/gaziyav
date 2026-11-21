@@ -1,8 +1,12 @@
-// Free stock video for B-roll: Pexels and Pixabay when the user saved their free keys (Settings → AI; the app keeps
-// them in the Keychain and hands them to this process as a message, like the AI keys), Wikimedia Commons (WebM/MP4
-// under free licences, no key) otherwise and as well. Searched and downloaded through the app's own network path.
+// Free stock video for B-roll: Pixabay and Pexels FIRST the moment the user pastes their free keys (Settings → Services;
+// the app hands them to this process as a message, like the AI keys), then the free web behind them as the fallback —
+// Wikimedia Commons (WebM/MP4 under free licences) and the Internet Archive. The order and the source switch (All · a
+// keyed service · free web · my library) are media-search.ts's (principle 1). Searched and downloaded through the app's
+// own network path; every clip says where it came from.
 import { routed } from "@/studio/server/http";
-import { archiveFileUrl, searchClipsByChoice } from "@/studio/server/providers/search";
+import { archiveClips, archiveFileUrl } from "@/studio/server/providers/search";
+import { chosen, serviceKey } from "@/studio/server/providers/services";
+import { planFor, SOURCE_NAME, FREE_FOR, type SourcePick } from "@/studio/server/providers/media-search";
 
 const UA = "Gaziyav/1.0 (Mac video editor; stock video search)";
 const MAX_BYTES = 400e6;
@@ -19,6 +23,8 @@ export interface StockClip {
 	height?: number;
 	mb?: number;
 	license?: string;
+	/** A still of the clip for the panel's tile. */
+	thumb?: string;
 }
 
 // ───────────────────────── the keys ─────────────────────────
@@ -40,7 +46,8 @@ function listen() {
 
 export function stockKey(provider: "pexels" | "pixabay"): string | null {
 	listen();
-	return g.__gaziyavStockKeys?.[provider] || null;
+	// Settings → Services' own copy first (and the tests' stand-in keys), this module's as before
+	return serviceKey(provider) || g.__gaziyavStockKeys?.[provider] || null;
 }
 
 /** For Settings: which keys are saved (their last 4 only). */
@@ -73,6 +80,7 @@ interface PexelsVideo {
 	width?: number;
 	height?: number;
 	user?: { name?: string };
+	image?: string;
 	video_files?: Array<{ link: string; width?: number; height?: number; file_type?: string; quality?: string }>;
 }
 
@@ -81,7 +89,8 @@ interface PixabayHit {
 	duration?: number;
 	tags?: string;
 	user?: string;
-	videos?: Record<string, { url: string; width?: number; height?: number; size?: number }>;
+	picture_id?: string;
+	videos?: Record<string, { url: string; width?: number; height?: number; size?: number; thumbnail?: string }>;
 }
 
 const pexelsFile = (v: PexelsVideo) => {
@@ -89,13 +98,14 @@ const pexelsFile = (v: PexelsVideo) => {
 	// The sharpest file at or under 1920 on its long side (4K is more than a reel needs and slow to bring in).
 	return files.filter((f) => Math.max(f.width ?? 0, f.height ?? 0) <= 1920).sort((a, b) => Math.max(b.width ?? 0, b.height ?? 0) - Math.max(a.width ?? 0, a.height ?? 0))[0] ?? files[0];
 };
+const pixabayThumb = (h: PixabayHit) => h.videos?.small?.thumbnail || h.videos?.tiny?.thumbnail || h.videos?.medium?.thumbnail || h.videos?.large?.thumbnail || (h.picture_id ? `https://i.vimeocdn.com/video/${h.picture_id}_295x166.jpg` : undefined);
 const pixabayFile = (h: PixabayHit) => h.videos?.large?.url ? h.videos.large : h.videos?.medium?.url ? h.videos.medium : h.videos?.small;
 
 async function searchPexels(q: string, key: string, vertical: boolean): Promise<StockClip[]> {
 	const j = await getJson<{ videos?: PexelsVideo[] }>(`https://api.pexels.com/videos/search?${new URLSearchParams({ query: q, per_page: "8", ...(vertical ? { orientation: "portrait" } : {}) })}`, { Authorization: key });
 	return (j.videos ?? []).map((v) => {
 		const f = pexelsFile(v);
-		return { item: `stock:pexels:${v.id}`, title: `${q} · ${v.user?.name ?? "Pexels"}`, source: "pexels" as const, seconds: v.duration, width: f?.width ?? v.width, height: f?.height ?? v.height, license: "Pexels license (free)" };
+		return { item: `stock:pexels:${v.id}`, title: `${q} · ${v.user?.name ?? "Pexels"}`, source: "pexels" as const, seconds: v.duration, width: f?.width ?? v.width, height: f?.height ?? v.height, license: "Pexels license (free)", ...(v.image ? { thumb: v.image } : {}) };
 	});
 }
 
@@ -103,52 +113,62 @@ async function searchPixabay(q: string, key: string, type?: string): Promise<Sto
 	const j = await getJson<{ hits?: PixabayHit[] }>(`https://pixabay.com/api/videos/?${new URLSearchParams({ key, q, per_page: "8", safesearch: "true", ...(type ? { video_type: type } : {}) })}`);
 	return (j.hits ?? []).map((h) => {
 		const f = pixabayFile(h);
-		return { item: `stock:pixabay:${h.id}`, title: `${(h.tags ?? q).split(",")[0].trim()} · ${h.user ?? "Pixabay"}`, source: "pixabay" as const, seconds: h.duration, width: f?.width, height: f?.height, mb: f?.size ? Math.round(f.size / 1e5) / 10 : undefined, license: "Pixabay license (free)" };
+		return { item: `stock:pixabay:${h.id}`, title: `${(h.tags ?? q).split(",")[0].trim()} · ${h.user ?? "Pixabay"}`, source: "pixabay" as const, seconds: h.duration, width: f?.width, height: f?.height, mb: f?.size ? Math.round(f.size / 1e5) / 10 : undefined, license: "Pixabay license (free)", ...(pixabayThumb(h) ? { thumb: pixabayThumb(h) } : {}) };
 	});
 }
 
 interface Page {
 	title: string;
-	imageinfo?: Array<{ url: string; size: number; width: number; height: number; mime: string; metadata?: Array<{ name: string; value: unknown }>; extmetadata?: Record<string, { value: string } | undefined> }>;
+	imageinfo?: Array<{ url: string; thumburl?: string; size: number; width: number; height: number; mime: string; metadata?: Array<{ name: string; value: unknown }>; extmetadata?: Record<string, { value: string } | undefined> }>;
 }
 
 const commons = (params: Record<string, string>) => getJson<{ query?: { pages?: Record<string, Page> } }>(`https://commons.wikimedia.org/w/api.php?${new URLSearchParams({ format: "json", ...params })}`);
 const length = (p: Page) => Number(p.imageinfo?.[0]?.metadata?.find((m) => m.name === "length" || m.name === "playtime_seconds")?.value) || undefined;
 
 async function searchCommons(q: string): Promise<StockClip[]> {
-	const j = await commons({ action: "query", generator: "search", gsrnamespace: "6", gsrlimit: "20", gsrsearch: `${q} filemime:video/webm|video/mp4`, prop: "imageinfo", iiprop: "url|size|mime|metadata|extmetadata", iiextmetadatafilter: "LicenseShortName" });
+	const j = await commons({ action: "query", generator: "search", gsrnamespace: "6", gsrlimit: "20", gsrsearch: `${q} filemime:video`, prop: "imageinfo", iiprop: "url|size|mime|metadata|extmetadata", iiextmetadatafilter: "LicenseShortName", iiurlwidth: "320" });
 	return Object.values(j.query?.pages ?? {})
 		.map((p) => ({ p, i: p.imageinfo?.[0] }))
 		.filter(({ i }) => i && /video\/(webm|mp4)/.test(i.mime) && i.size <= MAX_BYTES && i.width >= 640)
-		.map(({ p, i }) => ({ item: `stock:${p.title}`, title: p.title.replace(/^File:/, ""), source: "commons" as const, seconds: length(p), width: i?.width, height: i?.height, mb: Math.round((i?.size ?? 0) / 1e5) / 10, license: i?.extmetadata?.LicenseShortName?.value }))
+		.map(({ p, i }) => ({ item: `stock:${p.title}`, title: p.title.replace(/^File:/, ""), source: "commons" as const, seconds: length(p), width: i?.width, height: i?.height, mb: Math.round((i?.size ?? 0) / 1e5) / 10, license: i?.extmetadata?.LicenseShortName?.value, ...(i?.thumburl ? { thumb: i.thumburl } : {}) }))
 		.filter((c) => !c.seconds || c.seconds >= 2)
 		.slice(0, 8);
 }
 
-/** Pexels and Pixabay first when there is a key (better footage), Commons after; a refused key is said plainly. */
-export async function searchStock(query: string, vertical = true): Promise<{ items: StockClip[]; notes: string[] }> {
+/**
+ * Clips by the source switch (absent: the one kept): «All» asks the keyed services first (the one picked in Settings →
+ * Services first of them), then Commons and the Internet Archive; a keyed service that fails or refuses its key is said
+ * in one line and the free web answers. A picked service alone, the free web alone, or the library (none from here).
+ */
+export async function searchStock(query: string, vertical = true, pick?: SourcePick): Promise<{ items: StockClip[]; notes: string[]; searched: string[] }> {
 	const q = query.trim().slice(0, 100);
-	if (!q) return { items: [], notes: [] };
-	// Settings → Services → Video search: the chosen service alone when one is chosen (below: Gaziyav's own, the default).
-	const by = await searchClipsByChoice(q, vertical, { pexels: searchPexels, pixabay: searchPixabay });
-	if (by) return { items: by.slice(0, 14) as StockClip[], notes: [] };
-	const notes: string[] = [];
-	const tries: Array<[string, Promise<StockClip[]>]> = [];
-	const px = stockKey("pexels");
-	const pb = stockKey("pixabay");
-	if (px) tries.push(["Pexels", searchPexels(q, px, vertical)]);
-	if (pb) tries.push(["Pixabay", searchPixabay(q, pb)]);
-	tries.push(["Wikimedia Commons", searchCommons(q)]);
-	const items: StockClip[] = [];
-	for (const [name, run] of tries) {
-		try {
-			items.push(...(await run));
-		} catch (error) {
-			notes.push((error as Error).message === "key" ? `${name} didn't accept the saved key (Settings → AI).` : `${name}: ${(error as Error).message}`);
-		}
+	if (!q) return { items: [], notes: [], searched: [] };
+	const plan = await planFor("video", pick);
+	const notes: string[] = plan.note ? [plan.note] : [];
+	const searched = [...plan.keyed, ...(plan.free ? FREE_FOR.video : [])].map((id) => SOURCE_NAME[id]);
+	if (!plan.keyed.length && !plan.free) return { items: [], notes: ["The video search is set to My library: the project's own Media (switch in the Media panel)."], searched };
+	const row = chosen("video-search");
+	const pixabayType = row.provider === "pixabay" && row.model ? row.model : undefined;
+	const tries: Array<[string, Promise<StockClip[]>]> = plan.keyed.map((id) => [SOURCE_NAME[id], id === "pexels" ? searchPexels(q, stockKey("pexels") as string, vertical) : searchPixabay(q, stockKey("pixabay") as string, pixabayType)]);
+	if (plan.free) tries.push(["Wikimedia Commons", searchCommons(q)]);
+	const keyedItems: StockClip[] = [];
+	const freeItems: StockClip[] = [];
+	// The Internet Archive (free, no key) beside Commons: always on the free web, so a keyless search has enough.
+	const archived = plan.free ? archiveClips(q).catch(() => [] as StockClip[]) : Promise.resolve([] as StockClip[]);
+	const settled = await Promise.allSettled(tries.map(([, run]) => run));
+	for (const [i, r] of settled.entries()) {
+		const name = tries[i][0];
+		if (r.status === "fulfilled") (i < plan.keyed.length ? keyedItems : freeItems).push(...r.value);
+		else notes.push((r.reason as Error)?.message === "key" ? `${name} didn't accept the saved key (Settings → Services); the free web answered.` : `${name}: ${(r.reason as Error)?.message}`);
 	}
-	if (!px && !pb) notes.push("With a free Pexels or Pixabay key (Gaziyav → Settings → AI) the search finds much better footage.");
-	return { items: items.slice(0, 14), notes };
+	freeItems.push(...((await archived) as StockClip[]));
+	if (plan.free && !plan.keyed.length && !stockKey("pexels") && !stockKey("pixabay")) notes.push("With a free Pexels or Pixabay key (Gaziyav → Settings → Services) the search finds much better footage.");
+	// keyed first, then the free web interleaved (Commons, Archive) so both show on the first screen
+	const commons = freeItems.filter((c) => c.source === "commons");
+	const archive = freeItems.filter((c) => c.source === "archive");
+	const free: StockClip[] = [];
+	for (let i = 0; i < Math.max(commons.length, archive.length); i++) free.push(...[commons[i], archive[i]].filter((c): c is StockClip => !!c));
+	return { items: [...keyedItems.slice(0, 10), ...free].slice(0, 16), notes, searched };
 }
 
 // ───────────────────────── one clip's file ─────────────────────────
@@ -166,7 +186,7 @@ export async function stockFile(item: string): Promise<Response> {
 	const id = item.replace(/^stock:/, "");
 	const pex = /^pexels:(\d{1,12})$/.exec(id);
 	if (pex) {
-		const key = stockKey("pexels") ?? (() => { throw new StockError("No Pexels key: the user saves one in Settings → AI."); })();
+		const key = stockKey("pexels") ?? (() => { throw new StockError("No Pexels key: the user saves one in Settings → Services."); })();
 		const v = await getJson<PexelsVideo>(`https://api.pexels.com/videos/videos/${pex[1]}`, { Authorization: key });
 		const f = pexelsFile(v);
 		if (!f) throw new StockError("That Pexels clip has no file to download.");
@@ -174,7 +194,7 @@ export async function stockFile(item: string): Promise<Response> {
 	}
 	const pix = /^pixabay:(\d{1,12})$/.exec(id);
 	if (pix) {
-		const key = stockKey("pixabay") ?? (() => { throw new StockError("No Pixabay key: the user saves one in Settings → AI."); })();
+		const key = stockKey("pixabay") ?? (() => { throw new StockError("No Pixabay key: the user saves one in Settings → Services."); })();
 		const j = await getJson<{ hits?: PixabayHit[] }>(`https://pixabay.com/api/videos/?${new URLSearchParams({ key, id: pix[1] })}`);
 		const h = j.hits?.[0];
 		const f = h ? pixabayFile(h) : undefined;

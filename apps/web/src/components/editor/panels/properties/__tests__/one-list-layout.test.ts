@@ -33,6 +33,13 @@ describe("the inspector's tabs", () => {
 		for (const id of ["faceswap", "ai.upscale", "fix.enhance", "stabilize"]) expect(placeOf(id, "video").rank).toBeGreaterThan(lip.rank);
 		expect(placeOf("studio.lipsync", "audio").block).toBe("tools");
 	});
+	test("an AI plate's In / Out lie open in «Effects», where a text plate's do", () => {
+		const ai = placeOf("clip.animation", "ai");
+		const text = placeOf("text.animation", "text");
+		expect(ai.block).toBe(text.block);
+		expect(ai.folded).toBeFalsy();
+		expect(ai.rank).toBe(text.rank);
+	});
 	test("a sound clip's sound is its own first tab", () => {
 		expect(placeOf("audio.volume@basic", "audio").block).toBe("main");
 		expect(placeOf("speed", "audio").block).toBe("speed");

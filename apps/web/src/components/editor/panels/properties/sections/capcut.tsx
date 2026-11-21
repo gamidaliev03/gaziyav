@@ -2,7 +2,8 @@
 
 // The inspector groups that give the tabs their content (docs/EDITOR-MAP.md): Cutout (remove background, chroma key),
 // Color (the Color section itself), Motion (animation, stabilize) and, for text, Style and Voice.
-import { useServiceCards } from "@/generate/service-voices";
+import { followVoiceModel, useLibraryCards, useVoiceFitsModel, voiceLanguage } from "@/generate/service-voices";
+import { VoiceLanguage } from "@/generate/components/voice-language";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -11,7 +12,7 @@ import { buildDefaultEffectInstance, effectsRegistry } from "@/effects";
 import { ColorControls } from "@/effects/components/adjustment-view";
 import { COLOR_EFFECT_TYPE } from "@/effects/definitions/studio/color";
 import { useSavedVoices } from "@/generate/components/my-voices";
-import { myCards, readyCards, trendCards, useVoiceLang, VoicePicker } from "@/generate/components/voice-picker";
+import { myCards, needsKey, useVoiceLang, VoicePicker } from "@/generate/components/voice-picker";
 import { generate } from "@/generate/run";
 import { useT } from "@/i18n";
 import { NeuralInspector } from "@/neural/components/inspector-ai";
@@ -113,29 +114,42 @@ function AdjustColor({ element, trackId }: { element: TimelineElement; trackId: 
 function TextToSpeech({ element }: { element: TimelineElement }) {
 	const t = useT();
 	const [voice, setVoice] = useState("ryan");
+	const [voiceLang, setVoiceLang] = useState("auto");
 	const [busy, setBusy] = useState(false);
 	const content = element.type === "text" ? String(element.params.content ?? "") : "";
 	// samples in the language of the text (a Russian line plays Russian samples)
 	const lang = useVoiceLang(content);
 	const saved = useSavedVoices();
-	const services = useServiceCards();
-	const cards = useMemo(() => [...trendCards(lang.ui, lang.sample), ...readyCards(), ...myCards(saved), ...services], [lang.ui, lang.sample, saved, services]);
+	const library = useLibraryCards(lang.ui, lang.sample);
+	const cards = useMemo(() => [...myCards(saved), ...library], [saved, library]);
+	useVoiceFitsModel(voice, setVoice);
 	const read = async () => {
 		setBusy(true);
 		const editor = EditorCore.getInstance();
 		// the voice starts where the text does
 		editor.playback.seek({ time: element.startTime });
 		try {
-			await generate("voice", voice.startsWith("trend:") ? { text: content, trend: voice.slice(6) } : { text: content, speaker: voice, style: "" }, { place: true });
+			await generate("voice", voice.startsWith("trend:") ? { text: content, trend: voice.slice(6), lang: voiceLang } : { text: content, speaker: voice, style: "", lang: voiceLang }, { place: true });
 		} finally {
 			setBusy(false);
 		}
 	};
 	return (
 		<div className="flex flex-col gap-2 px-4 pb-3" data-tts>
-			<VoicePicker label="text-tts" cards={cards} value={voice} onPick={setVoice} />
+			<VoicePicker
+				label="text-tts"
+				cards={cards}
+				value={voice}
+				onPick={(id) => {
+					followVoiceModel(id);
+					const own = voiceLanguage(id);
+					if (own) setVoiceLang(own);
+					setVoice(id);
+				}}
+			/>
+			<VoiceLanguage value={voiceLang} onChange={setVoiceLang} />
 			<VoiceModelSelect />
-			<Button disabled={!content.trim() || busy} onClick={() => void read()} data-tts-run>
+			<Button disabled={!content.trim() || busy || !!needsKey(cards.find((c) => c.id === voice))} onClick={() => void read()} data-tts-run>
 				{busy ? t("Making the voice…") : t("Read aloud")}
 			</Button>
 		</div>

@@ -2,7 +2,7 @@
 // speaker embedding), the app's ready voices are its own. MiniMax: its voices, or a clone at $1.50 each. A clone is
 // made once per sample and kept in fal-voices.json (made again after six days: fal's files and MiniMax's unused
 // clones don't last for ever).
-import { chosen } from "@/studio/server/providers/services";
+import { chosen, keysReady } from "@/studio/server/providers/services";
 import { isServiceVoice, speakService, stand_in } from "@/studio/server/providers/voices";
 import crypto from "node:crypto";
 import fs from "node:fs";
@@ -11,8 +11,12 @@ import { StudioError } from "@/studio/server/errors";
 import { probe } from "@/studio/server/media";
 import { studioHome } from "@/studio/server/settings";
 import { findTool, reason, run } from "@/studio/server/tools";
-import { falModel, isQwenVoice, price } from "./models";
-import { BOOST, falReadyVoice, falSpeechRequest } from "./speech";
+import { ELEVEN_DEFAULT, falModel, isElevenVoice, isQwenVoice, price } from "./models";
+import { freeSpeech, freeSpeechTakesOver } from "@/studio/server/free-speech";
+import { readyVoice } from "@/studio/server/ready-voices";
+import { elevenVoiceName, isFalElevenVoice, READY_TO_ELEVEN } from "./eleven-voices";
+import { familyOf, isMinimaxVoice, MINIMAX_DEFAULT, minimaxVoiceId } from "./model-voices";
+import { BOOST, falReadyVoice, falSpeechRequest, READY_TO_MINIMAX, READY_TO_QWEN } from "./speech";
 import { addSpend, chosenTts, liveUnitPrice, modelFor, type RunOptions, runFal, uploadFile } from "./server";
 import { minimaxCloneInput, qwenCloneInput } from "./wire";
 import { kieSpeechInput } from "../kie/catalog";
@@ -23,9 +27,11 @@ export const speaksLanguage = (code?: string) => !code || !!BOOST[code.toLowerCa
 /** A ready voice as the chosen speech model names it (null when it isn't one). */
 export function systemVoice(id: string | undefined, qwen = isQwenVoice(modelFor("tts").id)): string | null {
 	if (!id) return null;
+	// a voice of fal's ElevenLabs list keeps its card id: speak() runs it on fal's ElevenLabs model whatever is picked
+	if (isFalElevenVoice(id) || isMinimaxVoice(id)) return id;
 	// kie.ai's speech models take the app's own names (src/kie/catalog.ts turns them into its voices).
 	if (modelFor("tts").api === "kie") return id;
-	return falReadyVoice(id, qwen);
+	return falReadyVoice(id, qwen, isElevenVoice(modelFor("tts").id));
 }
 
 // ───────────────────────── clones ─────────────────────────
@@ -133,13 +139,43 @@ export interface SpeakInput {
 	speed?: number;
 	/** Where the speech goes: AAC in .m4a, or 16-bit WAV in .wav. */
 	out: string;
+	/** The voice's own recording and its words (a cloned voice's sample): the money-free voice speaks in it. */
+	sample?: { path: string; text: string };
+}
+
+/** A ready voice's id from the name a speech model knows it by (Determined_Man, Ryan, Roger… → ryan). */
+function readyIdOf(voiceId: string): string | null {
+	for (const map of [READY_TO_MINIMAX, READY_TO_QWEN, READY_TO_ELEVEN]) for (const [id, name] of Object.entries(map)) if (name === voiceId) return id;
+	return /^[a-z_]+$/.test(voiceId) ? voiceId : null;
 }
 
 /** Text → speech file. Returns its length and the price. */
-export async function speak(s: SpeakInput, o: RunOptions = {}): Promise<{ seconds: number; cost: number }> {
+export async function speak(s: SpeakInput, o: RunOptions = {}): Promise<{ seconds: number; cost: number; note?: string }> {
+	// The money-free voice (studio/server/free-speech.ts: the on-device voice model, else the Mac's own) when the paid one is
+	// refused for an empty balance or has no key: the job goes on, and its one line says so.
+	const sample = s.sample ?? (() => {
+		const id = readyIdOf(s.voiceId);
+		const r = id ? readyVoice(id, s.style ?? "neutral") : null;
+		return r ? { path: r.ref, text: r.text } : undefined;
+	})();
+	const free = async () => {
+		const f = await freeSpeech({ text: s.text.trim().slice(0, 5000), language: s.language, out: s.out, signal: o.signal, sample });
+		o.onStatus?.(f.line);
+		return { seconds: f.seconds, cost: 0, note: f.line };
+	};
+	try {
+		return await paidSpeak(s, o);
+	} catch (error) {
+		if (o.signal?.aborted || !freeSpeechTakesOver(error)) throw error;
+		return free();
+	}
+}
+
+async function paidSpeak(s: SpeakInput, o: RunOptions): Promise<{ seconds: number; cost: number }> {
 	// Settings → Services: a service's voice speaks on its service (billed there, to its key); with another service chosen
 	// for Voice-over, a Gaziyav voice speaks as that service's featured voice of the same sex. Not cloned voices.
 	if (!s.cloned) {
+		await keysReady();
 		const pick = isServiceVoice(s.voiceId) ? s.voiceId : chosen("tts").provider ? await stand_in(chosen("tts").provider as string, /vivian|serena|anna|sohee/i.test(s.voiceId)) : null;
 		if (pick) {
 			const { seconds } = await speakService(pick, s.text.trim().slice(0, 5000), s.out, { signal: o.signal, onStatus: o.onStatus, language: s.language });
@@ -147,11 +183,20 @@ export async function speak(s: SpeakInput, o: RunOptions = {}): Promise<{ second
 		}
 	}
 	// A cloned voice is fal's (kie.ai has no clones): it speaks through fal's speech model whichever API is on.
-	const model = s.cloned ? chosenTts() : modelFor("tts");
+	// A voice of fal's ElevenLabs list speaks on fal's ElevenLabs model (the one picked, else Multilingual v2) by its name.
+	const eleven = !s.cloned && isFalElevenVoice(s.voiceId);
+	const picked = s.cloned ? chosenTts() : modelFor("tts");
+	// a MiniMax system voice speaks on MiniMax (the one picked, else Speech-02 HD) by its voice_id
+	const mm = !s.cloned && isMinimaxVoice(s.voiceId);
+	const model = eleven && !isElevenVoice(picked.id) ? (falModel(ELEVEN_DEFAULT) ?? picked) : mm && familyOf(picked.id) !== "minimax" ? (falModel(MINIMAX_DEFAULT) ?? picked) : picked;
+	if (eleven) s = { ...s, voiceId: elevenVoiceName(s.voiceId) ?? s.voiceId };
+	if (mm) s = { ...s, voiceId: minimaxVoiceId(s.voiceId) ?? s.voiceId };
 	const text = s.text.trim().slice(0, 5000);
 	if (!text) throw new StudioError("Type what the voice should say.");
 	let url: string | undefined;
 	const api = provider(model.api);
+	// no key for the voice's API at all: the money-free voice speaks (speak() catches this line)
+	if (!api.hasKey()) throw new StudioError("no key for the voice");
 	o.onStatus?.(`voicing on ${api.label}`);
 	let charged: number | undefined;
 	if (model.api === "kie") {

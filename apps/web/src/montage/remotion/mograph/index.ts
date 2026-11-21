@@ -1,6 +1,7 @@
 // The ready-made motion graphics by kind (src/montage/mograph.ts lists their fields).
 import type React from "react";
 import { MOGRAPH_KINDS } from "../../mograph";
+import { MgEditorialChart, MgFlowchart } from "./charts";
 import { MgBarChart, MgBigCounter, MgBigQuote, MgCountdown, MgDonutChart, MgMapRoute, MgOfferTimer, MgRating, MgStatTrio, MgSteps, MgTestimonial } from "./data";
 import { MgBuyNow, MgKineticStack, MgLinkInBio, MgMarquee, MgNewArrival, MgOutlineFill, MgPriceTag, MgProductShowcase, MgSaleBurst, MgSplitReveal, MgSubscribe, MgSwipeUp, MgWordPop } from "./promo";
 import { MgBubbles, MgCrt, MgFilmBurn, MgFireworks, MgGlitch, MgGrain, MgHearts, MgLensFlare, MgLightLeak, MgLiquidWipe, MgRain, MgShutter } from "./light";
@@ -42,6 +43,8 @@ export const MOGRAPH: Record<string, React.FC<any>> = {
 	MgOfferTimer,
 	MgBarChart,
 	MgDonutChart,
+	MgEditorialChart,
+	MgFlowchart,
 	MgStatTrio,
 	MgSteps,
 	MgTestimonial,

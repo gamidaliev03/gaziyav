@@ -42,7 +42,12 @@ export function listenForKey() {
 	g.__gaziyavFalListening = true;
 	port.on("message", (m) => {
 		const d = ((m as { data?: unknown })?.data ?? m) as { type?: string; key?: unknown };
-		if (d?.type === "fal-key") g[SLOT] = typeof d.key === "string" && d.key.trim() ? d.key.trim() : null;
+		if (d?.type === "fal-key") {
+			const next = typeof d.key === "string" && d.key.trim() ? d.key.trim() : null;
+			// another key (or none): an «empty balance» heard with the old one no longer stands for it
+			if (next !== g[SLOT]) clearEmpty("fal");
+			g[SLOT] = next;
+		}
 	});
 	port.postMessage({ type: "fal-key-request" });
 }
@@ -65,7 +70,7 @@ export function keyHint(): string | null {
 
 function requireKey(): string {
 	const k = falKey();
-	if (!k) throw new StudioError("Add your fal.ai key first: Settings → AI (fal.ai).");
+	if (!k) throw new StudioError("Add your fal.ai key first: Settings → Services (fal.ai).");
 	return k;
 }
 
@@ -187,7 +192,9 @@ function falSentence(status: number, text: string): StudioError | null {
 		noteEmpty("fal");
 		return new StudioError(BALANCE_SENTENCE);
 	}
-	if (status === 401 || status === 403) return new StudioError(`fal.ai didn't accept the key. Check it in Settings → AI (fal.ai).${brief(text) ? `\n\nDetails: HTTP ${status} — ${brief(text)}` : ""}`);
+	// a refused key says nothing about the balance: the earlier «empty» line gives way to this one
+	if (status === 401 || status === 403) clearEmpty("fal");
+	if (status === 401 || status === 403) return new StudioError(`fal.ai didn't accept the key. Check it in Settings → Services (fal.ai).${brief(text) ? `\n\nDetails: HTTP ${status} — ${brief(text)}` : ""}`);
 	if (status === 422) {
 		if (REFUSED.test(text)) return refusal(text);
 		let detail = "";

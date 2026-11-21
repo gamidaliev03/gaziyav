@@ -458,7 +458,7 @@ export function downloadBytes(spec: ModelSpec): number {
  * The two classes of the download policy (docs/AI-DOWNLOAD.md). Small (a download up to 1 GB: speech recognition,
  * Enhance voice, Separate, Voice changer, CleanUp, Retouch): comes by itself in the background once the first project
  * has been opened (background.ts). Large (lipsync, voice, pictures, music, face swap): downloads on first use, inside
- * the feature's own progress — or in the background too, when Settings → AI says so.
+ * the feature's own progress — or in the background too, when Settings → Services says so.
  */
 export const SMALL_LIMIT = 1_000_000_000;
 export type ModelClass = "small" | "large";

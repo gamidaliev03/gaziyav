@@ -28,7 +28,7 @@ registerInspectorSection({ id: "ai.upscale", tab: "ai", title: "Upscale", order:
 
 const isUploadAudio = (e: TimelineElement) => e.type === "audio" && e.sourceType === "upload";
 const videoWithSound = (e: TimelineElement) =>
-	e.type === "video" && EditorCore.getInstance().media.getAssets().find((a) => a.id === e.mediaId)?.hasAudio !== false;
+	e.type === "video" && e.isSourceAudioEnabled !== false && EditorCore.getInstance().media.getAssets().find((a) => a.id === e.mediaId)?.hasAudio !== false;
 
 const SOUND_TOOLS = [
 	{ id: "audio.enhanceVoice", title: "Enhance voice", order: 400, render: EnhanceVoice, defaultOpen: true },

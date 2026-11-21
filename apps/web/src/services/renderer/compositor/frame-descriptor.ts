@@ -14,6 +14,8 @@ import {
 } from "../nodes/graphic-node";
 import { ImageNode } from "../nodes/image-node";
 import { RootNode } from "../nodes/root-node";
+import { CompoundGroupNode } from "../nodes/compound-group-node";
+import { groupPasses } from "../compound-group";
 import { StickerNode } from "../nodes/sticker-node";
 import { renderTextToContext, TextNode } from "../nodes/text-node";
 import { VideoNode } from "../nodes/video-node";
@@ -94,6 +96,42 @@ async function collectNode({
 				textures,
 			});
 		}
+		return;
+	}
+
+	if (node instanceof CompoundGroupNode) {
+		// A compound with a mask, as one picture (services/renderer/compound-group.ts); before and after it plays, its
+		// layers are drawn as usual.
+		const into: FrameItemDescriptor[] = node.resolved ? [] : items;
+		for (let index = 0; index < node.children.length; index++) {
+			await collectNode({ node: node.children[index], renderer, path: `${path}:g${index}`, items: into, textures });
+		}
+		if (!node.resolved) return;
+		const { mask, strokeLayer } = buildMaskArtifacts({
+			node: node as unknown as GraphicNode,
+			renderer,
+			path,
+			transform: node.resolved.transform,
+			textures,
+		});
+		const texture = mask ? textures.get(mask.textureId) : undefined;
+		if (mask && mask.feather > 0 && texture?.kind === "rendered") {
+			// the layer path feathers a mask on the GPU; here the texture itself is softened
+			const draw = texture.draw;
+			const radius = mask.feather / 2;
+			textures.set(mask.textureId, {
+				...texture,
+				contentHash: `${texture.contentHash}:blur=${radius}`,
+				draw: (ctx) => {
+					ctx.save();
+					ctx.filter = `blur(${radius}px)`;
+					draw(ctx);
+					ctx.restore();
+				},
+			});
+		}
+		items.push({ type: "sceneTransition", from: into, to: [], effectPassGroups: groupPasses(mask) });
+		if (strokeLayer) items.push(strokeLayer);
 		return;
 	}
 

@@ -18,7 +18,7 @@ export interface ProviderInfo {
 	prefer: RegExp[];
 }
 
-/** fal.ai: OpenRouter's models through fal's OpenAI-compatible endpoint, on the one fal key (Settings → AI (fal.ai)). */
+/** fal.ai: OpenRouter's models through fal's OpenAI-compatible endpoint, on the one fal key (Settings → Services (fal.ai)). */
 const FAL: ProviderInfo = {
 	id: "fal",
 	name: "fal.ai",

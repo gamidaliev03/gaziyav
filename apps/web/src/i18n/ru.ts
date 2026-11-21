@@ -47,7 +47,8 @@ import { RU_MOBILE } from "./ru-mobile";
 import { RU_INSP } from "./ru-insp";
 import { RU_THEMES } from "./ru-themes";
 import { RU_LOOKS2 } from "./ru-looks2";
-import { RU_SERVICES } from "./ru-services";
+import { RU_SERVICES, RU_SERVICES_PATTERNS } from "./ru-services";
+import { RU_SOURCES, RU_SOURCES_PATTERNS } from "./ru-sources";
 
 /** Strings with a number or a name in them: English pattern → Russian ($1, $2 … are the parts in brackets). */
 type Replace = string | ((match: string, ...groups: string[]) => string);
@@ -57,6 +58,8 @@ const both = (a: string, b: string, sep: string, all: string) => (RU[a] === unde
 /** Mask shapes by name («Split» is the split-screen mask, not the verb). */
 const maskRu = (name: string) => ({ None: "Нет", Split: "Разделение" })[name] ?? ru(name);
 export const RU_PATTERNS: Array<[RegExp, Replace]> = [
+	...(RU_SERVICES_PATTERNS as Array<[RegExp, Replace]>),
+	...(RU_SOURCES_PATTERNS as Array<[RegExp, Replace]>),
 	...(RU_GAZIYAV_PATTERNS as Array<[RegExp, Replace]>),
 	[/^(\d+) captions, saved as a file beside the video$/, (_m, n) => `Субтитров: ${n}, сохраним файлом рядом с видео`],
 	[/^Collapse (.+)$/, (_m, a) => `Свернуть: ${ru(a)}`],
@@ -1443,6 +1446,23 @@ export const RU: Record<string, string> = {
 	"Offer timer": "Таймер предложения",
 	"Bar chart": "Столбчатая диаграмма",
 	"Donut chart": "Кольцевая диаграмма",
+	"Editorial chart": "Газетный график",
+	"Decision tree": "Дерево решений",
+	"Subtitle": "Подзаголовок",
+	"Bars (comma-separated)": "Столбцы (через запятую)",
+	"Line (comma-separated)": "Линия (через запятую)",
+	"Bars name": "Название столбцов",
+	"Line name": "Название линии",
+	"Source": "Источник",
+	"Question": "Вопрос",
+	"Left answer": "Левый ответ",
+	"Right answer": "Правый ответ",
+	"Left outcome 1": "Левый итог 1",
+	"Left outcome 2": "Левый итог 2",
+	"Right outcome 1": "Правый итог 1",
+	"Right outcome 2": "Правый итог 2",
+	"Picked outcome (0 = none)": "Выбранный итог (0 — нет)",
+	"Pastel notes": "Пастельные стикеры",
 	"Three stats": "Три показателя",
 	"Steps": "Шаги",
 	"Testimonial": "Отзыв",
@@ -1656,6 +1676,7 @@ export const RU: Record<string, string> = {
 	...RU_PANELS,
 	...RU_LOOKS2,
 	...RU_SERVICES,
+	...RU_SOURCES,
 	...RU_LOOKS4,
 	...RU_GEN,
 	...RU_MOBILE,

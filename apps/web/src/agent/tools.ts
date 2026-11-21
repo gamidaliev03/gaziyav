@@ -15,6 +15,8 @@ import { floatToFrameRate, frameRateToFloat } from "@/fps/utils";
 import { FACES, faceSwapClip } from "@/faceswap/run";
 import { generate } from "@/generate/run";
 import { VOICES } from "@/generate/voices";
+import { findVoice, langOf, line, modelFor, nearest, speaks, type VoiceChoice, voiceChoices } from "./voice-choice";
+import { LANGS, languagesOf } from "@/fal/model-voices";
 import { formatBytes, useOndeviceStore } from "@/ondevice/client";
 import { useJobsStore } from "@/jobs/store";
 import { buildLibraryClip } from "@/library/client";
@@ -25,7 +27,9 @@ import type { MediaAsset } from "@/media/types";
 import { designLayerPreset, insertUserTextPreset } from "@/presets/actions";
 import { useUserPresets } from "@/presets/user-presets";
 import { MOTION_KEYS } from "@/montage/motion";
-import { reframeClips, renderSmooth, toggleReverse, trackClip } from "@/motion/client";
+import { reframeClips, renderSmooth, setStabilize, toggleReverse, trackClip } from "@/motion/client";
+import { GENERATOR_PRESETS } from "@/generators/catalog";
+import { insertGenerator } from "@/generators/insert";
 import { ASPECTS, type AspectId, attachFollower, detachFollower } from "@/motion/commands";
 import { freezeFrame } from "@/motion/freeze";
 import { DEFAULT_FX } from "@/motion/tracker";
@@ -656,7 +660,10 @@ function setEffect(args: Args) {
 	const found = find(args.id);
 	const effects = ((found.element as { effects?: Array<{ id: string; type: string }> }).effects ?? []);
 	const key = String(args.effect ?? "");
-	const effect = effects.find((f) => f.id.startsWith(key) || f.type === key) ?? fail(`No effect "${key}" on this element.`);
+	const there = effects.find((f) => f.id.startsWith(key) || f.type === key);
+	// a known effect that isn't on the clip yet (the inspector's switches: chroma key…) is added with these params
+	if (!there && !args.remove && effectsRegistry.has(key)) return addEffect({ id: args.id, type: key, params: args.params });
+	const effect = there ?? fail(`No effect "${key}" on this element.`);
 	if (args.remove) {
 		editor().timeline.removeClipEffect({ trackId: found.track.id, elementId: found.element.id, effectId: effect.id });
 		return "Removed.";
@@ -806,7 +813,7 @@ async function webSearch(args: Args, signal: AbortSignal) {
 /** fal.ai (the user's own key): billed video / image generations, put on the timeline when done. */
 async function pointReady() {
 	const st = await usePoint.getState().refresh();
-	if (!st.connected) fail("No AI key is set (fal.ai, kie.ai or ArgoLink): tell the user to add one in Gaziyav → Settings → AI, then ask again.");
+	if (!st.connected) fail("No AI key is set (fal.ai, kie.ai or ArgoLink): tell the user to add one in Gaziyav → Settings → Services, then ask again.");
 	return st;
 }
 
@@ -1189,7 +1196,7 @@ async function generatorReady(kind: "voice"): Promise<string | null> {
 	return `The ${kind} generator isn't on ${THIS_COMPUTER} yet (a one-time ${formatBytes(model.downloadBytes)} download, started from the AI tab). Skip it, finish the rest, and tell the user at the end.`;
 }
 
-/** The speech model a ready voice speaks through (the pick of Settings → AI, on an API that has a key) and its price for a text. */
+/** The speech model a ready voice speaks through (the pick of Settings → Services, on an API that has a key) and its price for a text. */
 function ttsPrice(chars: number): { model: FalModel; cost: number; api: AiApi } {
 	const model = chosenModel("tts", falChoices(), falKeys());
 	return { model, cost: price(model, Math.max(1, chars), unitPrice(model)), api: apiOf(model) };
@@ -1203,7 +1210,33 @@ async function generateThing(kind: "voice", args: Args) {
 	// video's spend like every paid step (it was called «free, on this Mac»: nine lines of a news piece went to fal.ai
 	// and none of it reached the spend Claude reports, exam 11.11).
 	const text = String(args.text ?? "").trim();
-	const tts = ttsPrice(text.length);
+	// The voice and the language, checked against the picker's own list for the chosen model (voice-choice.ts): an unknown
+	// voice is an error with the nearest real ones, a language the voice / model doesn't speak too — never a silent default.
+	const chosen = chosenModel("tts", falChoices(), falKeys());
+	const list = await voiceChoices(chosen);
+	const lang = args.language !== undefined && String(args.language).toLowerCase() !== "auto" ? (langOf(args.language) ?? fail(`Unknown language «${String(args.language)}». One of: ${languagesOf(chosen.id).map((l) => l.code).join(", ")} (or auto).`)) : undefined;
+	const said = typeof args.speaker === "string" && args.speaker.trim() ? args.speaker.trim() : "";
+	let pick = said ? findVoice(list, said) : undefined;
+	if (said && !pick) {
+		const near = nearest(list, said, lang, chosen);
+		fail(`Unknown voice «${said}»: nothing was made, nothing charged. Nearest real voices${lang ? ` (${lang.en} first)` : ""}: ${near.map(line).join(" · ")}. All of them: find_content {kind:"voice", query:"${lang?.en ?? "<language>"}"}.`);
+	}
+	if (!pick && lang) {
+		// no voice named, a language asked: the language's own voice first (the model's own, then MiniMax's), else one that speaks it
+		pick = list.find((v) => v.lang === lang.code && v.runsOn === "chosen") ?? list.find((v) => v.lang === lang.code && v.runsOn !== "service") ?? list.find((v) => speaks(v, lang, chosen) && v.runsOn !== "service");
+		if (!pick) fail(`No voice speaks ${lang.en} here. ${chosen.title} speaks: ${languagesOf(chosen.id).map((l) => l.code).join(", ")}.`);
+	}
+	pick ??= list.find((v) => v.id === "ryan");
+	const voiceChoice = pick as VoiceChoice;
+	if (lang && !speaks(voiceChoice, lang, chosen)) {
+		const own = list.filter((v) => v.lang === lang.code).slice(0, 6);
+		const any = list.filter((v) => speaks(v, lang, chosen)).slice(0, 6);
+		fail(`${voiceChoice.id} doesn't speak ${lang.en}${voiceChoice.lang ? ` (it is a ${LANGS.find((l) => l.code === voiceChoice.lang)?.en ?? voiceChoice.lang} voice)` : ` on ${modelFor(voiceChoice, chosen).title}`}: nothing was made. ${lang.en} voices: ${(own.length ? own : any).map(line).join(" · ") || "none"}.`);
+	}
+	const runsOn = modelFor(voiceChoice, chosen);
+	args = { ...args, ...(voiceChoice.id.startsWith("trend:") ? { trend: voiceChoice.id.slice(6), speaker: undefined } : { speaker: voiceChoice.id }), ...(lang ? { lang: lang.code } : {}) };
+	delete args.language;
+	const tts = { model: runsOn, cost: price(runsOn, Math.max(1, text.length), unitPrice(runsOn)), api: apiOf(runsOn) };
 	const what = `a voice of ${text.length} characters`;
 	const quoted = await paidStep(`${what} (${tts.model.title})`, tts.cost, tts.api, args.quote);
 	if (quoted) return quoted;
@@ -1212,7 +1245,7 @@ async function generateThing(kind: "voice", args: Args) {
 	const start = args.start !== undefined ? Number(args.start) : sec(ed.playback.getCurrentTime());
 	// The same words in the same voice asked again within 30 minutes (a call re-sent after a timeout, a batch sent
 	// twice) is the voice already made: no new job, nothing charged; again:true makes a new take.
-	const key = `${projectId()}|${String(args.speaker ?? "")}|${String(args.style ?? "")}|${text}`;
+	const key = `${projectId()}|${String(args.speaker ?? args.trend ?? "")}|${String(args.lang ?? "")}|${String(args.style ?? "")}|${text}`;
 	const known = voicesMade.get(key);
 	const kept = known && Date.now() - known.at < 30 * 60_000 && args.again !== true ? ed.media.getAssets().find((a) => a.id === known.media) : undefined;
 	if (kept) {
@@ -1228,7 +1261,9 @@ async function generateThing(kind: "voice", args: Args) {
 	const asset = made as MediaAsset | null;
 	if (!ok || !asset) fail(`The ${kind} wasn't made (see the message in the app). Nothing was charged.`);
 	const voice = asset as MediaAsset;
-	const out: Record<string, unknown> = { media: voice.id, name: voice.name, ...(voice.duration ? { seconds: Math.round(voice.duration * 100) / 100 } : {}), model: `${tts.model.title} on ${API_LABEL[tts.api]}`, costUsd: Math.round(tts.cost * 1e4) / 1e4 };
+	const out: Record<string, unknown> = { media: voice.id, name: voice.name, ...(voice.duration ? { seconds: Math.round(voice.duration * 100) / 100 } : {}), model: `${runsOn.title} on ${API_LABEL[apiOf(runsOn)]}${runsOn.id !== chosen.id ? ` (this voice's own model; Settings keep ${chosen.title})` : ""}`, voice: line(voiceChoice), language: lang ? `${lang.en} (${lang.code})` : "auto (from the text)", costUsd: Math.round(tts.cost * 1e4) / 1e4 };
+	// (principle 4) heard before it is trusted: Whisper reads the words back; for a language it reads less surely, say so
+	if (lang && lang.code !== "ru" && lang.code !== "en") out.check = `Check the words before keeping it: analyze {what:"words", id:<this clip>} (Whisper reads ${lang.en}${/^(vi|th|yue|zh|hi|ar|he)$/.test(lang.code) ? " less surely than English: tones and spelling may differ even when the voice is right — say so" : ""}).`;
 	if (underBudget()) out.spent = await charged(what, tts.cost, tts.api);
 	voicesMade.set(key, { media: voice.id, at: Date.now() });
 	if (args.place === false) return { ...out, note: "In Media, not placed." };
@@ -1251,6 +1286,8 @@ const NEURAL: Record<string, { family: NeuralFamilyId; values: Record<string, Pa
 	enhance_voice: { family: "voiceEnhance", values: {} },
 	separate_voice: { family: "separate", values: {} },
 	voice_changer: { family: "voiceChange", values: {} },
+	// (the chat's coverage, principle 5) the inspector's Color match: params.ref = the clip whose colours to take
+	color_match: { family: "colorMatch", values: {} },
 };
 /** The sound tools: an audio clip of its own takes them too, not only a video's sound. */
 const SOUND_FAMILIES = new Set<NeuralFamilyId>(["voiceEnhance", "separate", "voiceChange"]);
@@ -1259,6 +1296,30 @@ async function aiEffect(args: Args, signal: AbortSignal) {
 	const pick = NEURAL[String(args.kind)] ?? fail(`Unknown AI effect. One of: ${Object.keys(NEURAL).join(", ")}`);
 	const { track, element } = SOUND_FAMILIES.has(pick.family) ? find(args.id) : findVideo(args.id);
 	const values = { ...pick.values, ...((args.params as Record<string, ParamValue>) ?? {}) };
+	if (pick.family === "colorMatch") {
+		// the reference as the panel sends it: its colours measured here (a timeline clip: its middle frame; a Media item)
+		const said = String(values.ref ?? "").trim();
+		if (!said) fail("Color match needs params.ref: the clip id or Media id whose colours to take.");
+		if (!/^[\d,;]+$/.test(said)) {
+			const { histogramOf } = await import("@/neural/components/ai-tools");
+			let file: File | undefined;
+			let type = "";
+			let atSec: number | undefined;
+			try {
+				const clip = find(said);
+				const asset = "mediaId" in clip.element ? editor().media.getAssets().find((m) => m.id === (clip.element as { mediaId: string }).mediaId) : undefined;
+				file = asset?.file;
+				type = asset?.type ?? "";
+				if (type === "video") atSec = (clip.element.trimStart + clip.element.duration / 2) / TICKS_PER_SECOND;
+			} catch {
+				const asset = findMedia(said);
+				file = asset.file;
+				type = asset.type;
+			}
+			if (!file) fail(`The reference «${said}» has no picture to measure (its file isn't available).`);
+			values.ref = await histogramOf(file as File, type, atSec);
+		}
+	}
 	const r = await settle(() => {
 		if (!applyToClip(track.id, element.id, pick.family, values)) fail("This clip's file isn't available.");
 	}, signal);
@@ -1276,7 +1337,7 @@ const clipSeconds = (element: TimelineElement) => element.duration / TICKS_PER_S
 /** Seconds new words take when said: ~15 characters a second. */
 const speechSeconds = (text: string) => Math.max(1, text.length / 15);
 
-/** The AI models the user picked in Settings → AI (or the defaults of the APIs with a key). */
+/** The AI models the user picked in Settings → Services (or the defaults of the APIs with a key). */
 const falChoices = () => useFal.getState().status?.choices;
 const falKeys = () => keysOf(useFal.getState().status);
 
@@ -1292,7 +1353,7 @@ function lipCost(seconds: number, model?: FalModel): { cost: number; api: AiApi 
 
 /**
  * The lipsync model of one call: the one it names (an id of price_plan {kind:"lipsync"}, or "cheapest": the cheapest
- * that takes this length), else the pick of this project's Lipsync window / Settings → AI. The price and the request
+ * that takes this length), else the pick of this project's Lipsync window / Settings → Services. The price and the request
  * both follow it (a named model was ignored: LatentSync ran and charged $0.20 where price_plan had said $0.085, 11.11).
  */
 function lipsyncModelFor(named: unknown, seconds: number, pid: string): FalModel {
@@ -1756,7 +1817,9 @@ async function projectSettings(args: Args) {
 		width = Math.round((width * f) / 2) * 2;
 		height = Math.round((height * f) / 2) * 2;
 	}
-	if (width !== p.settings.canvasSize.width || height !== p.settings.canvasSize.height) settings.canvasSize = { width, height };
+	// A shape asked for is a chosen one: the first clip placed afterwards keeps it (cat job 21.11: a 9:16 set here flipped to
+	// 16:9 when a wide stock clip became the first one, canvas/first-clip.ts).
+	if (width !== p.settings.canvasSize.width || height !== p.settings.canvasSize.height) Object.assign(settings, { canvasSize: { width, height }, originalCanvasSize: { width, height }, canvasFromClip: false });
 	if (!Object.keys(settings).length) return "Nothing to change.";
 	await ed.project.updateSettings({ settings });
 	return `Project: ${width}×${height}, ${args.fps ?? Math.round(frameRateToFloat(p.settings.fps))} fps.`;
@@ -1971,6 +2034,41 @@ const TOOLS: Array<ToolSpec & { run: Run }> = [
 		run: (a, s) => aiEffect(a, s),
 	},
 	{
+		// (the chat's coverage, principle 5: the inspector's Stabilize, Sync by waveform and the Generators, by the editor's own commands)
+		name: "stabilize",
+		description: "Steady a shaky video clip, as Video → Stabilize: level recommended (default) | mincrop (less zoom) | most (steadiest); off:true takes it away.",
+		parameters: obj({ id: S("Video id"), level: S("recommended | mincrop | most"), off: B("Take the stabilization away") }, ["id"]),
+		run: async (a) => {
+			const { element } = findVideo(a.id);
+			const level = a.off ? null : (["recommended", "mincrop", "most"].includes(String(a.level)) ? String(a.level) : "recommended") as "recommended" | "mincrop" | "most";
+			await setStabilize(element.id, level);
+			return level ? `Stabilizing «${element.name}» (${level}): it runs on this Mac, the clip updates when done.` : `Stabilization taken off «${element.name}».`;
+		},
+	},
+	{
+		name: "sync_waveform",
+		description: "Line up clips by their sound, as the clip menu's Sync by waveform (a camera's sound with a recorder's, several cameras): ids = the clips (default: the selected ones).",
+		parameters: obj({ ids: IDS }),
+		run: async (a) => {
+			const ids = Array.isArray(a.ids) ? (a.ids as unknown[]).map(String) : [];
+			const refs = ids.map((id) => { const f = find(id); return { trackId: f.track.id, elementId: f.element.id }; });
+			const { syncByWaveform } = await import("@/sound/sync/run");
+			const r = await syncByWaveform(editor(), refs.length ? refs : undefined);
+			return r ? `Synced by waveform: ${JSON.stringify(r).slice(0, 300)}` : "Nothing was synced (fewer than two clips with sound, or cancelled).";
+		},
+	},
+	{
+		name: "add_generator",
+		description: "A generator on the timeline, as Effects → Generators: solids, gradients, backgrounds, particles, light leaks, REC / VHS overlays… name = its name or id (an unknown one lists the names); start = seconds (default: the playhead).",
+		parameters: obj({ name: S("Generator name or id"), start: N("Seconds") }, ["name"]),
+		run: async (a) => {
+			const want = String(a.name ?? "").trim().toLowerCase();
+			const preset = GENERATOR_PRESETS.find((p) => p.id.toLowerCase() === want) ?? GENERATOR_PRESETS.find((p) => p.name.toLowerCase() === want) ?? GENERATOR_PRESETS.find((p) => p.name.toLowerCase().includes(want) || p.id.toLowerCase().includes(want)) ?? fail(`No generator «${a.name}». Some: ${GENERATOR_PRESETS.slice(0, 40).map((p) => p.name).join(", ")}…`);
+			const at = insertGenerator(editor(), preset, typeof a.start === "number" ? a.start : undefined);
+			return `Generator «${preset.name}» placed at ${Math.round(at * 100) / 100} s.`;
+		},
+	},
+	{
 		name: "face_swap",
 		description: `Put another face on the person in a video clip (on fal.ai with the user's key, ~$0.20 per 5 s, takes a few minutes). face: one of the app's made-up faces hero, diva, rebel, noir, elf, viking, idol, sage, android. photo: a Media picture of a real person — only with consent:true after the user confirmed that person agreed; never public figures.`,
 		parameters: obj({ id: S("Video id"), face: S("Made-up face id"), photo: S("Media id of a photo (optional)"), consent: B("The person in the photo agreed") }, ["id"]),
@@ -1985,7 +2083,7 @@ const TOOLS: Array<ToolSpec & { run: Run }> = [
 	{
 		name: "lipsync",
 		description: `Move the lips of the person in a video clip (paid on the user's key, ~$0.20 per 40 s; takes minutes) to: new words in their own voice (text: the voice is cloned from the clip), a ready or saved voice saying text (speaker), a sound (sound: a Media audio id — soundFrom/soundTo for its piece — or a timeline audio clip id: only its trimmed piece), or the audio under the clip on the timeline (sound:"timeline": a song placed there is sung; the result plays silent over it).`,
-		parameters: obj({ id: S("Video id"), text: S("What they should say (with speaker, or in the clip's own voice)"), sound: S("'timeline' (the audio under the clip), a Media audio id, or a timeline audio clip id"), soundFrom: N("Seconds into the Media sound: the piece's start"), soundTo: N("Seconds into the Media sound: the piece's end"), speaker: S("A ready voice (ryan, vivian…) or a saved voice's name, saying text"), cast: S("A cast name: its voice says text"), model: S("A lipsync model id (price_plan {kind:'lipsync'}) or 'cheapest'; default: the one picked in Settings → AI"), quote: B("Only the price") }, ["id"]),
+		parameters: obj({ id: S("Video id"), text: S("What they should say (with speaker, or in the clip's own voice)"), sound: S("'timeline' (the audio under the clip), a Media audio id, or a timeline audio clip id"), soundFrom: N("Seconds into the Media sound: the piece's start"), soundTo: N("Seconds into the Media sound: the piece's end"), speaker: S("A ready voice (ryan, vivian…) or a saved voice's name, saying text"), cast: S("A cast name: its voice says text"), model: S("A lipsync model id (price_plan {kind:'lipsync'}) or 'cheapest'; default: the one picked in Settings → Services"), quote: B("Only the price") }, ["id"]),
 		run: (a, s) => oneAtATime(() => speak(a, "lipsync", s)),
 	},
 	{
@@ -2002,8 +2100,8 @@ const TOOLS: Array<ToolSpec & { run: Run }> = [
 	},
 	{
 		name: "generate_voice",
-		description: "Voice-over from text with a ready voice: ryan, aiden, eric, dylan, uncle_fu (men); vivian, serena, ono_anna, sohee (women). style: excited, calm, whisper…",
-		parameters: obj({ text: S("Text"), speaker: S("Voice id"), style: S("Optional"), start: N("Seconds") }, ["text"]),
+		description: "Voice-over from text. speaker = a voice id the voice listing gives (find_content {kind:\"voice\", query:\"<language>\"}): the ready voices (ryan, vivian…), the speech model's own voices by language (mm:…, fal-el:…), the trending looks (trend:…), My voices. An unknown voice is an error with the nearest real ones. language (vi, en, de… or a name) goes to the model; a language asked without a speaker picks that language's own voice. style: excited, calm, whisper…",
+		parameters: obj({ text: S("Text"), speaker: S("Voice id from the voice listing"), language: S("ISO code or name: the language spoken (default: auto from the text)"), style: S("Optional"), start: N("Seconds") }, ["text"]),
 		run: (a) => generateThing("voice", a),
 	},
 	{

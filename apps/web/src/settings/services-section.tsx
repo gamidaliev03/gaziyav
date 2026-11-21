@@ -1,14 +1,13 @@
 "use client";
 
-// Settings → Services: one row per ability with the service it uses on the right (Gaziyav's own way is each row's
+// Settings → Services, below his keys: one row per ability with the service it uses on the right (Gaziyav's own way is each row's
 // default, as before), the key each service needs, and «Проверить» answering in one line. The keys of the services are
-// kept by the app like the fal.ai key (Settings → AI keeps fal.ai, kie.ai and ArgoLink). A choice acts at once.
+// kept by the app like the fal.ai key (Settings → Services keeps fal.ai, kie.ai and ArgoLink). A choice acts at once.
 import { useCallback, useEffect, useState } from "react";
-import type { ReactNode } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import { useLang } from "@/i18n";
 import type { Ability, Option, Row, Service } from "@/studio/server/providers/registry";
@@ -22,6 +21,7 @@ interface State {
 	use: Record<Ability, string>;
 	live: Record<Ability, string>;
 	keys: Keys;
+	empty?: Record<string, { since: number; held?: boolean }>;
 }
 type Line = { ok: boolean; ru: string; en: string };
 type GzBridge = { invoke: (channel: string, ...args: unknown[]) => Promise<{ ok: boolean; error?: string }> };
@@ -41,16 +41,6 @@ function useWords() {
 	return { ru, w: (r: string, e: string) => (ru ? r : e) };
 }
 
-/** The card a group of rows sits on, as the other tabs draw theirs. */
-function Group({ title, id, children }: { title: string; id: string; children: ReactNode }) {
-	return (
-		<section className="flex flex-col gap-2.5" data-settings-group={id}>
-			<h3 className="text-[13px] font-semibold">{title}</h3>
-			<div className="bg-foreground/[0.04] flex flex-col divide-y rounded-lg px-3 py-1">{children}</div>
-		</section>
-	);
-}
-
 export function ServicesSection() {
 	const { w } = useWords();
 	const [state, setState] = useState<State | null>(null);
@@ -64,21 +54,43 @@ export function ServicesSection() {
 	useEffect(() => {
 		void load();
 	}, [load]);
-	if (!state) return <Spinner className="mx-auto my-8" />;
+	if (!state) return <Spinner className="mx-auto my-4" />;
+	// The keys the app already keeps (fal.ai, kie.ai, ArgoLink above; Pexels and Pixabay in «Stock video») are shown
+	// once, where they always were: only the keys it never had get a field here, in the same style.
+	const fresh = state.services.filter((s) => !s.elsewhere && s.id !== "pexels" && s.id !== "pixabay");
 	return (
 		<div className="flex flex-col gap-5" data-settings-services data-no-translate>
-			<Group title={w("Что чем делается", "What does what")} id="services-rows">
-				{state.rows.map((row) => (
-					<AbilityRow key={row.id} row={row} state={state} onState={setState} />
+			<div className="flex flex-col gap-1.5" data-services-keys>
+				<span className="text-sm font-medium">{w("Ключи других сервисов (по желанию)", "Keys of other services (optional)")}</span>
+				{fresh.map((s) => (
+					<KeyRow key={s.id} service={s} kept={state.keys[s.id]} empty={state.empty?.[s.id]?.since} onChange={load} />
 				))}
-			</Group>
-			<Group title={w("Ключи сервисов", "Service keys")} id="services-keys">
-				{state.services.map((s) => (
-					<KeyRow key={s.id} service={s} kept={state.keys[s.id]} onChange={load} />
-				))}
-			</Group>
+			</div>
+			<section className="flex flex-col gap-2.5 border-t pt-5" data-settings-group="services-rows">
+				<span className="text-sm font-medium">{w("Что чем делается", "What does what")}</span>
+				<div className="flex flex-col divide-y">
+					{state.rows.map((row) => (
+						<AbilityRow key={row.id} row={row} state={state} onState={setState} />
+					))}
+				</div>
+			</section>
 		</div>
 	);
+}
+
+/** The options of a row: those that run on his keys (or need none), then one group per key he doesn't have yet. */
+function groupsOf(options: Array<Option & { usable: boolean }>, state: State) {
+	const ready = options.filter((o) => o.usable);
+	const byKey = new Map<string, Array<Option & { usable: boolean }>>();
+	for (const o of options.filter((x) => !x.usable)) {
+		const k = o.keys[0] ?? "";
+		byKey.set(k, [...(byKey.get(k) ?? []), o]);
+	}
+	const name = (k: string) => state.services.find((s) => s.id === k)?.name ?? k;
+	return [
+		{ key: "ready", label: null as { ru: string; en: string } | null, items: ready },
+		...[...byKey.entries()].map(([k, items]) => ({ key: `key:${k}`, label: { ru: `Нужен ключ ${name(k)}`, en: `Needs a ${name(k)} key` }, items })),
+	].filter((g) => g.items.length > 0);
 }
 
 /** What an option needs, in a few words: «без ключа», the key it has, or the key to add. */
@@ -91,7 +103,8 @@ function keyNote(o: Option & { usable: boolean }, state: State, w: (r: string, e
 
 function AbilityRow({ row, state, onState }: { row: Row; state: State; onState: (s: State) => void }) {
 	const { ru, w } = useWords();
-	const options = state.options[row.id];
+	// an option this version doesn't run yet isn't listed (no greyed «soon» rows)
+	const options = state.options[row.id].filter((o) => o.wired);
 	const value = state.use[row.id];
 	const picked = options.find((o) => o.id === value) ?? options[0];
 	const [line, setLine] = useState<Line | null>(null);
@@ -109,7 +122,7 @@ function AbilityRow({ row, state, onState }: { row: Row; state: State; onState: 
 		try {
 			setLine(await call<Line>("/check", { row: row.id, option: picked.id }));
 		} catch {
-			setLine({ ok: false, ru: "Не получилось проверить: попробуйте ещё раз.", en: "Couldn't check: try again." });
+			setLine({ ok: false, ru: "Не получилось проверить.", en: "Couldn't check it." });
 		} finally {
 			setBusy(false);
 		}
@@ -129,10 +142,16 @@ function AbilityRow({ row, state, onState }: { row: Row; state: State; onState: 
 							<SelectValue />
 						</SelectTrigger>
 						<SelectContent data-service-options={row.id}>
-							{options.map((o) => (
-								<SelectItem key={o.id} value={o.id} className="text-xs" disabled={!o.wired} note={o.wired ? keyNote(o, state, w) : w("скоро", "soon")} data-service-option={o.id}>
-									{ru ? o.ru : o.en}
-								</SelectItem>
+							{/* what works on his keys first; one that needs a key he lacks is listed apart under that key's name */}
+							{groupsOf(options, state).map((g) => (
+								<SelectGroup key={g.key}>
+									{g.label && <SelectLabel>{ru ? g.label.ru : g.label.en}</SelectLabel>}
+									{g.items.map((o) => (
+										<SelectItem key={o.id} value={o.id} className="text-xs" note={keyNote(o, state, w)} data-service-option={o.id}>
+											{ru ? o.ru : o.en}
+										</SelectItem>
+									))}
+								</SelectGroup>
 							))}
 						</SelectContent>
 					</Select>
@@ -154,7 +173,7 @@ function AbilityRow({ row, state, onState }: { row: Row; state: State; onState: 
 	);
 }
 
-function KeyRow({ service, kept, onChange }: { service: Service; kept: { key: boolean; hint: string | null } | undefined; onChange: () => Promise<void> }) {
+function KeyRow({ service, kept, empty, onChange }: { service: Service; kept: { key: boolean; hint: string | null } | undefined; empty?: number; onChange: () => Promise<void> }) {
 	const { ru, w } = useWords();
 	const [value, setValue] = useState("");
 	const [busy, setBusy] = useState(false);
@@ -203,22 +222,27 @@ function KeyRow({ service, kept, onChange }: { service: Service; kept: { key: bo
 		}
 	};
 	return (
-		<div className="flex flex-col gap-1 py-2" data-service-key={service.id}>
+		<div className="flex flex-col gap-1" data-service-key={service.id}>
 			<div className="flex min-w-0 items-center gap-2 text-sm">
-				<a href={service.keysUrl} target="_blank" rel="noreferrer" className="w-36 shrink-0 truncate hover:underline" title={w("Где взять ключ", "Where to get the key")}>
+				<a href={service.keysUrl} target="_blank" rel="noreferrer" className="w-28 shrink-0 truncate hover:underline" title={w("Где взять ключ", "Where to get the key")}>
 					{service.name}
 				</a>
 				{service.elsewhere ? (
 					<>
 						<span className="text-muted-foreground flex-1 text-xs tabular-nums">{kept?.key ? kept.hint : w("нет ключа", "no key")}</span>
 						<Button size="sm" variant="ghost" className="h-7" onClick={() => useSettingsStore.getState().setSection("ai")} data-service-key-ai>
-							{w("В разделе ИИ", "In the AI tab")}
+							{w("Выше", "Above")}
 						</Button>
 					</>
 				) : kept?.key ? (
 					<>
 						<span className="text-muted-foreground flex-1 text-xs tabular-nums" data-service-key-hint>
 							{kept.hint}
+							{empty ? (
+								<span className="text-destructive ml-2" data-service-key-empty>
+									{w(`на счёте нет денег (с ${new Date(empty).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })})`, `no money left (since ${new Date(empty).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })})`)}
+								</span>
+							) : null}
 						</span>
 						<Button size="sm" variant="ghost" className="h-7" disabled={busy} onClick={() => void check()} data-service-key-check>
 							{w("Проверить", "Check")}
@@ -248,7 +272,7 @@ function KeyRow({ service, kept, onChange }: { service: Service; kept: { key: bo
 				)}
 			</div>
 			{line && (
-				<p className={line.ok ? "pl-[9.5rem] text-[12px] text-emerald-600 dark:text-emerald-400" : "text-destructive pl-[9.5rem] text-[12px]"} data-service-key-line={service.id}>
+				<p className={line.ok ? "pl-[7.5rem] text-[12px] text-emerald-600 dark:text-emerald-400" : "text-destructive pl-[7.5rem] text-[12px]"} data-service-key-line={service.id}>
 					{ru ? line.ru : line.en}
 				</p>
 			)}

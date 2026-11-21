@@ -236,7 +236,7 @@ export async function preflight({
 	const fal = falModel(model.id);
 	const api = provider(fal?.api);
 	if (!api.hasKey()) {
-		out.blocking = fal?.api === "kie" ? "Add your kie.ai key in Settings → AI" : "Add your fal.ai key in Settings → AI (fal.ai)";
+		out.blocking = fal?.api === "kie" ? "Add your kie.ai key in Settings → Services" : "Add your fal.ai key in Settings → Services (fal.ai)";
 		out.checks.push({ level: "fail", text: out.blocking });
 	} else if (fal) {
 		// kie's ByteDance lipsync takes 360p–1080p: under that it refuses the job.
@@ -353,7 +353,7 @@ export function startLipsync({
 	syncMode?: unknown;
 }) {
 	const api = provider(falModel(modelId)?.api);
-	if (!api.hasKey()) throw new StudioError(api.id === "kie" ? "Add your kie.ai key first: Settings → AI." : "Add your fal.ai key first: Settings → AI (fal.ai).");
+	if (!api.hasKey()) throw new StudioError(api.id === "kie" ? "Add your kie.ai key first: Settings → Services." : "Add your fal.ai key first: Settings → Services (fal.ai).");
 	// Checked before the job starts, so a request without its clip or speech gets a clear 4xx, not a job that fails later.
 	if (!video?.fileId || !audioFileId) throw new StudioError("Pick the clip and the speech to lipsync");
 	const model = getModel(modelId);

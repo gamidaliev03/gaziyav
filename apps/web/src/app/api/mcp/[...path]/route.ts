@@ -13,6 +13,7 @@ import { budgetView, recordSpend, setLimit, setProjectBudget } from "@/mcp/serve
 import { compileForClaude } from "@/mcp/server/compose";
 import { readNotes, saveNotes } from "@/mcp/server/notes";
 import { searchStock, stockFile, stockKeys } from "@/mcp/server/stock";
+import { isSourcePick } from "@/studio/server/providers/media-search";
 import { keepPicture, memoryData, memoryText, noteTaste, pictureFile, refreshMemoryText, saveBrand, saveCharacter, saveVoice, setTargets } from "@/mcp/server/memory";
 
 export const runtime = "nodejs";
@@ -65,7 +66,10 @@ export async function GET(req: Request, ctx: Ctx) {
 		if (head === "budget") return json(budgetView(q.get("project")));
 		if (head === "stock" && sub === "file") return await stockFile(String(q.get("item") ?? ""));
 		if (head === "stock" && sub === "keys") return json(stockKeys());
-		if (head === "stock") return json(await searchStock(String(q.get("q") ?? ""), q.get("vertical") !== "0"));
+		if (head === "stock") {
+			const source = q.get("source");
+			return json(await searchStock(String(q.get("q") ?? ""), q.get("vertical") !== "0", isSourcePick(source) ? source : undefined));
+		}
 		if (head === "notes") return json(readNotes(q.get("project") ?? ""));
 		if (head === "memory" && sub === "file") {
 			const full = pictureFile(String(q.get("path") ?? ""));

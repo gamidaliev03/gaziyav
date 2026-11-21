@@ -4,6 +4,7 @@
 import { Switch } from "@/components/ui/switch";
 import { EditorCore } from "@/core";
 import { useEditor } from "@/editor/use-editor";
+import { hasListedClipEffects } from "@/effects/clip-effect-list";
 import { ClipEffectsTab, StandaloneEffectTab } from "@/effects/components/effects-tab";
 import { GraphicTab } from "@/graphics/components/graphic-tab";
 import { MasksTab } from "@/masks/components/masks-tab";
@@ -37,12 +38,27 @@ const isShape = (e: TimelineElement): e is GraphicElement => e.type === "graphic
 const isVisual = (e: TimelineElement): e is VisualElement =>
 	["video", "image", "text", "sticker", "graphic"].includes(e.type);
 const isMaskable = (e: TimelineElement): e is MaskableElement => ["video", "image", "graphic"].includes(e.type);
-const hasEffects = (e: TimelineElement): e is VisualElement => ["video", "image", "sticker", "graphic"].includes(e.type);
+// A text gets its Effects list once an effect is on it (dropped from Effects, ⌘K, pasted): it renders, so it needs a
+// place to be edited and removed (audit 21.11); a plain title keeps its short row of tabs.
+const hasEffects = (e: TimelineElement): e is VisualElement =>
+	["video", "image", "sticker", "graphic"].includes(e.type) || (e.type === "text" && hasListedClipEffects(e.effects));
 const videoHasAudio = (e: TimelineElement): e is VideoElement => {
 	if (e.type !== "video") return false;
+	// after «Extract audio» the sound plays from its own audio clip, which has these controls (audit 21.11)
+	if (e.isSourceAudioEnabled === false) return false;
 	const asset = EditorCore.getInstance().media.getAssets().find((a) => a.id === e.mediaId);
 	return asset?.hasAudio !== false;
 };
+/** A compound clip with sound somewhere inside it: its Audio tab sets the sound of all of it (montage/compound-sound.ts). */
+const compoundHasAudio = (e: TimelineElement, depth = 0): boolean => {
+	if (e.type !== "graphic" || e.params?.compound !== true || depth > 3) return false;
+	const scene = EditorCore.getInstance().scenes.getScenes().find((s) => s.id === e.params.sceneId);
+	if (!scene) return false;
+	return [...scene.tracks.overlay, scene.tracks.main, ...scene.tracks.audio].some((t) =>
+		(t.elements as TimelineElement[]).some((x) => x.type === "audio" || videoHasAudio(x) || compoundHasAudio(x, depth + 1)),
+	);
+};
+const hasOwnSound = (e: TimelineElement) => videoHasAudio(e) || compoundHasAudio(e);
 
 /** A group of parameter rows; `toggle` puts that boolean in the header and hides the rows while it's off. */
 function ParamGroup({
@@ -350,11 +366,11 @@ export function registerBuiltInSections() {
 	});
 
 	// Sound: Basic for audio clips, its own tab for video with sound.
-	registerGroups((e) => (isAudioClip(e) ? "basic" : "audio"), (e) => isAudioClip(e) || videoHasAudio(e), AUDIO_GROUPS, 100);
+	registerGroups((e) => (isAudioClip(e) ? "basic" : "audio"), (e) => isAudioClip(e) || hasOwnSound(e), AUDIO_GROUPS, 100);
 	// The sound's clean-up (isolate the voice, reduce noise, gate), then the audio effects applied to it, in the order they
 	// process the sound (one home: the clip's sound).
 	for (const tab of ["basic", "audio"] as const) {
-		const applies = (e: TimelineElement) => (tab === "basic" ? isAudioClip(e) : videoHasAudio(e));
+		const applies = (e: TimelineElement) => (tab === "basic" ? isAudioClip(e) : hasOwnSound(e));
 		registerInspectorSection({
 			id: `audio.cleanup@${tab}`,
 			tab,
@@ -393,6 +409,7 @@ export function registerBuiltInSections() {
 		title: "Mask",
 		order: 300,
 		bare: true,
+		// a compound clip's mask cuts its whole picture at once (services/renderer/compound-group.ts)
 		appliesTo: isMaskable,
 		render: ({ element, trackId }) => <MasksTab element={element as MaskableElement} trackId={trackId} />,
 	});

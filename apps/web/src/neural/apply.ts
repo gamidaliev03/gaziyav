@@ -475,7 +475,7 @@ async function runOnClip(editor: EditorCore, target: Target, effect: NeuralEffec
 	noteJob(element.id, jobId);
 	try {
 		// The tool's model, when it isn't on this Mac yet: downloaded now, inside this very progress («Downloading the
-		// model · 504 MB · 3 %»), Cancel stops it — no question first. Started in Settings → AI, it is the same download.
+		// model · 504 MB · 3 %»), Cancel stops it — no question first. Started in Settings → Services, it is the same download.
 		// The bar never goes back: the work after a download fills what the download left.
 		let floor = 0;
 		const model = modelFor(family, values);
@@ -564,7 +564,7 @@ async function runOnClip(editor: EditorCore, target: Target, effect: NeuralEffec
 			refineForExport({ editor, projectId, elementId: element.id, preview: result, source, effect, family, params, label, start, length, keyFor, values });
 		}
 	} catch (error) {
-		// Cancelled here, or its model's download cancelled in Settings → AI (an AbortError): no error, nothing red.
+		// Cancelled here, or its model's download cancelled in Settings → Services (an AbortError): no error, nothing red.
 		if (error instanceof Cancelled || controller.signal.aborted || (error as Error)?.name === "AbortError") {
 			jobCenter.cancelled(jobId);
 			return;

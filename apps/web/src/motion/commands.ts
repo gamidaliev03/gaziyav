@@ -333,7 +333,7 @@ export function applyReframe(
 	const canvas = target ? { width: target.width, height: target.height } : current;
 	const commands: Command[] = [];
 	if (target && (current.width !== target.width || current.height !== target.height)) {
-		commands.push(new UpdateProjectSettingsCommand({ canvasSize: { width: target.width, height: target.height } }));
+		commands.push(new UpdateProjectSettingsCommand({ canvasSize: { width: target.width, height: target.height }, originalCanvasSize: { width: target.width, height: target.height }, canvasFromClip: false }));
 	}
 	for (const { elementId, tracker, isNew } of clips) {
 		const at = locate(editor, elementId);

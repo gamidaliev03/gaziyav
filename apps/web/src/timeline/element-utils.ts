@@ -20,6 +20,7 @@ import {
 	type MaskableElement,
 	type RetimableElement,
 	type VisualElement,
+	type EffectElement,
 	type UploadAudioElement,
 } from "@/timeline";
 import { DEFAULTS } from "@/timeline/defaults";
@@ -60,8 +61,9 @@ export function isRetimableElement(
 
 export function canElementBeHidden(
 	element: TimelineElement,
-): element is VisualElement {
-	return isVisualElement(element);
+): element is VisualElement | EffectElement {
+	// an effect / filter / adjustment layer switches off like a clip (V): the renderer skips hidden elements
+	return isVisualElement(element) || element.type === "effect";
 }
 
 export function hasElementEffects({

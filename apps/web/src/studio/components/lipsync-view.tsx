@@ -3,7 +3,7 @@
 // The Lipsync section: for a selected video clip the FIRST section of the inspector (lipa, 14.11). The podcast's golden
 // path is the clip → the words → ⌘↵ (or the one button): the words are voiced in the clip's own voice and the clip
 // speaks them, one run with its stages, one price in cents on the button (the button is the consent; a dialog only above
-// the limit of Settings → AI). Everything here belongs to the clip: its draft, its run, its result card — several clips
+// the limit of Settings → Services). Everything here belongs to the clip: its draft, its run, its result card — several clips
 // run at once. The run / stop / retry bar is pinned to the inspector's own bottom edge, never scrolled away.
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
@@ -47,7 +47,9 @@ import { ResultCard } from "./result-card";
 import { RunProgress, RunStatus, sayStudio } from "./run-status";
 import { ScriptButton } from "./script-button";
 import { trendVoice } from "@/trending/voices";
-import { myCards, type VoiceCard } from "@/generate/components/voice-picker";
+import { myCards, needsKey, useVoiceGroups, type VoiceCard, VoiceGroupItems } from "@/generate/components/voice-picker";
+import { followVoiceModel, useLibraryCards, useVoiceFitsModel } from "@/generate/service-voices";
+import { isFalElevenVoice } from "@/fal/eleven-voices";
 import { VOICES } from "@/generate/voices";
 import { t as tr, useLang, useT } from "@/i18n";
 import { falChoice, isCloneVoice, openFalSettings, useFal, useFalTts, useKeys } from "@/fal/client";
@@ -121,10 +123,11 @@ export function LipsyncView({ embedded = false }: { embedded?: boolean }) {
 		if (projectId && clipId && pins[projectId] !== clipId) pin(projectId, clipId);
 	}, [projectId, clipId, pins, pin]);
 
-	// Only the clip's own voice or one of «My voices» speak here: an older draft with a ready voice goes back to the clip's.
+	// The clip's own voice, «My voices» or a library voice speak here; anything else (a voice that's gone) goes back to the clip's.
 	// biome-ignore lint/correctness/useExhaustiveDependencies: patch writes this clip's draft
 	useEffect(() => {
-		if (projectId && draft.voice !== "clone" && draft.voice !== "file" && draft.voice !== "timeline" && !draft.voice.startsWith("local:") && !(server?.voices ?? []).some((v) => v.id === draft.voice) && !draft.speech) patch({ voice: "clone" });
+		const library = VOICES.some((x) => x.id === draft.voice) || draft.voice.startsWith("trend:") || draft.voice.startsWith("svc:") || isFalElevenVoice(draft.voice);
+		if (projectId && draft.voice !== "clone" && draft.voice !== "file" && draft.voice !== "timeline" && !draft.voice.startsWith("local:") && !library && !(server?.voices ?? []).some((v) => v.id === draft.voice) && !draft.speech) patch({ voice: "clone" });
 	}, [projectId, key, draft.voice]);
 
 	// Lipsync works like an effect on the selected clip: an old "whole edit" draft goes back to the clip.
@@ -177,14 +180,15 @@ export function LipsyncView({ embedded = false }: { embedded?: boolean }) {
 	const savedVoices = server?.voices ?? [];
 	const own = useMemo(() => (clip?.asset.file ? URL.createObjectURL(clip.asset.file) : null), [clip]);
 	useEffect(() => () => (own ? URL.revokeObjectURL(own) : undefined), [own]);
+	// One picker everywhere (Voice-over, dubbing, here): this clip's own voice (the default of a new draft), his clones,
+	// then the library by key route — the same cards, groups and samples.
+	const libraryCards = useLibraryCards(lang === "ru" ? "ru" : "en");
 	const voiceCards = useMemo<VoiceCard[]>(
-		() => [
-			// The person's own voice (cloned from the selected clip) and the user's saved voices: nothing else speaks here.
-			{ id: "clone", name: "Original voice", hint: "The person's own voice, cloned from the clip (once)", sample: own, groups: [] },
-			...myCards(savedVoices),
-		],
-		[own, savedVoices],
+		() => [{ id: "clone", name: "Original voice", hint: "The person's own voice, cloned from the clip (once)", sample: own, groups: ["clip"] }, ...myCards(savedVoices), ...libraryCards],
+		[own, savedVoices, libraryCards],
 	);
+	const voiceGroups = useVoiceGroups(voiceCards);
+	useVoiceFitsModel(draft.voice, (v) => patch({ voice: v, voiceName: "" }));
 	const audioInput = useRef<HTMLInputElement>(null);
 	const chooseVoice = (v: string) => {
 		if (v === "pick-file") return audioInput.current?.click();
@@ -202,6 +206,7 @@ export function LipsyncView({ embedded = false }: { embedded?: boolean }) {
 			setVoiceFromAsset(key, asset).catch((err) => toast.error(sayStudio((err as Error).message)));
 			return;
 		}
+		followVoiceModel(v);
 		patch({ voice: v, voiceName: savedVoices.find((x) => x.id === v)?.name ?? trendVoice(v.slice(6))?.name ?? VOICES.find((x) => x.id === v)?.name ?? "" });
 	};
 	const fit = plan?.fit ?? "loop";
@@ -354,7 +359,7 @@ export function LipsyncView({ embedded = false }: { embedded?: boolean }) {
 
 	const shorten = async () => {
 		if (!settings?.agent) {
-			toast.error(t("The AI agent needs the fal.ai key: Settings → AI."));
+			toast.error(t("The AI agent needs the fal.ai key: Settings → Services."));
 			return;
 		}
 		setFitting(true);
@@ -468,7 +473,7 @@ export function LipsyncView({ embedded = false }: { embedded?: boolean }) {
 		}
 		void speakAndLipsync(editor, projectId, id, { fresh: o.fresh, seed: o.seed, guidance: o.guidance, agreedUsd: needVoice ? Math.max(limit, agreed) : undefined });
 	};
-	/** The button: no question under the limit of Settings → AI; above it, one dialog with the total. A press while the
+	/** The button: no question under the limit of Settings → Services; above it, one dialog with the total. A press while the
 	 * pre-flight is still answering waits for its price (⌘↵ right after the typing is never lost, never unpriced). */
 	const go = (o: Press = {}) => {
 		if (!checked && !busy) {
@@ -541,10 +546,10 @@ export function LipsyncView({ embedded = false }: { embedded?: boolean }) {
 					<div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
 						<span className="text-muted-foreground min-w-0 flex-1 [overflow-wrap:anywhere]" data-testid="footer-hint">
 							{reasonOnButton ? "" : t(hint)}
-							{/* the browser edition has no Settings → AI: its key goes in the banner above (and the AI tab's panel) */}
+							{/* the browser edition has no Settings → Services: its key goes in the banner above (and the AI tab's panel) */}
 							{noKey && !DEMO && (
 								<button type="button" className="text-foreground ml-1.5 underline underline-offset-2" onClick={openFalSettings} data-ai-open-settings>
-									{t("Settings → AI")}
+									{t("Settings → Services")}
 								</button>
 							)}
 						</span>
@@ -637,15 +642,12 @@ export function LipsyncView({ embedded = false }: { embedded?: boolean }) {
 								</SelectValue>
 							</SelectTrigger>
 							<SelectContent>
+								{/* this clip's voice and his clones, then the recordings, then the library: a long library never pushes the
+								    recordings out of reach (2300 voices sat above them in 1.0.63-v63g) */}
 								<SelectGroup>
 									<SelectLabel>{t("A voice says the text")}</SelectLabel>
-									{voiceCards.map((c) => (
-										<SelectItem key={c.id} value={c.id} className="text-xs" data-lipsync-sound-option={c.id}>
-											{c.id === "clone" ? t("Voice of this clip (cloned)") : c.name}
-											{c.hint && c.id !== "clone" ? <span className="text-muted-foreground ml-1.5">{t(c.hint)}</span> : null}
-										</SelectItem>
-									))}
 								</SelectGroup>
+								<VoiceGroupItems groups={voiceGroups.filter((g) => g.key === "clip" || g.key === "mine")} />
 								<SelectSeparator />
 								<SelectGroup>
 									<SelectLabel>{t("A recording")}</SelectLabel>
@@ -664,10 +666,17 @@ export function LipsyncView({ embedded = false }: { embedded?: boolean }) {
 										{t("Choose a file…")}
 									</SelectItem>
 								</SelectGroup>
+								<SelectSeparator />
+								<VoiceGroupItems groups={voiceGroups.filter((g) => g.key !== "clip" && g.key !== "mine")} />
 							</SelectContent>
 						</Select>
 						{source === "text" && sample && <SampleButton url={sample} />}
 					</div>
+					{source === "text" && needsKey(voiceCards.find((c) => c.id === draft.voice)) && (
+						<p className="text-destructive text-[11px] leading-snug" data-voice-needs-key>
+							{needsKey(voiceCards.find((c) => c.id === draft.voice))}
+						</p>
+					)}
 				</Field>
 				{source === "text" && (
 					<div className="flex flex-col gap-1.5">
@@ -884,7 +893,7 @@ export function LipsyncView({ embedded = false }: { embedded?: boolean }) {
 							<div className="flex flex-col gap-1.5 text-sm" data-lipsync-confirm>
 								{needVoice && <span>{t("Voice: {n} characters, {model} · {sum}", { n: text.length, model: tts.title, sum: money(voiceUsd) })}</span>}
 								{!confirm?.voiceOnly && !confirm?.sample && !audioOnly && <span>{t("Lipsync: {s} of video, {model} · {sum}", { s: sec(pf?.plan?.secondsSent ?? pf?.seconds ?? sentVideo), model: model.title, sum: money(lipUsd) })}</span>}
-								<span className="text-muted-foreground text-xs">{t("Above the limit of Settings → AI ({sum})", { sum: money(limit) })}</span>
+								<span className="text-muted-foreground text-xs">{t("Above the limit of Settings → Services ({sum})", { sum: money(limit) })}</span>
 							</div>
 						</AlertDialogDescription>
 					</AlertDialogHeader>

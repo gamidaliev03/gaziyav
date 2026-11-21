@@ -159,7 +159,7 @@ function unsupported(spec: ModelSpec): string | undefined {
 		if (gpu.vram < spec.nvidia.minVram * 0.95) return `Needs an NVIDIA card with at least ${Math.round(spec.nvidia.minVram / 1e9)} GB of memory (${gpu.name} has ${Math.round(gpu.vram / 1e9)} GB).`;
 	}
 	if (spec.appleSiliconOnly && !APPLE_SILICON) return "Needs a Mac with Apple silicon (M1 or later). Use a cloud service under API keys instead.";
-	if (spec.minMacOS && MACOS < spec.minMacOS) return `Needs macOS ${spec.minMacOS} or later. Update macOS, or use fal.ai (Settings → AI).`;
+	if (spec.minMacOS && MACOS < spec.minMacOS) return `Needs macOS ${spec.minMacOS} or later. Update macOS, or use fal.ai (Settings → Services).`;
 	// The heavy models (16 GB) are not offered on a smaller Mac at all — no «run anyway»: the basics (captions, Enhance
 	// voice, Separate, CleanUp, Voice changer) are its set, the rest runs on fal.ai.
 	if (spec.minMemory && memoryBytes() < spec.minMemory * 0.95) {

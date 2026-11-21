@@ -128,7 +128,7 @@ export async function gate(what: string, cost: number, api: AiApi, other?: strin
 	}
 	const bal = (await balances())[api];
 	const instead = other ? ` Use ${other} instead.` : " Use a model on another provider (price_plan {kind, mode} lists them).";
-	if (!bal.key) throw new Error(`Not run: there is no ${API_LABEL[api]} key.${instead} Or tell the user to add it in Gaziyav → Settings → AI.`);
+	if (!bal.key) throw new Error(`Not run: there is no ${API_LABEL[api]} key.${instead} Or tell the user to add it in Gaziyav → Settings → Services.`);
 	// (again:true: the user says it was topped up — one more try; a refusal marks it again, a job taken clears it)
 	if (bal.empty && !again) throw new Error(`Not run: ${emptyLine(api, bal.empty)} (it refused a paid job for an empty balance; kept 15 min). Nothing was spent.${instead} Or tell the user to top it up; once they have, the same call with again:true tries it.`);
 	if (bal.usd !== null && bal.usd + 1e-9 < cost) throw new Error(`Not run: ${API_LABEL[api]} has ${usd(bal.usd)} left, this costs ${usd(cost)}. Nothing was spent.${instead} Or tell the user to top it up.`);
@@ -301,7 +301,7 @@ function planInput(kind: "image" | "video", m: CloudModel, it: PlanItem): Record
 async function priceCloud(it: PlanItem, n: number): Promise<Priced> {
 	const kind = it.kind as "image" | "video";
 	const { list, resolved } = await cloudModelsFor(kind, kind === "video" ? it.mode : undefined, it.model);
-	if (!list.length) return { line: `${kind}: no model${it.mode && it.mode !== "text" ? ` does "${it.mode}"` : ""} (add a fal.ai, kie.ai or ArgoLink key in Settings → AI)`, each: 0, total: 0, api: null, error: "no model" };
+	if (!list.length) return { line: `${kind}: no model${it.mode && it.mode !== "text" ? ` does "${it.mode}"` : ""} (add a fal.ai, kie.ai or ArgoLink key in Settings → Services)`, each: 0, total: 0, api: null, error: "no model" };
 	let picks = list;
 	let note = "";
 	if (it.model && it.model !== "cheapest") {
@@ -334,7 +334,7 @@ async function priceCloud(it: PlanItem, n: number): Promise<Priced> {
 function choose(task: FalTask, it: PlanItem, amount: number): FalModel | null {
 	const s = useFal.getState().status;
 	if (it.model && it.model !== "cheapest") return falModel(it.model) ?? null;
-	// (lipsync with no model named: the one the pipeline will really run — this project's pick, else Settings → AI)
+	// (lipsync with no model named: the one the pipeline will really run — this project's pick, else Settings → Services)
 	if (!it.model && task === "lipsync") return falModel(studioLipsyncModel(projectId()).id) ?? chosenModel(task, s?.choices, keysOf(s));
 	const fits = (m: FalModel) => (m.maxSeconds === undefined || amount <= m.maxSeconds) && (m.minSeconds === undefined || amount >= m.minSeconds);
 	if (it.model === "cheapest") {

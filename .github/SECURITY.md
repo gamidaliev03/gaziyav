@@ -11,7 +11,7 @@ Include what you found, how to reproduce it, and what an attacker could do with 
 ## What is in scope
 
 - the Mac app and the browser edition;
-- how API keys are stored and sent (encrypted with the system keychain; sent only to the provider they belong to);
+- how API keys are stored and sent (stored encrypted on the Mac, in the app's own folder; sent only to the provider they belong to);
 - anything that makes the app send data that [the privacy note](../docs/en/privacy.md) does not list;
 - the update path of the bundled link downloader (accepted only with yt-dlp's own signature) and the model and library downloads (checked by SHA-256).
 
@@ -25,6 +25,6 @@ Only the files attached to this repository's [Releases](https://github.com/gamid
 
 Об уязвимостях сообщайте **не в открытых задачах**, а приватно: на странице репозитория **Security → Report a vulnerability** ([прямая ссылка](https://github.com/gamidaliev03/gaziyav/security/advisories/new)). Опишите, что нашли, как это повторить и что это даёт атакующему. Сопровождающий ответит, как только сможет. Пожалуйста, дайте нам разумное время на исправление до публикации.
 
-Что входит: приложение для Mac и версия для браузера; хранение и отправка API-ключей (они зашифрованы системной связкой ключей и уходят только своему сервису); любые данные, которые приложение отправляет помимо перечисленных в [заметке о приватности](../docs/ru/privacy.md); обновление встроенного загрузчика по ссылке (принимается только с подписью yt-dlp) и загрузка моделей и библиотеки (сверка по SHA-256).
+Что входит: приложение для Mac и версия для браузера; хранение и отправка API-ключей (они хранятся зашифрованными на Mac, в папке самого приложения, и уходят только своему сервису); любые данные, которые приложение отправляет помимо перечисленных в [заметке о приватности](../docs/ru/privacy.md); обновление встроенного загрузчика по ссылке (принимается только с подписью yt-dlp) и загрузка моделей и библиотеки (сверка по SHA-256).
 
 Наши сборки — только файлы, приложенные к [выпускам](https://github.com/gamidaliev03/gaziyav/releases). Приложение для macOS подписано, но пока не нотариально заверено Apple. Сверяйте SHA-256 из описания выпуска, прежде чем открывать загрузку.

@@ -38,13 +38,15 @@ describe("share caption", () => {
 });
 
 describe("share caption writer", () => {
-	test("Gaziyav AI's JSON → title, description without hashtags, 10 hashtags at most", async () => {
+	test("Gaziyav AI's JSON → title, description without hashtags; 5 hashtags at most with Instagram, 8 without", async () => {
 		const { parseCaption } = await import("../server/caption-writer");
 		const r = parseCaption('Sure! {"title":"Sunset <b>hike</b>","description":"Golden hour in the hills #nope","hashtags":["sunset","#travel","#travel","a","b","c","d","e","f","g","h","i"]}', ["instagram"]);
 		expect(r.title).toBe("Sunset bhike/b");
 		expect(r.description).toBe("Golden hour in the hills");
-		expect(r.hashtags.split(" ").length).toBe(10);
+		expect(r.hashtags.split(" ").length).toBe(5);
 		expect(r.hashtags.startsWith("#sunset #travel #a")).toBe(true);
+		const t = parseCaption('{"title":"Hike","description":"Hills","hashtags":["a","b","c","d","e","f","g","h","i","j"]}', ["tiktok", "youtube"]);
+		expect(t.hashtags.split(" ").length).toBe(8);
 		expect(() => parseCaption("no json", ["tiktok"])).toThrow();
 	});
 });

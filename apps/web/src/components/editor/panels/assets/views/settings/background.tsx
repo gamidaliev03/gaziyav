@@ -22,6 +22,7 @@ import { syntaxUIGradients } from "@/data/colors/syntax-ui";
 import { useEditor } from "@/editor/use-editor";
 import { effectPreviewService } from "@/services/renderer/effect-preview";
 import { cn } from "@/utils/ui";
+import { t } from "@/i18n";
 
 const BLUR_PREVIEW_UNIFORM_DIMENSIONS = {
 	width: 1920,
@@ -69,7 +70,7 @@ const BlurPreview = memo(
 				)}
 				onClick={onSelect}
 				type="button"
-				aria-label={`Select ${blur.label} blur`}
+				aria-label={t(`${blur.label} blur`)}
 			>
 				<canvas
 					ref={canvasRef}
@@ -103,7 +104,7 @@ const BackgroundPreviews = memo(
 	}) => {
 		return useMemo(
 			() =>
-				backgrounds.map((bg) => (
+				backgrounds.map((bg, i) => (
 					<button
 						key={bg}
 						className={cn(
@@ -124,7 +125,7 @@ const BackgroundPreviews = memo(
 						}
 						onClick={() => onSelect(bg)}
 						type="button"
-						aria-label={`Select background ${bg}`}
+						aria-label={t("Background {n}", { n: i + 1 })}
 					/>
 				)),
 			[
@@ -160,7 +161,7 @@ function CustomColorPreview({
 						isSelected && "border-primary border-2",
 					)}
 					type="button"
-					aria-label="Custom background color"
+					aria-label={t("Custom background color")}
 				>
 					<span
 						className="absolute inset-0"

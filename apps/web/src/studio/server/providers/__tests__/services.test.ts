@@ -142,3 +142,31 @@ test("the Post sheet's writer carries its language to Claude, whatever the mater
 	expect(w.title).toContain("Как");
 	setBrainForTests(null);
 });
+
+test("ElevenLabs voices through fal: the request fal's schema takes, the ready voices mapped, clones stay on Qwen", async () => {
+	const { falSpeechRequest, falReadyVoice } = await import("@/fal/speech");
+	const { chosenModel, cloneTts, isElevenVoice } = await import("@/fal/models");
+	const r = falSpeechRequest({ id: "fal-ai/elevenlabs/tts/multilingual-v2" }, { text: "Привет", voiceId: "Aria", language: "ru", speed: 1 });
+	expect(r.endpoint).toBe("fal-ai/elevenlabs/tts/multilingual-v2");
+	expect(r.input).toEqual({ text: "Привет", voice: "Aria", language_code: "ru", speed: 1 });
+	expect(falReadyVoice("ryan", false, true)).toBe("Roger");
+	expect(falReadyVoice("fal-el:Sarah", false, true)).toBe("Sarah");
+	expect(falReadyVoice("ryan", false, false)).toBe("Determined_Man");
+	const choices = { tts: "fal-ai/elevenlabs/tts/turbo-v2.5" };
+	expect(isElevenVoice(cloneTts(choices).id)).toBe(false);
+	expect(chosenModel("clone", choices).id).toBe("fal-ai/qwen-3-tts/clone-voice/1.7b");
+});
+
+test("every speech model's own voices and languages: MiniMax's system list by language, language_boost sent", async () => {
+	const { MINIMAX_VOICE_LIST, languagesOf, voicesOf, isMinimaxVoice } = await import("@/fal/model-voices");
+	const { falSpeechRequest, falReadyVoice } = await import("@/fal/speech");
+	expect(MINIMAX_VOICE_LIST.length).toBeGreaterThan(330);
+	expect(MINIMAX_VOICE_LIST.some((v) => v.lang === "vi")).toBe(true);
+	expect(languagesOf("fal-ai/minimax/speech-02-hd").some((l) => l.code === "vi")).toBe(true);
+	expect(voicesOf("fal-ai/minimax/speech-02-hd").length).toBe(MINIMAX_VOICE_LIST.length);
+	expect(isMinimaxVoice("mm:Vietnamese_kindhearted_girl")).toBe(true);
+	expect(falReadyVoice("mm:Vietnamese_kindhearted_girl", false)).toBe("Vietnamese_kindhearted_girl");
+	const r = falSpeechRequest({ id: "fal-ai/minimax/speech-02-hd" }, { text: "xin chào", voiceId: "Vietnamese_kindhearted_girl", language: "vi" });
+	expect((r.input as { language_boost?: string }).language_boost).toBe("Vietnamese");
+	expect(((r.input as { voice_setting?: { voice_id?: string } }).voice_setting ?? {}).voice_id).toBe("Vietnamese_kindhearted_girl");
+});

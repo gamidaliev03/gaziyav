@@ -10,6 +10,7 @@ import { Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogTi
 import { EditorCore } from "@/core";
 import type { ProjectBackup } from "@/services/storage/recovery";
 import { cn } from "@/utils/ui";
+import { uiLocale } from "@/i18n/locale";
 
 const REASON: Record<ProjectBackup["reason"], string> = {
 	open: "Opened",
@@ -19,7 +20,7 @@ const REASON: Record<ProjectBackup["reason"], string> = {
 	"before-join": "Before joining timelines",
 };
 
-const when = (ms: number) => new Date(ms).toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", second: "2-digit" });
+const when = (ms: number) => new Date(ms).toLocaleString(uiLocale(), { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", second: "2-digit" });
 
 export function RestoreVersionDialog({ isOpen, onOpenChange, projectId, projectName }: { isOpen: boolean; onOpenChange: (open: boolean) => void; projectId: string; projectName: string }) {
 	const [versions, setVersions] = useState<ProjectBackup[] | null>(null);

@@ -174,7 +174,8 @@ export function classify(r: PlanRequest): { mode: "quick" | "full"; why: string 
 	// The user's words decide, not the preset's own boilerplate (its «no full-frame scene» read as «scene» → always full).
 	if (r.preset && typeof r.brief === "string") {
 		const q = r.brief.toLowerCase();
-		if (!STRONG_FULL.test(q) && !/анимац|animat|motion|рисун|draw|дерев|tree/.test(q) && KIT_ONLY.test(q)) return { mode: "quick", why: "the kit draws it as it is" };
+		const shape = /в виде|в форме|shape|shaped|like a|с текстом|with text|с подписью|рисун|draw|дерев|tree|ракет|rocket|облак|cloud|стрелк|arrow|собак|dog|кот|cat|сердц|heart|звезд|star|цвет(ок|ы)|flower|солнц|sun|корон|crown|машин|car|дом|house/.test(q);
+		if (!STRONG_FULL.test(q) && !/анимац|animat|motion/.test(q) && !shape && KIT_ONLY.test(q)) return { mode: "quick", why: "the kit draws it as it is" };
 		return { mode: "full", why: "designed from scratch for this request" };
 	}
 	if (r.layers.some((l) => l.kind === "Custom")) return { mode: "full", why: "refining its own components" };
@@ -216,13 +217,15 @@ const ASSET_LABEL: Record<string, string> = { lottie: "Searching icons", image: 
 const BUDGET = { plan: { tokens: 16000, timeout: 240 }, write: { tokens: 64000, timeout: 480 } };
 
 async function runFull(r: PlanRequest, face: Box | null, ctx: FullCtx): Promise<PlanResult> {
+	// Library plates (Templates → «Create with Gaziyav AI»): the strongest model the connection offers draws and judges them.
+	const plateModel = r.preset ? "fable" : undefined;
 	const { log, signal } = ctx;
 	const s = loadSettings();
 	if (!brainReadyNow() && !agentReady()) throw new StudioError(BRAIN_OFF);
 	let calls = 0;
 	/** One reasoner call → JSON; an unreadable answer gets one "valid JSON only" repair call before giving up. */
 	const thinkJson = async (messages: Message[], budget: { tokens: number; timeout: number }): Promise<{ text: string; json: any }> => {
-		const text = await chat({ key: s.deepseekKey, model: REASONER, messages, json: true, maxTokens: budget.tokens, timeout: budget.timeout, signal });
+		const text = await chat({ key: s.deepseekKey, model: REASONER, messages, json: true, maxTokens: budget.tokens, timeout: budget.timeout, signal, brainModel: plateModel });
 		calls++;
 		try {
 			return { text, json: parseJson(text) };
@@ -241,6 +244,7 @@ async function runFull(r: PlanRequest, face: Box | null, ctx: FullCtx): Promise<
 				maxTokens: budget.tokens,
 				timeout: budget.timeout,
 				signal,
+				brainModel: plateModel,
 			});
 			calls++;
 			const json = parseJson(fixed);
@@ -265,7 +269,16 @@ async function runFull(r: PlanRequest, face: Box | null, ctx: FullCtx): Promise<
 		// its one answer (the step that cost a whole extra round trip on 21.11: 135 s for «дерево с текстом»).
 		planLine = `one element: ${(r.brief ?? request).slice(0, 160)}`;
 		log(`Plan: ${planLine}`);
-		plan = { understanding: request, elements: r.brief ? [r.brief.slice(0, 80)] : [] };
+		// the art director's checklist for a plate: the look asked, its text, the frame, its motion
+		plan = {
+			understanding: request,
+			elements: [
+				`the shape of «${(r.brief ?? "").slice(0, 60)}» reads at a glance (drawn, not a diagram unless asked)`,
+				"the editable text fits inside the plate and is readable",
+				"everything sits inside the 9:16 safe area (centre 900×1400 of 1080×1920)",
+				"it animates in and out like a built-in plate",
+			],
+		};
 	} else {
 		log("Planning…");
 		plan = (
@@ -356,7 +369,7 @@ ${fonts || "none"}`;
 	fs.mkdirSync(runDir, { recursive: true });
 	let reviewed = false;
 	let built: Built | null = null;
-	// A library element gets one fix at most (each fix is a whole rewrite); a composition two.
+	// A library plate: at most one correction (185 s in the app with two); a composition: two.
 	const tries = r.preset ? 2 : 3;
 	for (let attempt = 0; attempt < tries; attempt++) {
 		if (signal.aborted) throw new CancelledError();
@@ -371,11 +384,13 @@ ${fonts || "none"}`;
 			break;
 		}
 		let problems = built.problems;
-		if (!problems.length && !reviewed && built.views.length) {
+		// A plate whose build passed the local checks (it compiles, renders and every text is on its frames) is kept as it
+		// is: the frame judging runs only for a composition, or when the local check already found something.
+		if (!problems.length && !reviewed && built.views.length && !r.preset) {
 			reviewed = true;
 			log(elements.length ? `Looking at the frames (checklist: ${elements.join(", ").slice(0, 120)})…` : "Looking at the frames…");
 			try {
-				problems = await review(s.deepseekKey, s.deepseekModel, request, built, elements, signal);
+				problems = await review(s.deepseekKey, s.deepseekModel, request, built, elements, signal, plateModel);
 				calls++;
 				log(problems.length ? `Art director: ${problems.length} note${problems.length === 1 ? "" : "s"} — ${problems[0]}` : "Art director: looks good, every element is there");
 			} catch (error) {
@@ -384,7 +399,10 @@ ${fonts || "none"}`;
 				problems = [];
 			}
 		}
-		if (!problems.length || attempt === tries - 1) break;
+		// A library plate is drawn again only for what breaks it (it does not compile, a frame fails or is empty, no
+		// layer, a text that cannot be edited): a second full drawing doubles the wait, so notes of taste don't cost it.
+		const worthFixing = r.preset ? problems.filter((p) => /\.tsx: |failed to render|is empty|no layers|text written into the code|are not used by any layer/.test(p)) : problems;
+		if (!worthFixing.length || attempt === tries - 1) break;
 		log(`Fixing: ${problems[0].slice(0, 160)}${problems.length > 1 ? ` (+${problems.length - 1})` : ""}`);
 		messages.push({ role: "assistant", content: answer.text }, { role: "user", content: `Problems found when rendering your frames:\n- ${problems.join("\n- ")}\n${FIX_NOTE}` });
 		try {
@@ -436,7 +454,7 @@ async function build(
 	beats: { at: number; what: string }[] = [],
 ): Promise<Built> {
 	const { log, signal } = ctx;
-	if (!raw || typeof raw !== "object") throw new StudioError("Gaziyav AI didn't manage this one: nothing was changed. Press the button once more.");
+	if (!raw || typeof raw !== "object") throw new StudioError("Gaziyav AI didn't manage this — nothing was changed.");
 	const problems: string[] = [];
 
 	// Components (a refinement may leave a component it did not change out of "components": its current code stays).
@@ -751,7 +769,7 @@ export function visibleStrings(l: PlannedLayer): string[] {
 	return [...new Set(out.map((s) => s.trim()).filter(Boolean))].slice(0, 60);
 }
 
-async function review(key: string, model: string, request: string, built: Built, elements: string[], signal: AbortSignal): Promise<string[]> {
+async function review(key: string, model: string, request: string, built: Built, elements: string[], signal: AbortSignal, brainModel?: string): Promise<string[]> {
 	const parts: Part[] = [
 		{
 			type: "text",
@@ -766,6 +784,7 @@ async function review(key: string, model: string, request: string, built: Built,
 			{ role: "system", content: REVIEW_SYSTEM },
 			{ role: "user", content: parts },
 		],
+		brainModel,
 		json: true,
 		maxTokens: 8000,
 		timeout: 150,

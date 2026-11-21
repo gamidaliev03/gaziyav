@@ -13,7 +13,7 @@ This page is written from the code. If you find a request it does not list, plea
 - **Captions, voice clean-up, separating voice and music, the voice changer, object clean-up**: local models on your Mac.
 - **Library tracks and sounds** you have used: kept in a cache on your disk.
 - **Crash reports** stay on disk; the crash reporter is set never to upload.
-- **Your keys** (fal.ai, kie.ai, ArgoLink, Pexels, Pixabay): encrypted with the macOS Keychain, readable only by your user. The app shows only their last four characters.
+- **Your keys** (fal.ai, kie.ai, ArgoLink, Pexels, Pixabay): stored encrypted on your Mac, in the app's own folder, readable only by your user. The app shows only their last four characters.
 
 ## What leaves, when, and where
 

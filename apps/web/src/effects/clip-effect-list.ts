@@ -33,6 +33,11 @@ export function clipEffectRows(effects: readonly Effect[]): ClipEffectRow[] {
 	return rows;
 }
 
+/** Whether the clip's Effects list has a row (a filter lives in Colour, a chroma key in Cutout). */
+export function hasListedClipEffects(effects: readonly Effect[] | undefined): boolean {
+	return clipEffectRows(effects ?? []).some((row) => row.kind === "effect");
+}
+
 /**
  * The clip's effects after × on a filter: the look is cleared (its intensity and an imported LUT with it); a colour
  * effect that then has no grading left goes away altogether, so nothing invisible stays on the clip.

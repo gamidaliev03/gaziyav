@@ -134,9 +134,9 @@ export const RU_GAZIYAV: Record<string, string> = {
 	"{s} of speech on fal.ai, usually {time}: ≈ {usd}.": "{s} речи на fal.ai, обычно {time}: ≈ {usd}.",
 	"The result replaces the piece in its exact place; ⌘Z brings the original back.": "Результат встанет точно на место отрезка; ⌘Z вернёт оригинал.",
 	"The result goes on top of the clip.": "Результат встанет поверх клипа.",
-	"Gaziyav AI thinks on your fal.ai key. Add it once in Settings → AI.": "Gaziyav AI думает на вашем ключе fal.ai. Добавьте его один раз в Настройки → ИИ.",
+	"Gaziyav AI thinks on your fal.ai key. Add it once in Settings → Services.": "Gaziyav AI думает на вашем ключе fal.ai. Добавьте его один раз в Настройки → Сервисы.",
 	"Open Settings": "Открыть настройки",
-	"The model is chosen in Settings → AI → AI agent.": "Модель выбирается в Настройки → ИИ → ИИ-агент.",
+	"The model is chosen in Settings → Services → AI agent.": "Модель выбирается в Настройки → Сервисы → ИИ-агент.",
 	"Pictures and clips from text": "Картинки и клипы по тексту",
 	"Seedream, FLUX, Nano Banana and Seedance on your own fal.ai key. Add the key once in Settings; the price shows on the button before each run.":
 		"Seedream, FLUX, Nano Banana и Seedance на вашем ключе fal.ai. Добавьте ключ один раз в настройках; цена видна на кнопке перед запуском.",
@@ -155,11 +155,11 @@ export const RU_GAZIYAV: Record<string, string> = {
 	"Allow up to ${n} this session": "Разрешить до ${n} за сеанс",
 	"Session budget, $": "Бюджет сеанса, $",
 	"fal.ai: {cost} for {what}": "fal.ai: {cost} за {what}",
-	"Add your fal.ai key in Settings → AI (fal.ai) to swap faces.": "Добавьте ключ fal.ai в Настройки → ИИ, чтобы менять лица.",
+	"Add your fal.ai key in Settings → Services (fal.ai) to swap faces.": "Добавьте ключ fal.ai в Настройки → Сервисы, чтобы менять лица.",
 	"Your editor. AI on your own fal.ai key.": "Ваша монтажка. ИИ — на вашем ключе fal.ai.",
 	"AI voice": "ИИ-голос",
-	"Add your fal.ai key first: Settings → AI (fal.ai).": "Сначала добавьте ключ fal.ai: Настройки → ИИ (fal.ai).",
-	"Add your fal.ai key in Settings → AI (fal.ai)": "Добавьте ключ fal.ai в Настройки → ИИ (fal.ai)",
+	"Add your fal.ai key first: Settings → Services (fal.ai).": "Сначала добавьте ключ fal.ai: Настройки → Сервисы (fal.ai).",
+	"Add your fal.ai key in Settings → Services (fal.ai)": "Добавьте ключ fal.ai в Настройки → Сервисы (fal.ai)",
 	"Models and the fal.ai key ": "Модели и ключ fal.ai",
 	"A personal video editor": "Личная монтажка",
 	"Make it with AI": "Сделать с ИИ",
@@ -248,7 +248,7 @@ export const RU_GAZIYAV: Record<string, string> = {
 	"Inspiring": "Вдохновляющая",
 	"Sweet": "Нежная",
 	"Light AI that runs on": "Лёгкий ИИ, который бесплатно работает на",
-	"The AI agent needs the fal.ai key: Settings → AI.": "ИИ-агенту нужен ключ fal.ai: Настройки → ИИ.",
+	"The AI agent needs the fal.ai key: Settings → Services.": "ИИ-агенту нужен ключ fal.ai: Настройки → Сервисы.",
 	"Put a video on the timeline, then select it": "Положите видео на таймлайн и выделите его",
 	"for free: captions, pause removal, CleanUp, voice enhance, voice and music separation, the voice changer and retouch. They download by themselves in the background, then work offline.":
 		": субтитры, удаление пауз, CleanUp, улучшение голоса, разделение голоса и музыки, смена голоса и ретушь. Всё скачивается само в фоне, потом работает без сети.",
@@ -512,7 +512,7 @@ export const RU_GAZIYAV: Record<string, string> = {
 	"Describe what happens next.": "Опишите, что происходит дальше.",
 	"Expressive faces": "Выразительные лица",
 	"Extend": "Продолжить",
-	"Face swap isn't on kie.ai: it runs on fal.ai. Add a fal.ai key in Settings → AI.": "Замены лица нет на kie.ai: она идёт через fal.ai. Добавьте ключ fal.ai в Настройках → ИИ.",
+	"Face swap isn't on kie.ai: it runs on fal.ai. Add a fal.ai key in Settings → Services.": "Замены лица нет на kie.ai: она идёт через fal.ai. Добавьте ключ fal.ai в Настройках → Сервисы.",
 	"Fast, natural": "Быстро, естественно",
 	"Finer detail": "Тоньше детали",
 	"Good with words on pictures": "Хорош с надписями на картинках",
@@ -551,11 +551,11 @@ export const RU_GAZIYAV: Record<string, string> = {
 	"Add to Media": "В Медиа",
 	"Put it in the picture's place": "Поставить на место картинки",
 	"Replace the picture": "Заменить картинку",
-	"Gaziyav AI writes on your fal.ai key: add it in Settings → AI.": "Gaziyav AI пишет на вашем ключе fal.ai: добавьте его в Настройки → ИИ.",
-	"Open Settings → AI": "Открыть Настройки → ИИ",
-	"Settings → AI": "Настройки → ИИ",
+	"Gaziyav AI writes on your fal.ai key: add it in Settings → Services.": "Gaziyav AI пишет на вашем ключе fal.ai: добавьте его в Настройки → Сервисы.",
+	"Open Settings → Services": "Открыть Настройки → Сервисы",
+	"Settings → Services": "Настройки → Сервисы",
 	"What the video is about: the idea, the facts, who it is for. E.g. “three ways to light a talking head at home”": "О чём видео: идея, факты, для кого. Например: «три способа осветить говорящую голову дома»",
-	"Add your fal.ai key (Settings → AI)": "Добавьте ключ fal.ai (Настройки → ИИ)",
+	"Add your fal.ai key (Settings → Services)": "Добавьте ключ fal.ai (Настройки → Сервисы)",
 	"API keys and models": "Ключи API и модели",
 	"The sum of the three keys' ledgers; the AI agent, scripts and translations count their tokens at the model's input price (a floor).": "Сумма журналов трёх ключей; ИИ-агент, сценарии и переводы считают свои токены по входной цене модели (не меньше).",
 	"{n} LLM tokens": "{n, plural, one {# токен} few {# токена} other {# токенов}} LLM",
@@ -574,7 +574,7 @@ export const RU_GAZIYAV: Record<string, string> = {
 	"{p} per 1M input tokens": "{p} за 1 млн входных токенов",
 	"billed by tokens": "оплата по токенам",
 	"Paid before the restart: resuming that job": "Оплачено до перезапуска: продолжаем ту задачу",
-	// Settings → AI, the on-device models (ondevice/manifest.ts `purpose`; drawn as plain text, the DOM translator finds these)
+	// Settings → Services, the on-device models (ondevice/manifest.ts `purpose`; drawn as plain text, the DOM translator finds these)
 	"Removes an object, a person or a caption from a photo or a clip and fills in the background, on this Mac": "Убирает предмет, человека или надпись с фото или из клипа и дорисовывает фон, на этом Mac",
 	"Clear speech: noise, hum and room taken out of a voice, on this Mac": "Чистая речь: шум, гул и эхо комнаты убраны из голоса, на этом Mac",
 	"Voice and music of a clip as two clips, cleaner than the built-in separation, on this Mac": "Голос и музыка клипа двумя клипами, чище встроенного разделения, на этом Mac",
@@ -604,7 +604,7 @@ export const RU_GAZIYAV_PATTERNS: Array<[RegExp, string | ((match: string, ...gr
 	[/^([\s\S]*)Nothing was charged\.([\s\S]*)$/, (_m, a, b) => `${ruSentence(a)}Ничего не списано.${b}`],
 	[/^Cancelled here: (kie\.ai|ArgoLink) was not told to stop a started job, it may still bill it — Generate again within 3 hours comes back to it$/, "Остановлено здесь: $1 не получил команды остановить начатую задачу и может её списать — «Сгенерировать» снова в течение 3 часов вернётся к ней"],
 	[/^Cancelled$/, "Отменено"],
-	[/^(fal\.ai|kie\.ai|ArgoLink) didn't accept (the|this) key\.?([\s\S]*)$/, (_m, a, _b, c) => `${a} не принял ключ.${c}`],
+	[/^(fal\.ai|kie\.ai|ArgoLink) didn't accept (the|this) key\.?([\s\S]*)$/, (_m, a, _b, c) => `${a} не принял ключ.${keyTail(c)}`],
 	[/^~(\d+)–(\d+) min$/, "~$1–$2 мин"],
 	[/^~(\d+) min$/, "~$1 мин"],
 	[/^~(\d+)–(\d+) s$/, "~$1–$2 с"],
@@ -616,6 +616,16 @@ export const RU_GAZIYAV_PATTERNS: Array<[RegExp, string | ((match: string, ...gr
 	[/^Reference picture: none \(up to (\d+)\)$/, "Образец: нет (до $1)"],
 ];
 
+/** What follows «… didn't accept the key.»: where to fix it, in Russian (the whole line, never half English). */
+function keyTail(text: string): string {
+	return text
+		.replace(/ Copy it again from (fal\.ai|kie\.ai|argolink\.io|ArgoLink) → API Keys\./, " Скопируйте его заново на $1 → API Keys.")
+		.replace(/ Copy it again from ([^.]+)\./, " Скопируйте его заново: $1.")
+		.replace(/ Check it in Settings → Services \((fal\.ai|kie\.ai|ArgoLink)\)\./, " Проверьте его в Настройки → Сервисы ($1).")
+		.replace(/ Check it in Settings → Services\./, " Проверьте его в Настройки → Сервисы.")
+		.replace(/\n\nDetails: /, "\n\nПодробности: ");
+}
+
 /** The provider sentences word by word («kie.ai: not enough credits. Top up on kie.ai, then press Retry. »). */
 function ruSentence(text: string): string {
 	return text
@@ -624,6 +634,6 @@ function ruSentence(text: string): string {
 		.replace(/fal\.ai: the account balance is empty\. Top it up on fal\.ai \(Billing\), then press Retry\. /, "fal.ai: баланс счёта пуст. Пополните на fal.ai (Billing) и нажмите «Повторить». ")
 		.replace(/^(kie\.ai|ArgoLink|fal\.ai) couldn't make this: /, "$1 не смог это сделать: ")
 		.replace(/kie\.ai never started this task: it stayed (.+?) in its queue for (\d+) min\. /, "kie.ai так и не начал задачу: она простояла $1 в очереди $2 мин. ")
-		.replace(/The service didn't accept the API key: check it in Settings → AI \(⌘,\)\. /, "Сервис не принял ключ API: проверьте его в Настройках → ИИ (⌘,). ")
+		.replace(/The service didn't accept the API key: check it in Settings → Services \(⌘,\)\. /, "Сервис не принял ключ API: проверьте его в Настройках → Сервисы (⌘,). ")
 		.replace(/The (fal\.ai|kie\.ai|ArgoLink|service) balance is empty\. Top it up, then press Retry\. /, "Баланс $1 пуст. Пополните его и нажмите «Повторить». ");
 }

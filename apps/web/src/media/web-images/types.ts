@@ -1,5 +1,9 @@
-// Web images for the Media panel (Kadr A12): Wikimedia Commons, free, no key.
-export type WebImageProvider = "commons";
+// Web images for the Media panel (Kadr A12): a keyed Pixabay / Pexels first when its key is pasted, then the free web
+// (Wikimedia Commons, Openverse, NASA). Each picture says where it came from.
+export type WebImageProvider = "commons" | "pixabay" | "pexels" | "openverse" | "nasa";
+
+/** The site's name for a picture's corner and its credit. */
+export const PROVIDER_NAME: Record<WebImageProvider, string> = { commons: "Wikimedia Commons", pixabay: "Pixabay", pexels: "Pexels", openverse: "Openverse", nasa: "NASA" };
 
 export interface WebImage {
 	id: string;
@@ -20,6 +24,10 @@ export interface WebImageSearchResult {
 	items: WebImage[];
 	hasMore: boolean;
 	providers: WebImageProvider[];
+	/** The sites asked, in order (by name). */
+	searched?: string[];
+	/** One line: a picked service without its key, or a keyed service that failed (the free web answered). */
+	note?: string;
 	error?: string;
 }
 

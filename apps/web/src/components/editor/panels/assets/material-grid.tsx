@@ -1,5 +1,6 @@
 "use client";
 
+import { t } from "@/i18n";
 import { Add01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@/components/ui/icon";
 import type { CSSProperties } from "react";
@@ -47,8 +48,8 @@ export function TileAddButton({
 		<button
 			type="button"
 			data-tile-add
-			aria-label={label}
-			title={label}
+			aria-label={t(label)}
+			title={t(label)}
 			onClick={(event) => {
 				event.preventDefault();
 				event.stopPropagation();

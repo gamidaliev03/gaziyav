@@ -67,6 +67,10 @@ export const FAL_MODELS: FalModel[] = [
 	{ id: "fal-ai/minimax/speech-2.8-hd", task: "tts", title: "MiniMax Speech 2.8 HD", maker: "MiniMax", note: "The richest MiniMax voice", unit: "1k-chars", usd: 0.1 },
 	{ id: "fal-ai/minimax/speech-02-turbo", task: "tts", title: "MiniMax Speech-02 Turbo", maker: "MiniMax", note: "The previous generation, fast", unit: "1k-chars", usd: 0.06 },
 	{ id: "fal-ai/minimax/speech-02-hd", task: "tts", title: "MiniMax Speech-02 HD", maker: "MiniMax", note: "The previous generation, studio quality", unit: "1k-chars", usd: 0.1 },
+	// ElevenLabs' own voices through fal (fal's key, fal's bill; its voice is a name: Aria, Roger, Sarah…, 21.11 schema)
+	{ id: "fal-ai/elevenlabs/tts/turbo-v2.5", task: "tts", title: "ElevenLabs Turbo v2.5", maker: "ElevenLabs", note: "ElevenLabs voices, fast, 32 languages", unit: "1k-chars", usd: 0.05 },
+	{ id: "fal-ai/elevenlabs/tts/multilingual-v2", task: "tts", title: "ElevenLabs Multilingual v2", maker: "ElevenLabs", note: "ElevenLabs voices, the most natural, 29 languages", unit: "1k-chars", usd: 0.1 },
+	{ id: "fal-ai/elevenlabs/tts/eleven-v3", task: "tts", title: "ElevenLabs v3", maker: "ElevenLabs", note: "ElevenLabs' most expressive model", unit: "1k-chars", usd: 0.1 },
 	// Voice clone: made by the voice model's family (Qwen: a speaker embedding from the sample, MiniMax: a voice id)
 	{ id: "fal-ai/qwen-3-tts/clone-voice/1.7b", task: "clone", title: "Qwen3 voice clone", maker: "Alibaba Qwen", note: "A voice from a sample: $0.0008 per minute of sample", unit: "minute", usd: 0.0008 },
 	{ id: "fal-ai/minimax/voice-clone", task: "clone", title: "MiniMax Voice Clone", maker: "MiniMax", note: "Once per voice; reused for free afterwards", unit: "voice", usd: 1.5 },
@@ -154,6 +158,10 @@ export const falModel = (id: string | undefined): FalModel | undefined => FAL_MO
 
 /** Qwen's voices and clones only work with Qwen's speech, MiniMax's with MiniMax's. */
 export const isQwenVoice = (id: string) => id.includes("qwen-3-tts");
+/** fal's ElevenLabs speech models: the voice is one of ElevenLabs' own, by name (fal/eleven-voices.ts). */
+export const isElevenVoice = (id: string) => id.includes("elevenlabs/tts");
+/** The ElevenLabs model a voice of fal's ElevenLabs list switches to when another speech model is picked. */
+export const ELEVEN_DEFAULT = "fal-ai/elevenlabs/tts/multilingual-v2";
 
 /** The pick saved for a task, when it is a model of that task (any API). */
 function pickOf(task: FalTask, choices: Partial<Record<FalTask, string>> | undefined): FalModel | undefined {
@@ -173,7 +181,9 @@ function pickOf(task: FalTask, choices: Partial<Record<FalTask, string>> | undef
  */
 export function chosenModel(task: FalTask, choices: Partial<Record<FalTask, string>> | undefined, keys?: Keys): FalModel {
 	if (task === "clone") {
-		const qwen = isQwenVoice(chosenModel("tts", choices, { fal: true, kie: false }).id);
+		// (ElevenLabs on fal makes no clones: a cloned voice speaks on Qwen there, as by default)
+		const tts = chosenModel("tts", choices, { fal: true, kie: false }).id;
+		const qwen = isQwenVoice(tts) || isElevenVoice(tts);
 		return falModel(qwen ? "fal-ai/qwen-3-tts/clone-voice/1.7b" : "fal-ai/minimax/voice-clone") as FalModel;
 	}
 	const on = onOffer(keys);
@@ -187,7 +197,10 @@ export function chosenModel(task: FalTask, choices: Partial<Record<FalTask, stri
 }
 
 /** The speech model a cloned voice speaks with: fal's (kie.ai has no clones), whichever API the voice model is on. */
-export const cloneTts = (choices: Partial<Record<FalTask, string>> | undefined): FalModel => chosenModel("tts", choices, { fal: true, kie: false, argo: false });
+export const cloneTts = (choices: Partial<Record<FalTask, string>> | undefined): FalModel => {
+	const m = chosenModel("tts", choices, { fal: true, kie: false, argo: false });
+	return isElevenVoice(m.id) ? (falModel(FAL_DEFAULTS.tts) as FalModel) : m;
+};
 
 /** Whether fal's live price (its unit as fal names it) is the catalog's unit, so the one can stand in for the other. */
 export function sameUnit(m: FalModel, unit: string): boolean {

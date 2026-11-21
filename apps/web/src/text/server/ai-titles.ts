@@ -1,10 +1,11 @@
 // AI titles: DeepSeek writes the hook (first 2.5 s) and the CTA (last seconds) from the clip's speech.
 // Server-only. Uses the lipsync pipeline's DeepSeek client and saved key (imports only).
 
-export const TITLES_SYSTEM = `Ты — копирайтер рекламных коротких видео (Reels, TikTok, Shorts).
-По расшифровке речи ролика напиши два текста на экран:
-- hook — заголовок первых 2 секунд, 3–7 слов, цепляет и обещает пользу или интригу, по сути ролика;
-- cta — призыв в конце, 2–5 слов, конкретное действие (купить, перейти, записаться…).
+export const TITLES_SYSTEM = `По расшифровке речи короткого видео (Reels, TikTok, Shorts) напиши два текста на экран.
+- hook — заголовок первых 2 секунд, 3–7 слов: одна конкретная вещь из ролика — число, вопрос или результат. Никогда не
+  приветствие, не имя автора и не «в этом видео»; обещай только то, что в ролике есть.
+- cta — текст в конце, 2–5 слов, по сути ролика: в рекламе — конкретное действие (купить, перейти, записаться…); в
+  остальных — вопрос к зрителю или что смотреть дальше. Не проси лайк, подписку, репост или подарок.
 Пиши на языке речи. Без кавычек, эмодзи, хэштегов и точки в конце. Не выдумывай цены, скидки и факты, которых нет в речи.
 Ответь только JSON: {"hook": "...", "cta": "..."}`;
 
@@ -33,10 +34,10 @@ export function parseAiTitles(answer: string): AiTitles {
 		const end = answer.lastIndexOf("}");
 		data = JSON.parse(answer.slice(start, end + 1));
 	} catch {
-		throw new Error("Gaziyav AI didn't manage this one: nothing was changed. Press the button once more.");
+		throw new Error("Gaziyav AI didn't manage this — nothing was changed.");
 	}
 	const titles = { hook: clean(data.hook, 9), cta: clean(data.cta, 6) };
-	if (!titles.hook || !titles.cta) throw new Error("Gaziyav AI didn't manage this one: nothing was changed. Press the button once more.");
+	if (!titles.hook || !titles.cta) throw new Error("Gaziyav AI didn't manage this — nothing was changed.");
 	return titles;
 }
 

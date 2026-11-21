@@ -22,6 +22,7 @@ import { openSettings } from "@/settings/settings-store";
 import { KEY_REFUSED, LATE_KEYS_URL, LATE_PLATFORMS, type LateAccount, type TikTokChoice } from "../late";
 import type { Post } from "../types";
 import { Avatar, LateKeyForm } from "./share-settings";
+import { uiLocale } from "@/i18n/locale";
 
 const NO_TIKTOK: TikTokChoice = {
 	privacyLevel: "",
@@ -40,7 +41,7 @@ function localValue(ms: number): string {
 }
 const inAnHour = () => Math.ceil((Date.now() + 3600_000) / 300_000) * 300_000;
 const when = (ms: number) =>
-	new Date(ms).toLocaleString(undefined, {
+	new Date(ms).toLocaleString(uiLocale(), {
 		weekday: "short",
 		day: "numeric",
 		month: "short",

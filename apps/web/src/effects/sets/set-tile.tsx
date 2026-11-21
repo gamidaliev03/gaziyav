@@ -53,7 +53,7 @@ export function SetTile({ set, photo }: { set: EffectSet; photo?: string }) {
 				<div
 					role="button"
 					tabIndex={-1}
-					aria-label={`Apply ${set.name}`}
+					aria-label={t("Apply {name}", { name: t(set.name) })}
 					data-effect-set={set.id}
 					// the live preview shows the set's sample words (BREAKING NEWS, LIVE…): content, not interface text
 					data-no-translate

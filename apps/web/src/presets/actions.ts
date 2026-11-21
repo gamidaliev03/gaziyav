@@ -28,10 +28,13 @@ const CLIP_ONLY = new Set(["words"]);
 /** The request Gaziyav AI gets: the user's words, and what a preset is. */
 export function presetRequest(description: string): string {
 	return [
-		`Design one reusable on-screen element for the user's own library of titles and plates: ${description.trim()}`,
-		"It is a preset kept for many videos: no speech to follow, so any text is a short placeholder in the language of the request that the user will replace.",
-		"One element only (it may be built from a few layers), on a transparent background: no captions, no full-frame scene, no film finish, no progress bar, no sound effects.",
-		"Make it look finished on its own: an entrance, a calm hold and an exit within about 4 seconds.",
+		`Design one reusable on-screen plate for the user's own library of titles and plates. The person wrote: «${description.trim()}».`,
+		"Those words are the LOOK of the plate, not a topic. «X с текстом» / «X with text» / «плашка в виде X» means a plate shaped like X or illustrated with X, carrying the text: draw X itself as vector shapes (SVG paths and CSS), recognisable at a glance, with the text inside or on it. A single word («облако», «rocket») is the shape to draw, with a short text on it.",
+		"When the words can mean two things (a tree: a plant or a diagram; an arrow: a drawn arrow or a chart), make the more visual, literal one: a drawn tree, a drawn arrow — never a diagram, a chart or a list unless the words ask for one.",
+		"Never ask the person anything and never answer with a question: make the plate.",
+		"It is a preset kept for many videos: no speech to follow, so the text is a short placeholder (1–4 words) in the language of the request, as editable props the user replaces; every other look (colours, size) is an editable prop too.",
+		"One element only (it may be built from a few layers), on a transparent background, sized and placed for a 9:16 frame inside its safe area (the centre 900×1400 of 1080×1920): no captions, no full-frame scene, no film finish, no progress bar, no sound effects.",
+		"Make it look finished on its own, like the built-in plates: an entrance, a calm hold and an exit within about 4 seconds.",
 	].join("\n");
 }
 
@@ -86,9 +89,9 @@ export function stepOf(log: string): string | null {
 	if (/^Quick/.test(log)) return "Putting the plate together…";
 	if (/^(Full|Planning|Plan:)/.test(log)) return "Thinking it over…";
 	if (/^(Searching|Picking|Your media|Using your picture)/.test(log)) return "Looking for pictures…";
-	if (/^Writing/.test(log)) return "Writing the animation…";
-	if (/^(Looking at the frames|Art director)/.test(log)) return "Checking the frames…";
-	if (/^Fixing/.test(log)) return "Fixing a detail…";
+	if (/^Writing/.test(log)) return "Drawing…";
+	if (/^(Looking at the frames|Art director)/.test(log)) return "Looking at the frame…";
+	if (/^Fixing/.test(log)) return "Correcting…";
 	if (/^Done/.test(log)) return "Almost done…";
 	return null;
 }

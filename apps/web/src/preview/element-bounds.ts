@@ -208,11 +208,13 @@ function getElementBounds({
 			animations: element.animations,
 			localTime,
 		});
+		// a compound clip is a whole frame (its timeline's canvas), not a square shape
+		const frame = element.definitionId === "ai.Composition";
 		return getVisualElementBounds({
 			canvasWidth,
 			canvasHeight,
-			sourceWidth: DEFAULT_GRAPHIC_SOURCE_SIZE,
-			sourceHeight: DEFAULT_GRAPHIC_SOURCE_SIZE,
+			sourceWidth: frame ? canvasWidth : DEFAULT_GRAPHIC_SOURCE_SIZE,
+			sourceHeight: frame ? canvasHeight : DEFAULT_GRAPHIC_SOURCE_SIZE,
 			transform,
 		});
 	}

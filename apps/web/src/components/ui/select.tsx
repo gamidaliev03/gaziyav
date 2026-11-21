@@ -147,16 +147,20 @@ const SelectContent = React.forwardRef<
 			}}
 			{...props}
 		>
-			<SelectScrollUpButton />
+			{/* A list under its field (popper) scrolls by wheel, trackpad and keys with a thin scrollbar of its own. Radix's
+			    scroll arrows are left out there: the up arrow appears as soon as the list leaves the top and, on appearing,
+			    scrolls the focused row (the picked one) back into view and pushes every row down by its height — the card
+			    under the pointer was no longer the one clicked (v63j: «MiniMax · Vietnamese» after scrolling, kept «Viral narrator»). */}
+			{position !== "popper" && <SelectScrollUpButton />}
 			<SelectPrimitive.Viewport
 				className={cn(
 					position === "popper" &&
-						"h-(--radix-select-trigger-height) w-full min-w-(--radix-select-trigger-width)",
+						"h-(--radix-select-trigger-height) w-full min-w-(--radix-select-trigger-width) [scrollbar-width:thin]!",
 				)}
 			>
 				{children}
 			</SelectPrimitive.Viewport>
-			<SelectScrollDownButton />
+			{position !== "popper" && <SelectScrollDownButton />}
 		</SelectPrimitive.Content>
 	</SelectPrimitive.Portal>
 ));

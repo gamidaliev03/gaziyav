@@ -33,7 +33,11 @@ export function listenForKieKey() {
 	g.__gaziyavKieListening = true;
 	port.on("message", (m) => {
 		const d = ((m as { data?: unknown })?.data ?? m) as { type?: string; provider?: string; key?: unknown };
-		if (d?.type === "provider-key" && d.provider === "kie") g.__gaziyavKieKey = typeof d.key === "string" && d.key.trim() ? d.key.trim() : null;
+		if (d?.type === "provider-key" && d.provider === "kie") {
+			const next = typeof d.key === "string" && d.key.trim() ? d.key.trim() : null;
+			if (next !== g.__gaziyavKieKey) clearEmpty("kie");
+			g.__gaziyavKieKey = next;
+		}
 	});
 	port.postMessage({ type: "provider-key-request", provider: "kie" });
 }
@@ -50,7 +54,7 @@ export const kieHint = (): string | null => {
 
 function auth(): Record<string, string> {
 	const k = kieKey();
-	if (!k) throw new StudioError("Add your kie.ai key first: Settings → AI.");
+	if (!k) throw new StudioError("Add your kie.ai key first: Settings → Services.");
 	return { Authorization: `Bearer ${k}` };
 }
 
@@ -62,7 +66,8 @@ type Answer<T> = { code?: number; msg?: string; message?: string; data?: T };
 const said = (text: string, transient = false) => new StudioError(text, { plain: true, transient });
 
 function failure(code: number | undefined, text: string): StudioError {
-	if (code === 401) return said("kie.ai didn't accept the key. Check it in Settings → AI.");
+	if (code === 401) clearEmpty("kie");
+	if (code === 401) return said("kie.ai didn't accept the key. Check it in Settings → Services.");
 	if (code === 402) {
 		// remembered for 15 min: price_plan says kie.ai is empty, Claude's paid steps on it stop first (ai/empty.ts)
 		noteEmpty("kie");

@@ -31,7 +31,7 @@ export interface Service {
 	keysUrl: string;
 	/** Also works with no key (a key lifts its limits). */
 	keyless?: boolean;
-	/** Where its key is pasted when it isn't on this tab (fal.ai / kie.ai / ArgoLink: Settings → AI). */
+	/** Where its key is pasted when it isn't on this tab (fal.ai / kie.ai / ArgoLink: Settings → Services). */
 	elsewhere?: "ai";
 	/** How the key looks, said where it is pasted. */
 	hint?: { ru: string; en: string };
@@ -58,7 +58,7 @@ export const SERVICES: Service[] = [
 	{ id: "keenable", name: "Keenable", keysUrl: "https://app.keenable.ai/console", keyless: true },
 ];
 
-/** The keys this tab keeps (the others are Settings → AI's, already there). */
+/** The keys this tab keeps (the others are Settings → Services's, already there). */
 export const OWN_KEYS = SERVICES.filter((s) => !s.elsewhere).map((s) => s.id);
 
 export interface Option {
@@ -121,14 +121,14 @@ const RU_MODEL: Record<string, string> = { Photos: "Фото", Illustrations: "�
 
 /** What Gaziyav 1 itself does for each ability (1.0.58), the default of its row. */
 const OWN: Record<Ability, Omit<Option, "id" | "wired"> | null> = {
-	tts: { ru: "Газияв: fal.ai / kie.ai (модель — в разделе ИИ)", en: "Gaziyav: fal.ai / kie.ai (model in the AI tab)", keys: ["fal", "kie"] },
+	tts: { ru: "Газияв: fal.ai / kie.ai (модель — выше)", en: "Gaziyav: fal.ai / kie.ai (model above)", keys: ["fal", "kie"] },
 	music: { ru: "Газияв: музыка из библиотеки", en: "Gaziyav: music from the library", keys: [], free: true },
 	sfx: { ru: "Газияв: звуки из библиотеки", en: "Gaziyav: sounds from the library", keys: [], free: true },
 	asr: { ru: "Газияв: на этом Mac (Whisper)", en: "Gaziyav: on this Mac (Whisper)", keys: [], free: true },
 	cutout: { ru: "Газияв: на этом Mac", en: "Gaziyav: on this Mac", keys: [], free: true },
-	image: { ru: "Газияв: fal.ai / kie.ai / ArgoLink (модель — в разделе ИИ)", en: "Gaziyav: fal.ai / kie.ai / ArgoLink (model in the AI tab)", keys: ["fal", "kie", "argo"] },
+	image: { ru: "Газияв: fal.ai / kie.ai / ArgoLink (модель — выше)", en: "Gaziyav: fal.ai / kie.ai / ArgoLink (model above)", keys: ["fal", "kie", "argo"] },
 	"image-search": { ru: "Wikimedia Commons", en: "Wikimedia Commons", keys: [], free: true },
-	video: { ru: "Газияв: fal.ai / kie.ai / ArgoLink (модель — в разделе ИИ)", en: "Gaziyav: fal.ai / kie.ai / ArgoLink (model in the AI tab)", keys: ["fal", "kie", "argo"] },
+	video: { ru: "Газияв: fal.ai / kie.ai / ArgoLink (модель — выше)", en: "Gaziyav: fal.ai / kie.ai / ArgoLink (model above)", keys: ["fal", "kie", "argo"] },
 	"video-search": { ru: "Газияв: Pexels, Pixabay и Wikimedia", en: "Gaziyav: Pexels, Pixabay and Wikimedia", keys: [], free: true },
 	translate: { ru: "Gaziyav AI", en: "Gaziyav AI", keys: [], free: true },
 	"web-search": { ru: "Википедия", en: "Wikipedia", keys: [], free: true },
@@ -171,3 +171,14 @@ export function optionsOf(ability: Ability): Option[] {
 export const optionOf = (ability: Ability, id: string | undefined): Option | undefined => optionsOf(ability).find((o) => o.id === id);
 
 export const isAbility = (v: unknown): v is Ability => ROWS.some((r) => r.id === v);
+
+/** The line when a service's key isn't in yet, naming the service (one exact string per service: i18n has each). */
+export const needsKeyLine = (id: string, voice = false) => {
+	const name = SERVICES.find((s) => s.id === id)?.name ?? id;
+	const a = /^[aeiou]/i.test(name) ? "an" : "a";
+	return voice ? `The ${name} voice needs ${a} ${name} key: Settings → Services.` : `This needs ${a} ${name} key: Settings → Services.`;
+};
+export const needsKeyLineRu = (id: string, voice = false) => {
+	const name = SERVICES.find((s) => s.id === id)?.name ?? id;
+	return voice ? `Для голоса ${name} нужен ключ ${name}: Настройки → Сервисы.` : `Для этого нужен ключ ${name}: Настройки → Сервисы.`;
+};

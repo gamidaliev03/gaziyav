@@ -158,7 +158,7 @@ describe("a call in plain words", () => {
 
 	test("why a step failed, in words", () => {
 		expect(ru(reasonOf("Error: Not run: a picture with FLUX costs $0.03 on fal.ai, more than this video's budget has left ($0.01 of $1.00). Nothing was spent."))).toBe("Не укладывается в бюджет этого видео");
-		expect(ru(reasonOf("Error: Not run: there is no fal.ai key. Use kie instead."))).toBe("Нет ключа fal.ai: добавьте его в Настройках → ИИ");
+		expect(ru(reasonOf("Error: Not run: there is no fal.ai key. Use kie instead."))).toBe("Нет ключа fal.ai: добавьте его в Настройках → Сервисы");
 		expect(en(reasonOf("Error: The open project is now «B», not «A» you worked on: nothing was changed."))).toBe("Another project is open now");
 		expect(en(reasonOf("Error: the render crashed on frame 12."))).toBe("the render crashed on frame 12.");
 		expect(ru(reasonOf(""))).toBe("Не получилось");

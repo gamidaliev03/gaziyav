@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { EditorCore } from "@/core";
 import { useEditor } from "@/editor/use-editor";
 import { cn } from "@/utils/ui";
-import { Alert02Icon, Cancel01Icon, RefreshIcon, Settings01Icon } from "@hugeicons/core-free-icons";
+import { Alert02Icon, Cancel01Icon, Settings01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@/components/ui/icon";
 import { estimatePoint, jobModelId, type Kind, modelName, type PointInput, type PointJob, type PointModel, pointModels, pointReference, resultToMedia, resultToTimeline, usePoint } from "../client";
 import { useT } from "@/i18n";
@@ -394,8 +394,17 @@ function ResultCard({ job }: { job: PointJob }) {
 	const t = useT();
 	const forget = usePoint((s) => s.forget);
 	const active = job.state === "queued" || job.state === "running";
-	const stop = () => void usePoint.getState().cancel(job.id).catch((e) => toast.error((e as Error).message));
-	const again = () => void usePoint.getState().retry(job.id).catch((e) => toast.error((e as Error).message));
+	// Stop frees the queue: the card goes and the form keeps every setting, so the same Generate runs it again. A provider
+	// that may still bill a started job (kie.ai, ArgoLink) keeps the card with that one line.
+	const stop = () =>
+		void usePoint
+			.getState()
+			.cancel(job.id)
+			.then(() => {
+				const now = usePoint.getState().jobs.find((j) => j.id === job.id);
+				if (!now?.error || now.error === "Cancelled") forget(job.id);
+			})
+			.catch((e) => toast.error((e as Error).message));
 	const editor = useEditor();
 	const [adding, setAdding] = useState(false);
 	const ready = job.state === "succeeded" && job.files.length > 0;
@@ -454,24 +463,23 @@ function ResultCard({ job }: { job: PointJob }) {
 								{/* Failure is calm and on the object (CRAFT.md §5): the card dims, one retry glyph; the whole sentence (with
 								    «Nothing was charged») is its tooltip and stays readable to a screen reader. */}
 								<div className="absolute inset-0 bg-black/30" aria-hidden />
-								<span className="sr-only" data-point-error>
-									{(job.error ?? "Failed").split("\n\nDetails:")[0]}
+								{/* the one line it failed with, on the card (a balance refusal says where to top up); the form above keeps
+								    the settings, so Generate runs it again — no separate Retry */}
+								<HugeiconsIcon icon={Alert02Icon} className="relative size-4 text-white/80" aria-hidden />
+								<span className="relative line-clamp-4 text-[11px] leading-snug text-white" data-point-error>
+									{t((job.error ?? "Failed").split("\n\nDetails:")[0].split("\n")[0])}
 								</span>
-								{job.input && !job.quiet ? (
-									<button
-										type="button"
-										aria-label={t("Retry")}
-										title={`${t("Retry")} — ${(job.error ?? "Failed").split("\n\nDetails:")[0]}`}
-										className="relative grid size-8 place-items-center rounded-full bg-black/60 text-white hover:bg-black/80"
-										onClick={again}
-										onDoubleClick={(e) => e.stopPropagation()}
-										data-point-retry
-									>
-										<HugeiconsIcon icon={RefreshIcon} className="size-4" />
-									</button>
-								) : (
-									<HugeiconsIcon icon={Alert02Icon} className="text-muted-foreground relative size-4" aria-hidden />
-								)}
+								<button
+									type="button"
+									aria-label={t("Remove")}
+									title={t("Remove")}
+									className="absolute top-1 right-1 grid size-6 place-items-center rounded-full bg-black/50 text-white hover:bg-black/75"
+									onClick={() => forget(job.id)}
+									onDoubleClick={(e) => e.stopPropagation()}
+									data-point-dismiss
+								>
+									<HugeiconsIcon icon={Cancel01Icon} className="size-3" />
+								</button>
 							</>
 						) : (
 							<>

@@ -15,7 +15,7 @@ import {
 	resetColorGroup,
 } from "@/effects/definitions/studio/color";
 import { InspectorGroup } from "@/components/editor/panels/properties/components/inspector-ui";
-import { useT } from "@/i18n";
+import { t, useT } from "@/i18n";
 import { ChangedDot, type ColorEdit, ColorSlider, CurvesEditor, HslControls, WheelsControls } from "./color-controls";
 import { encodeCube, parseCube } from "@/effects/luts/cube";
 import { getLutStrip, LOOKS, lookTextureId } from "@/effects/luts/looks";
@@ -517,8 +517,8 @@ export function LookTile({
 				}}
 				onMouseLeave={() => setHovered(false)}
 				className="flex w-full min-w-0 flex-col gap-1 text-left"
-				aria-label={`Apply look ${name}`}
-				title={`${name} — double-click to apply`}
+				aria-label={t("Apply {name}", { name })}
+				title={t("{name} — double-click to apply", { name })}
 			>
 				<div
 					className={cn(
@@ -597,8 +597,8 @@ function StackLookTile({ look, onPick }: { look: StudioLook; onPick: () => void 
 				onMouseEnter={() => setHovered(true)}
 				onMouseLeave={() => setHovered(false)}
 				className="flex w-full min-w-0 flex-col gap-1 text-left"
-				aria-label={`Apply look ${look.name}`}
-				title={look.skipped.length ? `${look.name} — double-click to apply. Not supported: ${look.skipped.join(", ")}` : `${look.name} — double-click to apply`}
+				aria-label={t("Apply {name}", { name: look.name })}
+				title={look.skipped.length ? t("{name} — double-click to apply. Not supported: {list}", { name: look.name, list: look.skipped.join(", ") }) : t("{name} — double-click to apply", { name: look.name })}
 			>
 				<div className="bg-accent aspect-square w-full overflow-hidden rounded-sm border-2 border-transparent">
 					<FxThumbnail cacheKey={`look:${look.id}`} buildPasses={buildPasses} restTime={0.3} loopSeconds={1.5} hovered={hovered} />

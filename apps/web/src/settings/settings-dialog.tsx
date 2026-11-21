@@ -27,7 +27,6 @@ import { LanguageList } from "@/i18n/language-choice";
 import { cn } from "@/utils/ui";
 import { type SettingsSection, useSettingsStore } from "./settings-store";
 import { AiSection } from "./ai-section";
-import { ServicesSection } from "./services-section";
 import { ShareSettings } from "@/share/components/share-settings";
 import { LibraryRow } from "@/ondevice/components/ondevice-dialogs";
 import { THIS_COMPUTER } from "@/utils/platform";
@@ -43,8 +42,7 @@ const SECTIONS: Array<{ id: SettingsSection; label: string }> = [
 	{ id: "performance", label: "Performance" },
 	{ id: "general", label: "General" },
 	{ id: "appearance", label: "Themes" },
-	{ id: "ai", label: "AI" },
-	{ id: "services", label: "Services" },
+	{ id: "ai", label: "Services" },
 	{ id: "share", label: "Share" },
 	...(FAMILY_SETTINGS ? [{ id: "calls" as const, label: "Calls" }] : []),
 ];
@@ -75,7 +73,7 @@ export function SettingsDialog() {
 	const { setOpen, setSection } = useSettingsStore.getState();
 	const { setTheme } = useTheme();
 	// On-device models, API keys and Claude are groups of one AI section now; old links to them land there.
-	const aliased: SettingsSection = section === "ondevice" || section === "claude" || section === "pointagent" ? "ai" : section;
+	const aliased: SettingsSection = section === "ondevice" || section === "claude" || section === "pointagent" || section === "services" ? "ai" : section;
 	const current = SECTIONS.some((s) => s.id === aliased) ? aliased : "projects";
 
 	// Outside the Mac app (no menu bar) ⌘, opens Settings from the keyboard.
@@ -138,7 +136,6 @@ export function SettingsDialog() {
 					{current === "general" && <GeneralSection />}
 					{current === "appearance" && <AppearanceSection />}
 					{current === "ai" && <AiSection />}
-					{current === "services" && <ServicesSection />}
 					{current === "share" && <ShareSettings />}
 					{current === "calls" && FAMILY_SETTINGS && <FAMILY_SETTINGS.CallSettings />}
 				</div>

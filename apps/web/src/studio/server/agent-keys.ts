@@ -55,7 +55,7 @@ export function getKey(provider: AgentProvider): string {
 }
 
 export function storeKey(provider: AgentProvider, key: string) {
-	if (provider === "fal") throw new StudioError("Paste the fal.ai key in Settings → AI (fal.ai).");
+	if (provider === "fal") throw new StudioError("Paste the fal.ai key in Settings → Services (fal.ai).");
 	if (fileStore()) {
 		fs.mkdirSync(studioHome(), { recursive: true });
 		fs.writeFileSync(testFile(), JSON.stringify({ ...readTest(), [provider]: key }), { mode: 0o600 });
@@ -116,7 +116,7 @@ export function activeAgent(): ActiveAgent | null {
 
 export const agentReady = () => !!activeAgent();
 
-export const NOT_SET_UP = "Gaziyav AI has no AI yet: press Enter in the prompt and choose one, or add a key in Settings → AI → API keys.";
+export const NOT_SET_UP = "Gaziyav AI has no AI yet: press Enter in the prompt and choose one, or add a key in Settings → Services → API keys.";
 
 /** What Settings and the chooser may see: no key, only its mask. */
 export function agentSetup() {

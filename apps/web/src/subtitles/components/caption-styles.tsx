@@ -86,18 +86,18 @@ export function CaptionStyleGallery({ group, query = "" }: { group?: TemplateGro
 		const removed = useUserPresets.getState().remove("captions", style.id);
 		if (!removed) return;
 		if (styleId === style.id) setStyleId(CAPTION_STYLES[0].id);
-		toast(`“${style.name}” deleted`, {
-			action: { label: "Undo", onClick: () => useUserPresets.getState().restore("captions", removed.item, removed.index) },
+		toast(t("“{name}” deleted", { name: t(style.name) }), {
+			action: { label: t("Undo"), onClick: () => useUserPresets.getState().restore("captions", removed.item, removed.index) },
 		});
 	};
 	const pick = async (style: CaptionStyle) => {
 		setStyleId(style.id);
 		if (captionCount === 0) {
-			toast(`${style.name}: new captions get this template`);
+			toast(t("{name}: new captions get this template", { name: t(style.name) }));
 			return;
 		}
 		const changed = await applyCaptionStyle({ editor, styleId: style.id, scope: "all" });
-		toast.success(`${style.name}: ${changed} ${changed === 1 ? "caption" : "captions"} — ⌘Z to undo`);
+		toast.success(t(changed === 1 ? "{name}: {n} caption — ⌘Z to undo" : "{name}: {n} captions — ⌘Z to undo", { name: t(style.name), n: changed }));
 	};
 	return (
 		<div className="flex flex-col gap-2" data-caption-templates={group ?? "all"}>
@@ -141,9 +141,9 @@ export function CaptionStyleGallery({ group, query = "" }: { group?: TemplateGro
 					<button
 						type="button"
 						aria-pressed={style.id === styleId}
-						aria-label={style.name}
+						aria-label={t(style.name)}
 						data-caption-style={style.id}
-						title={captionCount > 0 ? `${t(style.name)}: apply to all ${captionCount} captions (⌘Z undoes)` : `${t(style.name)}: the template of new captions`}
+						title={captionCount > 0 ? t("{name}: apply to all {n} captions (⌘Z undoes)", { name: t(style.name), n: captionCount }) : t("{name}: the template of new captions", { name: t(style.name) })}
 						onClick={() => void pick(style)}
 						className="flex w-full flex-col text-left"
 					>
@@ -154,9 +154,9 @@ export function CaptionStyleGallery({ group, query = "" }: { group?: TemplateGro
 					{/* CapCut's ☆ at the tile's bottom-right corner: Favorites. */}
 					<button
 						type="button"
-						aria-label={favorites.includes(style.id) ? `Remove ${style.name} from Favorites` : `Add ${style.name} to Favorites`}
+						aria-label={favorites.includes(style.id) ? t("Remove {name} from Favorites", { name: t(style.name) }) : t("Add {name} to Favorites", { name: t(style.name) })}
 						aria-pressed={favorites.includes(style.id)}
-						title={favorites.includes(style.id) ? "Remove from Favorites" : "Add to Favorites"}
+						title={favorites.includes(style.id) ? t("Remove from Favorites") : t("Add to Favorites")}
 						data-caption-favorite={style.id}
 						onClick={() => toggleFavorite(style.id)}
 						className={cn(
@@ -169,8 +169,8 @@ export function CaptionStyleGallery({ group, query = "" }: { group?: TemplateGro
 					{isUserPresetId(style.id) && (
 						<button
 							type="button"
-							aria-label={`Delete ${style.name}`}
-							title="Delete style"
+							aria-label={t("Delete {name}", { name: t(style.name) })}
+							title={t("Delete style")}
 							onClick={() => removeStyle(style)}
 							className="bg-background/80 text-muted-foreground hover:text-foreground absolute top-0.5 right-0.5 flex size-4 items-center justify-center rounded-sm text-xs leading-none opacity-0 group-hover:opacity-100 focus-visible:opacity-100 group-focus-within:opacity-100"
 						>

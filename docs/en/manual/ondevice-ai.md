@@ -19,7 +19,7 @@
 Built in, nothing to install: remove or blur the background, enhance, upscale 2× / 4×, deflicker, auto colour, split into scenes, make vertical (keeping the face in frame), beat markers, tracking (blur or pixelate a moving face or object).
 
 **How.**
-- Settings → **AI** lists the features, each with its download size and the memory it needs. **Download** one, or **Download all**.
+- Settings → **Services** lists the features, each with its download size and the memory it needs. **Download** one, or **Download all**.
 - Or just use a feature: the first time you need it, its model downloads in the background.
 - On a clip, use the inspector: most tools are in its **AI** tab, voice tools in **Audio**, auto colour in **Color**, background removal in **Effects** ([The inspector](inspector.md)). They are also in the clip's menu, or ask [Claude](claude.md). A tool's result is an effect on the clip, switched on and off in its section, not a separate file in Media.
 

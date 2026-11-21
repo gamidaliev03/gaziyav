@@ -209,6 +209,8 @@ export interface GraphicElement extends BaseTimelineElement {
 export interface EffectElement extends BaseTimelineElement {
 	type: "effect";
 	effectType: string;
+	/** Switched off (V / the clip menu's Hide): the layer stays on the timeline and changes nothing in the frame. */
+	hidden?: boolean;
 	/** A transition dropped on the layer: it transitions everything below the layer over the layer's span (transitions/layer.ts). */
 	transition?: LayerTransition;
 }

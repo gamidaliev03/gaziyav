@@ -9,7 +9,7 @@ Open Settings from the app menu (Gaziyav → Settings). The sections:
 - **Performance** — encoding and decoding: «Speed up hardware encoding».
 - **General** — language (English, Russian), a notification when an export finishes in the background, trackpad feedback (a light tap when a clip snaps, a guide aligns or a trim reaches its end).
 - **Themes** — the [looks](looks.md).
-- **AI** — the [free on-device features](ondevice-ai.md), [Claude](claude.md), and the key for [paid AI](extras.md) with your spending limit.
+- **Services** — the keys (fal.ai, kie.ai, ArgoLink, Pexels, Pixabay, and optional keys of other services), your spending limit for [paid AI](extras.md), the [free on-device features](ondevice-ai.md), **Connect Claude** for the [Claude app](claude.md), and **What does what**: one row per ability with its service picker and a **Check** button.
 - **Share** — the accounts used by [Post](post.md).
 
 <img src="../../../assets/screens/en/t-settings-projects.jpg" width="100%" alt="Settings → Draft: Folders, and Disk space with Keep the cache under 10 GB">

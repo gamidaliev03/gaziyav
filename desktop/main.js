@@ -341,8 +341,8 @@ async function startServer() {
 			// once more by the app; only a missing connection is said to the person.
 			text: async (req) => {
 				let r = await agentHost.oneShot(req);
-				if (!r?.ok && !["not-installed", "sign-in", "not-ready", "empty"].includes(r?.code)) r = await agentHost.oneShot(req);
-				if (!r?.ok) throw new Error(r?.error || "");
+				if (!r?.ok && !["not-installed", "sign-in", "not-ready", "empty", "offline", "limit"].includes(r?.code)) r = await agentHost.oneShot(req);
+				if (!r?.ok) throw Object.assign(new Error(r?.error || ""), { code: r?.code });
 				return req?.json && r.json !== undefined ? JSON.stringify(r.json) : String(r.text ?? "");
 			},
 			status: () => agentHost.oneShotStatus(),

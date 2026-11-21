@@ -48,7 +48,7 @@ export async function POST(req: Request) {
 			})());
 		return json({ style: captionStyleFromAnswer({ answer: parseModelJson(answer), id, description }) });
 	} catch (error) {
-		const message = error instanceof Error && error.message ? error.message : "Gaziyav AI didn't manage this one: nothing was changed. Press the button once more.";
+		const message = error instanceof Error && error.message ? error.message : "Gaziyav AI didn't manage this — nothing was changed.";
 		return json({ error: message });
 	}
 }

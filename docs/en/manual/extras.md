@@ -6,7 +6,7 @@
 
 ## Set up
 
-Settings → **AI** → paste your fal.ai key. It is stored encrypted in the macOS Keychain; the editor's interface never gets more than its last four characters. Set your spending limit: a run that costs more (the default limit is $1) asks you once.
+Settings → **Services** → paste your fal.ai key. It is stored encrypted on your Mac, in the app's own folder; the editor's interface never gets more than its last four characters. Set your spending limit: a run that costs more (the default limit is $1) asks you once.
 
 ## What it costs
 

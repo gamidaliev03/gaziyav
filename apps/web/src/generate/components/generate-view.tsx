@@ -10,7 +10,8 @@ import { HugeiconsIcon } from "@/components/ui/icon";
 import { AiMagicIcon, Cancel01Icon, VoiceIcon } from "@hugeicons/core-free-icons";
 import { estimate, falChoice, isCloneVoice, openFalSettings, useApiKey, useApiOf, useFal, useFalTts, useKeys } from "@/fal/client";
 import { VoiceModelSelect } from "@/fal/components/voice-model-select";
-import { useServiceCards } from "../service-voices";
+import { followVoiceModel, useLibraryCards, useVoiceFitsModel, voiceLanguage } from "../service-voices";
+import { VoiceLanguage } from "./voice-language";
 import { apiOf, price, usd } from "@/fal/models";
 import { useEditor } from "@/editor/use-editor";
 import { currentClip } from "@/studio/client/editor-bridge";
@@ -23,7 +24,7 @@ import { SourceResult } from "@/media/source-result";
 import { useT } from "@/i18n";
 import { cn } from "@/utils/ui";
 import { AddYourVoice, removeSavedVoice, useSavedVoices } from "./my-voices";
-import { myCards, readyCards, trendCards, useVoiceLang, VoicePicker } from "./voice-picker";
+import { myCards, needsKey, useVoiceLang, VoicePicker } from "./voice-picker";
 import { VOICES } from "../voices";
 
 export { VOICES } from "../voices";
@@ -112,21 +113,33 @@ function VoiceForm({ projectId, cloneNeedsFal }: { projectId: string; cloneNeeds
 	const [style, setStyle] = useDraft("voice.style", "");
 	// A trending voice (a ready voice + its sound) or "" for a plain ready voice / one of My voices.
 	const [trend, setTrend] = useDraft("voice.trend", "");
+	// the language beside the voice: «auto» = the text's; a voice of a language sets it
+	const [voiceLang, setVoiceLang] = useDraft("voice.language", "auto");
 	const lang = useVoiceLang(text);
 	const saved = useSavedVoices();
 	const addRef = useRef<HTMLInputElement>(null);
-	const services = useServiceCards();
-	const cards = useMemo(() => [...trendCards(lang.ui, lang.sample), ...readyCards(), ...myCards(saved), ...services], [lang.ui, lang.sample, saved, services]);
+	const library = useLibraryCards(lang.ui, lang.sample);
+	const cards = useMemo(() => [...myCards(saved), ...library], [saved, library]);
+	// the voice follows the model: a voice of fal's ElevenLabs list goes back to the default under another model
+	useVoiceFitsModel(speaker, setSpeaker);
+	// A service's voice picked earlier (1.0.59–1.0.62 listed them under every model) while «Озвучка» is not on its
+	// service: Gaziyav's default voice, as 1.0.58 had it — never a key question for a voice he can't see.
+	// (a voice still listed stays picked; one whose service has no key says so under the list and Create waits)
+	const speakerNow = speaker.startsWith("svc:") && library.length > 0 && !library.some((c) => c.id === speaker) ? "ryan" : speaker;
+	const waitsForKey = !trend && !!needsKey(library.find((c) => c.id === speakerNow));
 	// A service's voice is billed by its service to its own key: no fal price on the button.
-	const ownKey = speaker.startsWith("svc:") && !trend;
+	const ownKey = speakerNow.startsWith("svc:") && !trend;
 	const pick = (id: string) => {
 		if (id.startsWith("trend:")) setTrend(id.slice(6));
 		else {
+			followVoiceModel(id);
+			const own = voiceLanguage(id);
+			if (own) setVoiceLang(own);
 			setSpeaker(id);
 			setTrend("");
 		}
 	};
-	const value = trend ? `trend:${trend}` : speaker;
+	const value = trend ? `trend:${trend}` : speakerNow;
 	const label = text.trim() && !ownKey
 		? `${t("Create")} · ${estimate(tts, text.trim().length)}${cloned ? ` ${t("(+ a one-time clone {p})", { p: usd(price(falChoice("clone"), 30)) })}` : ""}`
 		: t("Create");
@@ -171,6 +184,7 @@ function VoiceForm({ projectId, cloneNeedsFal }: { projectId: string; cloneNeeds
 				{/* 3. who says it: one field with the editor's own list (as the Lipsync panel), ▶ for its sample, × to remove */}
 				<div className="shrink-0">
 					<VoicePicker label="tts" title="Voice" cards={cards} value={value} onPick={pick} onAdd={() => addRef.current?.click()} onRemove={(id) => void removeSavedVoice(id, t).then((gone) => gone && speaker === id && setSpeaker("ryan"))} />
+					<VoiceLanguage value={voiceLang} onChange={setVoiceLang} />
 				</div>
 				{/* 4. the takes and the clone form, under it (nothing there when there is nothing to show) */}
 				<div className="scrollbar-hidden -mx-2 max-h-48 min-h-0 shrink overflow-y-auto px-2">
@@ -184,10 +198,10 @@ function VoiceForm({ projectId, cloneNeedsFal }: { projectId: string; cloneNeeds
 			<div className="bg-background flex shrink-0 flex-col gap-1.5 border-t px-2 pt-1.5 pb-2" data-voice-create>
 				<RunButton
 					kind="voice"
-					disabled={!text.trim()}
+					disabled={!text.trim() || waitsForKey}
 					needsFal={cloned && cloneNeedsFal}
 					ownKey={ownKey}
-					onRun={() => void generate("voice", trend ? { text, trend } : { text, speaker, style }, { place: true })}
+					onRun={() => void generate("voice", trend ? { text, trend, lang: voiceLang } : { text, speaker: speakerNow, style, lang: voiceLang }, { place: true })}
 					label={label}
 				/>
 			</div>

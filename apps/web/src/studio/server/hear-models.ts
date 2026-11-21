@@ -90,7 +90,7 @@ export function modelNote(s: HearModelState): string | null {
 	const any = "questions in any words and names for the sounds come with Claude's hearing model";
 	if (s.state === "downloading") return `${any} (${s.mb} MB): downloading now, ${Math.round((s.progress ?? 0) * 100)}% — until then from the signal measurements`;
 	if (s.state === "missing") return `${any} (${s.mb} MB, not on this Mac yet: its download starts now${s.why ? `; the last try failed: ${s.why}` : ""}) — until then from the signal measurements`;
-	if (s.state === "removed") return `${any}, which was removed in Settings → AI (download it there again) — this is from the signal measurements`;
+	if (s.state === "removed") return `${any}, which was removed in Settings → Services (download it there again) — this is from the signal measurements`;
 	return `${any}, which can't run here (${s.why}) — this is from the signal measurements`;
 }
 
@@ -344,7 +344,7 @@ export function tagLabels(): string[] {
 export async function labelBank(signal?: AbortSignal): Promise<Bank> {
 	if (box.__hearBank) return box.__hearBank;
 	const labels = tagLabels();
-	if (!labels.length) throw new StudioError("The hearing model's labels are missing: repair it in Settings → AI.");
+	if (!labels.length) throw new StudioError("The hearing model's labels are missing: repair it in Settings → Services.");
 	const file = path.join(dataDir(), "hearing", `label-bank-${CACHE_VERSION}-${labels.length}.bin`);
 	let vectors: Float32Array[] | null = null;
 	try {

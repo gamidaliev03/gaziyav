@@ -39,7 +39,8 @@ export async function translateSpeech(
 	]
 		.filter(Boolean)
 		.join("\n");
-	const answer = await ds.chat({ system: SYSTEM, user, json: true, temperature: 0.3, maxTokens: 3000, thinking: false, signal });
+	// the target language goes with the call: the app's «write in the interface language» line never overrides it
+	const answer = await ds.chat({ system: SYSTEM, user, json: true, temperature: 0.3, maxTokens: 3000, thinking: false, signal, lang: target.code });
 	const out = cleanSpeech(answer);
 	if (!out) throw new StudioError("Gaziyav AI sent no usable translation. Press Translate again.");
 	if (out.length > Math.max(text.length * 4, 400)) throw new StudioError("Gaziyav AI's translation was far longer than the speech. Press Translate again.");

@@ -1,11 +1,11 @@
 "use client";
 
-// Settings → AI → AI on this Mac: the model manager (download size, progress, cancel, Repair, remove). Every "open the
+// Settings → Services → AI on this Mac: the model manager (download size, progress, cancel, Repair, remove). Every "open the
 // models" link in the app lands here.
 import { OndeviceSection } from "@/ondevice/components/ondevice-dialogs";
 import { useT } from "@/i18n";
 
-/** Settings → AI → AI on this Mac: the first group of the AI section (AI on this Mac · API keys · Connect Claude). */
+/** Settings → Services → AI on this Mac: the first group of the AI section (AI on this Mac · API keys · Connect Claude). */
 export function OndeviceSlot() {
 	const t = useT();
 	return (

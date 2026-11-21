@@ -1,7 +1,7 @@
 "use client";
 
 // The voice model right where a voice is made (AI → Voice, Text → Text-to-speech, the Lipsync window) — the same choice
-// as Settings → AI. Only «Qwen3 TTS» could be seen there before; MiniMax was a trip to Settings away.
+// as Settings → Services. Only «Qwen3 TTS» could be seen there before; MiniMax was a trip to Settings away.
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { manyKeys, onOffer } from "@/fal/video";

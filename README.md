@@ -126,7 +126,7 @@ Video, titles, audio, captions, shapes and compound clips follow the same rules:
 
 ### Free AI on your Mac
 
-<img src="assets/screens/en/t-settings-ai.jpg" width="100%" alt="Settings → AI: the on-device features, each with its size and an install button">
+<img src="assets/screens/en/t-settings-ai.jpg" width="100%" alt="Settings → Services: the on-device features, each with its size and an install button">
 
 These run on your Mac (Apple silicon) and need no key, no account and no payment. Each model downloads once, the first time you use it.
 
@@ -218,7 +218,7 @@ The chat uses your own Claude subscription through Claude Code on your Mac. Gazi
 
 Until Claude is connected, the editor, export and posting work as before, and the AI text buttons say in one line how to connect.
 
-Prefer to talk to Claude in the Claude app instead? The connector for Claude for Mac and Claude Code is still there: **Settings → AI → Claude → Connect Claude**.
+Prefer to talk to Claude in the Claude app instead? The connector for Claude for Mac and Claude Code is still there: **Settings → Services → Claude → Connect Claude**.
 
 ## Paid AI on your own key
 
@@ -228,7 +228,7 @@ You don't need it to edit. Each paid service bills you at its own price; Gaziyav
 
 **More voices.** About 2,300 more voices in the voice picker, from ElevenLabs, Cartesia, Inworld, OpenAI, Google, Groq and Xiaomi MiMo. Each needs that service's key in Settings → Services; a voice whose service has no key shows the service it needs.
 
-**fal.ai** (Settings → AI). With your own [fal.ai](https://fal.ai) key, Gaziyav runs lipsync, a voice from text or a cloned voice, pictures and video from text, and face swap. The key is stored encrypted in the macOS Keychain, and the app shows only its last four characters. The button shows the price before the run; above your limit (default $1) it asks once.
+**fal.ai** (Settings → Services). With your own [fal.ai](https://fal.ai) key, Gaziyav runs lipsync, a voice from text or a cloned voice, pictures and video from text, and face swap. The key is stored encrypted on your Mac, in the app's own folder, and the app shows only its last four characters. The button shows the price before the run; above your limit (default $1) it asks once.
 
 **Lipsync.** Select the clip → <kbd>⌥L</kbd> → type the words → <kbd>⌘</kbd><kbd>↵</kbd>. The voice is cloned from the clip, and the same face says the new line. Gaziyav sends **only the parts where someone speaks** and puts back only the face, on top of your original frames. Lipsync is also in the clip's menu and in <kbd>⌘K</kbd>.
 

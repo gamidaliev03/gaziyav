@@ -26,19 +26,15 @@ export interface ChatOptions {
 	maxTokens?: number;
 	timeout?: number;
 	signal?: AbortSignal;
+	/** The connected Claude's model for this step («fable» for library plates; default the app's, haiku). */
+	brainModel?: string;
 }
 
 export async function chat(o: ChatOptions): Promise<string> {
-	// Frames to look at (the art director's check): the one-shot call takes words only, so a look at pictures goes to an
-	// earlier AI that sees them (1.0.58's), else it is skipped by its caller — never a blind look.
-	if (o.messages.some((m) => Array.isArray(m.content) && m.content.some((p) => p.type === "image_url"))) {
-		const a = activeAgent();
-		if (a) return legacyChat(a, o);
-		throw new StudioError("The frames weren't looked at.");
-	}
-	// One brain (studio/server/brain.ts): the connected Claude answers, whatever model the step would have picked.
+	// One brain (studio/server/brain.ts): the connected Claude answers, whatever model the step would have picked; the
+	// frames of the art director's check go with it as pictures (the one-shot's `images`).
 	try {
-		return await brainChat("plan", o.messages, { json: o.json, signal: o.signal, timeout: o.timeout });
+		return await brainChat("plan", o.messages, { json: o.json, signal: o.signal, timeout: o.timeout, ...(o.brainModel ? { model: o.brainModel } : {}) });
 	} catch (error) {
 		// Claude not connected and an earlier AI set up (1.0.58's keys): that one, as before.
 		const a = (error as Error)?.message === BRAIN_OFF ? activeAgent() : null;
@@ -55,8 +51,8 @@ async function legacyChat(a: NonNullable<ReturnType<typeof activeAgent>>, o: Cha
 	}
 	const r = await compatChat(a, { messages: o.messages, json: o.json, maxTokens: o.maxTokens ?? 8000, temperature: o.temperature, thinking: o.model === REASONER ? undefined : o.thinking, timeout: o.timeout, signal: o.signal });
 	if (!r.content.trim()) {
-		if (r.finish === "length") throw new StudioError("Gaziyav AI didn't manage this one: nothing was changed. Press the button once more.");
-		throw new StudioError("Gaziyav AI didn't manage this one: nothing was changed. Press the button once more.");
+		if (r.finish === "length") throw new StudioError("Gaziyav AI didn't manage this — nothing was changed.");
+		throw new StudioError("Gaziyav AI didn't manage this — nothing was changed.");
 	}
 	return r.content;
 }
@@ -73,6 +69,6 @@ export function parseJson(text: string): any {
 				return JSON.parse(candidate);
 			} catch {}
 		}
-		throw new StudioError("Gaziyav AI didn't manage this one: nothing was changed. Press the button once more.");
+		throw new StudioError("Gaziyav AI didn't manage this — nothing was changed.");
 	}
 }

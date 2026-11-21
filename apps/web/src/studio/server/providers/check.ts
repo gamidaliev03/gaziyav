@@ -27,7 +27,7 @@ function said(status: number): Line {
 	if (status === 401 || status === 403 || status === 400) return REFUSED;
 	if (status === 402 || status === 432 || status === 433) return BROKE;
 	if (status === 429) return yes("Ключ принят; сервис сейчас занят — попробуйте позже.", "The key is accepted; the service is busy right now.");
-	return no("Сервис ответил ошибкой: попробуйте через минуту.", "The service answered with an error: try again in a minute.");
+	return no("Сервис ответил ошибкой: ключ проверить не удалось.", "The service answered with an error: the key couldn't be checked.");
 }
 
 async function get(url: string, headers: Record<string, string> = {}, init: RequestInit = {}): Promise<Line> {

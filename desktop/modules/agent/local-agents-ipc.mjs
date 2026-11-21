@@ -154,7 +154,7 @@ export function agentProblem(entry, step, e, turnId = null) {
  *           harness?: (id: string) => Promise<any>, onWorking?: (folders: string[]) => void, onAsking?: (folders: string[]) => void, onTurn?: (turn: { kind: 'done' | 'failed' | 'asking', agent: string, cwd: string, meta: any, error?: string }) => void, onConnectionResult?: (id: string, error: unknown | null) => void, logDir?: () => string | null,
  *           skills?: { dataDir: string, mine: string } | null }} opts
  */
-export function registerLocalAgentIpc(ipcMain, { trusted, binDir = null, fallbackDir = null, env = {}, mcpServers = null, harness = async () => null, log = () => {}, onWorking = () => {}, onAsking = () => {}, onTurn = (_turn) => {}, onConnectionResult = (_agent, _error) => {}, logDir = () => null, skills = null, sessionExtra = {} }) {
+export function registerLocalAgentIpc(ipcMain, { trusted, binDir = null, fallbackDir = null, env = {}, mcpServers = null, harness = async () => null, log = () => {}, onWorking = () => {}, onAsking = () => {}, onTurn = (_turn) => {}, onConnectionResult = (_agent, _error) => {}, logDir = () => null, skills = null, sessionExtra = {}, explain = (e) => (e instanceof Error ? e.message : String(e)) }) {
   const harnessFor = async (agent) => (HARNESS_AGENTS.includes(agent) ? harness(agent) : undefined);
   const skillRecord = skills ? skillStore(skills.dataDir) : null;
   /* what went wrong, kept in Studio's home with Studio's own problems (openfilm's problems.mjs), for its report */
@@ -317,7 +317,8 @@ export function registerLocalAgentIpc(ipcMain, { trusted, binDir = null, fallbac
       entry.info = info;
       return { ok: true, key, info: { ...info, authMethods: [], mcp: false } };
     } catch (e) {
-      const result = { ok: false, error: e instanceof Error ? e.message : String(e), ...(e?.code ? { code: String(e.code) } : {}) };
+      /* Gaziyav: what the person reads is one plain line in the UI's language (`explain`); the raw error goes to the log */
+      const result = { ok: false, error: explain(e), ...(e?.code ? { code: String(e.code) } : {}) };
       onConnectionResult(agent, e);
       if (meta?.turnId) {
         const raw = sentError(e);
@@ -360,7 +361,7 @@ export function registerLocalAgentIpc(ipcMain, { trusted, binDir = null, fallbac
     } catch (e) {
       connectionError = e;
       /* `balance`: the service the app's own agent runs on has no balance left (agents.mjs), and where to top it up */
-      result = { ok: false, error: e instanceof Error ? e.message : String(e), ...(e?.balance ? { balance: e.balance } : {}) };
+      result = { ok: false, error: explain(e), ...(e?.balance ? { balance: e.balance } : {}) };
       raw = sentError(e);
       if (!e?.balance) noteProblem(entry, 'prompt', e, meta?.turnId ?? null);
     } finally {
@@ -456,7 +457,7 @@ export function registerLocalAgentIpc(ipcMain, { trusted, binDir = null, fallbac
     try {
       return { ok: true, result: await entry.session.setConfigOption(String(opts.configId), opts.value) };
     } catch (e) {
-      return { ok: false, error: e instanceof Error ? e.message : String(e) };
+      return { ok: false, error: explain(e) };
     }
   });
 

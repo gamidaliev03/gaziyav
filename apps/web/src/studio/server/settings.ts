@@ -28,7 +28,7 @@ export interface StudioSettings {
 	 */
 	youtubeBrowser: string;
 	/**
-	 * Settings → AI → «Download large models in the background»: the lipsync, voice, picture, music and face-swap
+	 * Settings → Services → «Download large models in the background»: the lipsync, voice, picture, music and face-swap
 	 * models (about 20 GB) come by themselves too, after the small ones (ondevice/background.ts). Off: they download on first use.
 	 */
 	backgroundLargeModels: boolean;

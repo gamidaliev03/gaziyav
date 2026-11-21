@@ -74,7 +74,7 @@ export const RU_SHARE: Record<string, string> = {
 	"Posting as it is ({w}×{h}): Shorts, Reels and TikTok will show it with bars.": "Публикуем как есть ({w}×{h}): в Shorts, Reels и TikTok будут полосы.",
 	"Retry": "Повторить",
 	"Send the video with AirDrop, Messages, Mail or any app. It is exported first.": "Отправьте видео через AirDrop, Сообщения, Почту или любое приложение. Сначала оно экспортируется.",
-	"Settings → AI": "Настройки → ИИ",
+	"Settings → Services": "Настройки → Сервисы",
 	"Share…": "Поделиться…",
 	"Show in Explorer": "Показать в Проводнике",
 	"Show in Finder": "Показать в Finder",

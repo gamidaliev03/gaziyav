@@ -393,7 +393,8 @@ async function applyPlan(args: Args, signal: AbortSignal): Promise<string> {
 	// The frame first (its own step): the platform's shape.
 	const canvas0 = project.settings.canvasSize;
 	if (Math.abs(canvas0.width / canvas0.height - platform.size.width / platform.size.height) > 0.02) {
-		await ed.project.updateSettings({ settings: { canvasSize: { ...platform.size } } });
+		// the platform's shape is chosen: a first clip placed later keeps it
+		await ed.project.updateSettings({ settings: { canvasSize: { ...platform.size }, originalCanvasSize: { ...platform.size }, canvasFromClip: false } });
 	}
 	const canvas = ed.project.getActive().settings.canvasSize;
 	const sounds = await api<{ music: SoundPick | null; sfx: Record<string, SoundPick | null>; pending?: string }>("sounds", { mood: input.music?.mood || t.music.mood || preset.music.mood, seconds, sfx: { hit: preset.sfx.hit, whoosh: preset.sfx.whoosh, riser: preset.sfx.riser } }, signal);

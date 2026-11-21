@@ -1,8 +1,10 @@
 // The speech request of fal's voice models as ONE pure function (no Node imports): the Mac app's server (fal/voice.ts
 // speak) and the browser edition (web/voice) build the very same JSON from it — the language, the voice, the style.
-import { type FalModel, isQwenVoice, MINIMAX_VOICES } from "./models";
+import { type FalModel, isElevenVoice, isQwenVoice, MINIMAX_VOICES } from "./models";
+import { elevenVoiceName, READY_TO_ELEVEN } from "./eleven-voices";
+import { LANGS, minimaxVoiceId } from "./model-voices";
 import { referenceFor } from "./reference";
-import { minimaxSpeechInput, qwenSpeechInput } from "./wire";
+import { elevenSpeechInput, minimaxSpeechInput, qwenSpeechInput } from "./wire";
 
 /** ISO code → MiniMax's language_boost name. */
 export const BOOST: Record<string, string> = {
@@ -12,6 +14,12 @@ export const BOOST: Record<string, string> = {
 	// The names local-tts used («russian», «english»…) map too.
 	russian: "Russian", english: "English", german: "German", french: "French", spanish: "Spanish", italian: "Italian", portuguese: "Portuguese", japanese: "Japanese", korean: "Korean", chinese: "Chinese",
 };
+
+// every language MiniMax's language_boost takes, by its ISO code too (fal schema, read 21.11; model-voices.ts LANGS)
+for (const l of LANGS) {
+	BOOST[l.code] ??= l.boost;
+	BOOST[l.boost.toLowerCase()] ??= l.boost;
+}
 
 /** The old ready voices (and the trending looks built on them) speak in the closest MiniMax voice. */
 export const READY_TO_MINIMAX: Record<string, string> = {
@@ -35,8 +43,13 @@ export const QWEN_LANG: Record<string, string> = { Russian: "Russian", English: 
 export const EMOTION: Record<string, string> = { energetic: "happy", calm: "neutral", serious: "neutral", neutral: "neutral" };
 
 /** A ready voice as a fal speech model names it (null when it isn't one). */
-export function falReadyVoice(id: string | undefined, qwen: boolean): string | null {
+export function falReadyVoice(id: string | undefined, qwen: boolean, eleven = false): string | null {
 	if (!id) return null;
+	// ElevenLabs on fal: its own voices by name; the ready voices speak as the nearest of them
+	if (eleven) return elevenVoiceName(id) ?? READY_TO_ELEVEN[id] ?? null;
+	// a MiniMax system voice from its own list (`mm:<voice_id>`)
+	const mm = minimaxVoiceId(id);
+	if (mm) return qwen ? "Ryan" : mm;
 	if (qwen) return READY_TO_QWEN[id] ?? (MINIMAX_VOICES.some((v) => v.id === id) ? "Ryan" : null);
 	if (MINIMAX_VOICES.some((v) => v.id === id)) return id;
 	return READY_TO_MINIMAX[id] ?? null;
@@ -59,6 +72,12 @@ export interface FalSpeech {
 export function falSpeechRequest(model: Pick<FalModel, "id">, s: FalSpeech): { endpoint: string; input: Record<string, unknown>; expectSeconds: number } {
 	const text = s.text.trim().slice(0, 5000);
 	const boost = BOOST[(s.language ?? "").toLowerCase()] ?? (/[а-яё]/i.test(text) ? "Russian" : "auto");
+	if (isElevenVoice(model.id))
+		return {
+			endpoint: model.id,
+			input: elevenSpeechInput({ endpoint: model.id, text, voice: s.voiceId, speed: s.speed, language: /^[a-z]{2}$/i.test(s.language ?? "") ? s.language : /[а-яё]/i.test(text) ? "ru" : undefined }),
+			expectSeconds: 5 + text.length / 60,
+		};
 	if (isQwenVoice(model.id))
 		return {
 			endpoint: model.id,

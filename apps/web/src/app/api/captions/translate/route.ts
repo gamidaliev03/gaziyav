@@ -36,11 +36,13 @@ export async function POST(req: Request) {
 				maxTokens: 4000,
 				thinking: false,
 				signal: req.signal,
+				// the target language with the call (never the interface's)
+				lang: to,
 			});
 			out.push(...linesFromAnswer(parseModelJson(answer), part));
 		}
 		return json({ lines: out });
 	} catch (error) {
-		return json({ error: error instanceof Error && error.message ? error.message : "Couldn't translate this time: nothing was changed. Press the button once more." });
+		return json({ error: error instanceof Error && error.message ? error.message : "Couldn't translate it — nothing was changed." });
 	}
 }

@@ -87,7 +87,7 @@ function hint(text: string): string {
 		return " → YouTube paused downloads from this network for a few minutes (too many requests). Wait a little, then press Retry, or open the video in a browser once.";
 	}
 	if (/http 401|invalid api key|authentication|unauthorized|invalid_api_key/.test(t)) {
-		return " → Invalid API key: check it in Settings → AI (⌘,). Nothing was charged.";
+		return " → Invalid API key: check it in Settings → Services (⌘,). Nothing was charged.";
 	}
 	if (/http 402|insufficient|balance|exhausted|payment required/.test(t)) {
 		return " → The service balance is empty. Top it up, then press Retry. Nothing was charged.";

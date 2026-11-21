@@ -15,6 +15,8 @@ import type { Segment } from "./pipeline";
 import { loadSettings } from "./settings";
 import { applyTrendVoice } from "./voice-fx";
 import { trendVoice } from "@/trending/voices";
+import { isServiceVoice } from "./providers/voices";
+import { freeSpeechTakesOver } from "./free-speech";
 import { keepClipVoice, myVoice } from "./my-voices";
 import { speechText } from "./speech-text";
 import { findTool, reason, run } from "./tools";
@@ -51,7 +53,8 @@ export function startVoiceoverJob({ source, voiceId, text, language }: { source?
 	const mine = myVoice(voiceId);
 	const reuse = !mine && voiceId?.startsWith("local:") ? voiceId.slice(6) : null;
 	const trend = voiceId?.startsWith("trend:") ? trendVoice(voiceId.slice(6)) : null;
-	const ready = !mine && !reuse ? systemVoice(trend ? trend.speaker : voiceId) : null;
+	// (a service's voice, Settings → Services, speaks on its own key through speak())
+	const ready = !mine && !reuse ? (isServiceVoice(voiceId) ? (voiceId as string) : systemVoice(trend ? trend.speaker : voiceId)) : null;
 	if (!mine && !reuse && !ready && !source) throw new StudioError("Select the clip on the timeline to take the voice from");
 	const settings = loadSettings();
 	return startJob(
@@ -88,12 +91,17 @@ export function startVoiceoverJob({ source, voiceId, text, language }: { source?
 					}
 					// What the sample says: the voice is cloned closer with it (My voices keep theirs; a clip's is heard here).
 					const refText = mine?.text ?? (await hearSpeech(sample.path, work.dir, job, "sample", signal).catch(() => null))?.words.map((w) => w.text).join(" ").trim() ?? "";
-					const { voiceId: minimax, cost } = await cloneVoice(sample.path, work.dir, { signal, onStatus: (t) => job.detail("sample", t), onProgress: (p) => job.progress("sample", p) }, refText);
+					const cloned = await cloneVoice(sample.path, work.dir, { signal, onStatus: (t) => job.detail("sample", t), onProgress: (p) => job.progress("sample", p) }, refText).catch((error) => {
+						// no money / no key for the clone: the money-free voice speaks in the sample (speak, below)
+						if (signal.aborted || !freeSpeechTakesOver(error)) throw error;
+						return { voiceId: "", cost: 0 };
+					});
+					const { voiceId: minimax, cost } = cloned;
 					if (cost) job.charge(cost);
 					else job.detail("sample", "the voice was cloned before — no clone fee");
 					// A clip's voice joins «My voices» on its first clone (paid once, picked there afterwards)
 					const kept = !mine && !reuse && source ? keepClipVoice(sample.path, refText, clipVoiceName(source.fileId), (await probe(sample.path, signal)).duration) : null;
-					return { id: sample.id, minimax, cloned: true, refText, kept: kept?.id };
+					return { id: sample.id, minimax, cloned: true, refText, kept: kept?.id, samplePath: sample.path };
 				});
 				const lang = language ?? (/[а-яё]/i.test(text) ? "ru" : "en");
 				// The text as a person says it (no emoji or link mumble; «3,5 млн» as words).
@@ -102,11 +110,12 @@ export function startVoiceoverJob({ source, voiceId, text, language }: { source?
 				const out = newFile(trend ? "Voice.wav" : "Voice.m4a");
 				const spoken = trend ? path.join(work.dir, "speech.wav") : out.path;
 				await job.step("speech", async (signal) => {
-					const { cost } = await speak(
-						{ text: say, voiceId: voice.minimax, cloned: voice.cloned, referenceText: voice.refText, language: lang, style: trend?.style, speed: settings.speechSpeed, out: spoken },
+					const { cost, note } = await speak(
+						{ text: say, voiceId: voice.minimax, cloned: voice.cloned, referenceText: voice.refText, language: lang, style: trend?.style, speed: settings.speechSpeed, out: spoken, ...("samplePath" in voice && voice.samplePath ? { sample: { path: voice.samplePath, text: voice.refText } } : {}) },
 						{ signal, onStatus: (t) => job.detail("speech", t), onProgress: (p) => job.progress("speech", p) },
 					);
 					job.charge(cost);
+					if (note) job.detail("speech", note);
 					if (trend) {
 						job.detail("speech", trend.name);
 						await applyTrendVoice(spoken, trend, out.path, signal);

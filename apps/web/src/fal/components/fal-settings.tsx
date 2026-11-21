@@ -1,6 +1,6 @@
 "use client";
 
-// Settings → AI: the fal.ai and kie.ai keys (kept by the app in the Mac's Keychain, never shown again), and the model
+// Settings → Services: the fal.ai and kie.ai keys (kept by the app in the Mac's Keychain, never shown again), and the model
 // each feature uses, with its price: one list per feature with the models of every API that has a key.
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";

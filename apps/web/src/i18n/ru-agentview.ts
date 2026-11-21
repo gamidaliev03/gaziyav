@@ -176,7 +176,7 @@ export const RU_AGENT_WORDS: Record<string, string> = {
 	"moving the playhead": "двигает курсор",
 	// ── why a step failed ──
 	"It would go over this video's budget": "Не укладывается в бюджет этого видео",
-	"No {api} key: add it in Settings → AI": "Нет ключа {api}: добавьте его в Настройках → ИИ",
+	"No {api} key: add it in Settings → Services": "Нет ключа {api}: добавьте его в Настройках → Сервисы",
 	"Not enough money on the AI account": "На счёте ИИ-сервиса не хватает денег",
 	"Another project is open now": "Сейчас открыт другой проект",
 	"No project is open": "Проект не открыт",

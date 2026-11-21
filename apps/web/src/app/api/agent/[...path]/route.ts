@@ -1,4 +1,4 @@
-// Gaziyav AI's AI (the chooser at the prompt and Settings → AI → API keys): which provider, its key (checked with a
+// Gaziyav AI's AI (the chooser at the prompt and Settings → Services → API keys): which provider, its key (checked with a
 // test call that also lists its models, kept in the Keychain, shown only as a mask) and the model. The app's own
 // window only.
 import { agentSetup, modelsFor, removeKey, setKey, setModel, setProvider } from "@/studio/server/agent-keys";

@@ -197,6 +197,8 @@ approval, nothing beyond it. Post only when the message asks to post — then th
 then post with confirm:true, and give the links. Paid generation only when the job asked for needs it.
 
 Reply in the language the person writes in, in plain short words: no file paths, ids, tool names, code or error texts.
+Name the app's places as the person sees them in their language (the tools name them in English): in Russian
+Settings → Share is «Настройки → Поделиться», Settings → Services «Настройки → Сервисы», Export «Экспорт».
 If something cannot be done, say so in one plain line.`;
 
 export const INSTRUCTIONS = agentInstructions();
@@ -1310,7 +1312,9 @@ export class AgentSession {
     /* what a failure names: the agent's program and its own words, as the person would run it (not our logging or skills) */
     this.command = native ? [cli.path, ...this.spec.args] : null;
     /* who it is, as `openfilm canvas` marks what it puts on the board (OPENFILM_AGENT) */
-    const extra = { ...agentDefaults(this.opts.agent, shell), ...this.opts.env, ...(native ? native.env : node.env), ...(cli && this.spec.env ? this.spec.env(cli.path) : {}), ...own, ...skills?.env, ...this.logging?.env, ...blogger?.env,
+    /* Gaziyav's sessions (the chat, the one-shots): the account's claude.ai connectors are not loaded at all */
+    const noClaudeAi = this.opts.gaziyav || this.opts.minimal ? { ENABLE_CLAUDEAI_MCP_SERVERS: 'false' } : {};
+    const extra = { ...agentDefaults(this.opts.agent, shell), ...noClaudeAi, ...this.opts.env, ...(native ? native.env : node.env), ...(cli && this.spec.env ? this.spec.env(cli.path) : {}), ...own, ...skills?.env, ...this.logging?.env, ...blogger?.env,
       OPENFILM_AGENT: this.spec.label };
     /* OpenCode's inline configuration carries both its skills and, in Developer mode, its logging */
     if (skills?.env?.OPENCODE_CONFIG_CONTENT && this.logging?.env?.OPENCODE_CONFIG_CONTENT) {
@@ -1396,10 +1400,12 @@ export class AgentSession {
          Gaziyav's tools allowed without asking, the skills as plugins, and the app's words as the whole system prompt */
       ...(claude && this.opts.gaziyav ? { _meta: { systemPrompt: this.opts.gaziyav.instructions ? await this.opts.gaziyav.instructions(skills?.log?.openfilm ?? []) : instructions, claudeCode: { options: {
         tools: [...(this.opts.gaziyav.tools ?? [])], settingSources: [], mcpServers: {},
+        /* only Gaziyav's own connector: never the person's claude.ai connectors (Gmail, Docs…) nor any other server */
+        strictMcpConfig: true,
         allowedTools: [...(this.opts.gaziyav.allowed ?? [])],
         ...(skills?.claude?.plugins ? { plugins: skills.claude.plugins } : {}),
       } } } }
-        : claude && this.opts.minimal ? { _meta: { systemPrompt: this.opts.minimal.systemPrompt ?? instructions, claudeCode: { options: { tools: [...(this.opts.minimal.tools ?? [])], settingSources: [], mcpServers: {} } } } }
+        : claude && this.opts.minimal ? { _meta: { systemPrompt: this.opts.minimal.systemPrompt ?? instructions, claudeCode: { options: { tools: [...(this.opts.minimal.tools ?? [])], settingSources: [], mcpServers: {}, strictMcpConfig: true } } } }
         : claude ? { _meta: { systemPrompt: { append: instructions }, ...(skills?.claude ? { claudeCode: { options: skills.claude } } : {}) } } : {}),
     };
     /* the program's own sign-in, taken up (Cursor asks for this before any session) */

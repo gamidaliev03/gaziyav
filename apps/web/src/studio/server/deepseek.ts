@@ -47,8 +47,8 @@ export class DeepSeek {
 			if (a.provider === "anthropic") return claudeComplete({ system, messages: [{ role: "user", content: user }], json, maxTokens, signal });
 			const r = await compatChat(a.provider === "deepseek" ? { ...a, model: this.model || a.model } : a, { messages, json, maxTokens, temperature, thinking, signal });
 			if (!r.content.trim()) {
-				if (r.finish === "length") throw new StudioError("Gaziyav AI didn't manage this one: nothing was changed. Press the button once more.");
-				throw new StudioError("Gaziyav AI didn't manage this one: nothing was changed. Press the button once more.");
+				if (r.finish === "length") throw new StudioError("Gaziyav AI didn't manage this — nothing was changed.");
+				throw new StudioError("Gaziyav AI didn't manage this — nothing was changed.");
 			}
 			return r.content;
 		}

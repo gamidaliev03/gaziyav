@@ -192,7 +192,7 @@ function image(src) {
 function hint(text) {
 	if (/No project is open/i.test(text)) return "";
 	if (/No element|No clip|No media|Unknown parameter|No track/i.test(text) && !/get_project/.test(text)) return " (get_project lists the current ids.)";
-	if (/key|Settings → AI/i.test(text) && /fal|kie|Argo/i.test(text)) return " (The user adds the key in Gaziyav → Settings → AI; meanwhile use free sources.)";
+	if (/key|Settings → Services/i.test(text) && /fal|kie|Argo/i.test(text)) return " (The user adds the key in Gaziyav → Settings → Services; meanwhile use free sources.)";
 	return "";
 }
 const forClaude = (text) =>

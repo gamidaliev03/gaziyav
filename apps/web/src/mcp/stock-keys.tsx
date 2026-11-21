@@ -1,6 +1,6 @@
 "use client";
 
-// Settings → AI: the two optional free keys for stock video (Claude's B-roll): Pexels and Pixabay. One compact row
+// Settings → Services: the two optional free keys for stock video (Claude's B-roll): Pexels and Pixabay. One compact row
 // each; the key goes to the app (Keychain), never into the page. Without them the search uses Wikimedia Commons.
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";

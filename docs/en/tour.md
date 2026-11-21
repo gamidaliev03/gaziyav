@@ -52,7 +52,7 @@ Fifteen slides, two minutes. One idea per slide.
 
 - Gaziyav sells no credits for Claude and asks for no key: the chat runs on your own Claude subscription through Claude Code on your Mac.
 - Install Claude Code from [claude.com/download](https://claude.com/download) and sign in, then press **Connect** in the chat (**View → Claude Chat**, <kbd>⌃⌘K</kbd>).
-- The **Skills** button lists 10 skills, each with an on/off switch. Prefer the Claude app? **Settings → AI → Claude → Connect Claude**.
+- The **Skills** button lists 10 skills, each with an on/off switch. Prefer the Claude app? **Settings → Services → Claude → Connect Claude**.
 
 ---
 
@@ -68,7 +68,7 @@ Fifteen slides, two minutes. One idea per slide.
 
 ### 7 · Free AI on your Mac
 
-<img src="../../assets/screens/en/t-settings-ai.jpg" width="100%" alt="Settings → AI with the on-device features">
+<img src="../../assets/screens/en/t-settings-ai.jpg" width="100%" alt="Settings → Services with the on-device features">
 
 - Captions from speech, pause and filler removal, voice clean-up, voice and music apart, voice changer.
 - Remove an object, retouch, remove or blur the background, upscale, deflicker.

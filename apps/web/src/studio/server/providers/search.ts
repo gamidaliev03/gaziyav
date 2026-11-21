@@ -5,7 +5,7 @@
 // time when picked, only from addresses a search here answered.
 import { routed } from "../http";
 import { StudioError } from "../errors";
-import { chosen, plainLine, runService, serviceKey } from "./services";
+import { chosen, keysReady, plainLine, runService, serviceKey } from "./services";
 import os from "node:os";
 import path from "node:path";
 import fs from "node:fs";
@@ -23,6 +23,8 @@ const remember = (url: string) => {
 	return url;
 };
 export const foundUrl = (url: string) => found().has(url);
+/** Marks an address a search answered (media-search.ts's music and sounds). */
+export const rememberFound = remember;
 
 async function getJson<T>(url: string, headers: Record<string, string> = {}): Promise<T> {
 	let res: Response;
@@ -58,7 +60,7 @@ const REWORK = (l: string) => {
 	return /public domain|\bpd\b|pdm|cc0|cc[- ]?by|attribution|nasa|creativecommons\.org\/(licenses\/by(-sa)?\/|publicdomain)/.test(s);
 };
 
-async function pexelsPictures(q: string, page: number, key: string): Promise<FoundPicture[]> {
+export async function pexelsPictures(q: string, page: number, key: string): Promise<FoundPicture[]> {
 	const j = await getJson<{ photos?: Array<{ id: number; url?: string; alt?: string; photographer?: string; width?: number; height?: number; src?: Record<string, string> }> }>(
 		`https://api.pexels.com/v1/search?${new URLSearchParams({ query: q, per_page: String(PAGE), page: String(page) })}`,
 		{ authorization: key },
@@ -70,7 +72,7 @@ async function pexelsPictures(q: string, page: number, key: string): Promise<Fou
 	});
 }
 
-async function pixabayPictures(q: string, page: number, key: string, type: string): Promise<FoundPicture[]> {
+export async function pixabayPictures(q: string, page: number, key: string, type: string): Promise<FoundPicture[]> {
 	const j = await getJson<{ hits?: Array<{ id: number; pageURL?: string; tags?: string; user?: string; webformatURL?: string; previewURL?: string; largeImageURL?: string; imageWidth?: number; imageHeight?: number }> }>(
 		`https://pixabay.com/api/?${new URLSearchParams({ key, q: q.slice(0, 100), image_type: type, safesearch: "true", per_page: String(PAGE), page: String(page) })}`,
 	);
@@ -82,7 +84,7 @@ async function pixabayPictures(q: string, page: number, key: string, type: strin
 }
 
 /** Openverse and NASA's library, no key (Commons is the default row's own). */
-async function freePictures(q: string, page: number): Promise<FoundPicture[]> {
+export async function freePictures(q: string, page: number): Promise<FoundPicture[]> {
 	const openverse = getJson<{ results?: Array<{ id: string; title?: string; url?: string; thumbnail?: string; foreign_landing_url?: string; creator?: string; license?: string; license_version?: string; width?: number; height?: number }> }>(
 		`https://api.openverse.org/v1/images/?${new URLSearchParams({ q, license_type: "commercial,modification", page_size: String(PAGE), page: String(page) })}`,
 	).then((j) =>
@@ -112,6 +114,7 @@ async function freePictures(q: string, page: number): Promise<FoundPicture[]> {
 
 /** Pictures by the chosen service; null: the row is on Gaziyav's own (Commons), the caller searches as before. */
 export async function searchPicturesByChoice(q: string, page: number): Promise<{ items: FoundPicture[]; hasMore: boolean } | null> {
+	await keysReady();
 	const o = chosen("image-search");
 	if (o.id === "gaziyav") return null;
 	const items =
@@ -137,10 +140,12 @@ export interface FoundClip {
 	height?: number;
 	mb?: number;
 	license?: string;
+	/** A still of the clip for the panel's tile. */
+	thumb?: string;
 }
 
 /** Internet Archive clips that may be reworked, each with an MP4 under 40 MB (Gaziyav 2's free media). */
-async function archiveClips(q: string): Promise<FoundClip[]> {
+export async function archiveClips(q: string): Promise<FoundClip[]> {
 	const base = "https://archive.org";
 	const j = await getJson<{ response?: { docs?: Array<{ identifier: string; title?: string; creator?: string | string[]; licenseurl?: string }> } }>(
 		`${base}/advancedsearch.php?${new URLSearchParams({ q: `(${q}) AND mediatype:movies AND licenseurl:[* TO *]`, "fl[]": "identifier", rows: "30", output: "json" })}&fl[]=title&fl[]=creator&fl[]=licenseurl`,
@@ -151,7 +156,7 @@ async function archiveClips(q: string): Promise<FoundClip[]> {
 	for (const [k, d] of docs.entries()) {
 		const file = (metas[k]?.files ?? []).filter((f) => /\.mp4$/i.test(f.name) && Number(f.size ?? 0) > 0 && Number(f.size) < 40e6).sort((a, b) => Number(a.size) - Number(b.size))[0];
 		if (!file) continue;
-		out.push({ item: `stock:archive:${d.identifier}/${file.name}`, title: d.title || d.identifier, source: "archive", seconds: Number(file.length) || undefined, width: Number(file.width) || undefined, height: Number(file.height) || undefined, mb: Math.round(Number(file.size) / 1e5) / 10, license: String(d.licenseurl ?? "") });
+		out.push({ item: `stock:archive:${d.identifier}/${file.name}`, title: d.title || d.identifier, source: "archive", seconds: Number(file.length) || undefined, width: Number(file.width) || undefined, height: Number(file.height) || undefined, mb: Math.round(Number(file.size) / 1e5) / 10, license: String(d.licenseurl ?? ""), thumb: `${base}/services/img/${encodeURIComponent(d.identifier)}` });
 		if (out.length >= 8) break;
 	}
 	return out;
@@ -159,6 +164,7 @@ async function archiveClips(q: string): Promise<FoundClip[]> {
 
 /** Clips by the chosen service; null: Gaziyav's own way (Pexels + Pixabay + Commons, as before). */
 export async function searchClipsByChoice(q: string, vertical: boolean, own: { pexels: (q: string, key: string, vertical: boolean) => Promise<FoundClip[]>; pixabay: (q: string, key: string, type?: string) => Promise<FoundClip[]> }): Promise<FoundClip[] | null> {
+	await keysReady();
 	const o = chosen("video-search");
 	if (o.id === "gaziyav") return null;
 	if (o.id === "archive") return archiveClips(q);
@@ -176,14 +182,17 @@ export function archiveFileUrl(item: string): string | null {
 // ───────────────────────── the web ─────────────────────────
 
 /** Web facts by the chosen service (Brave, Tavily, Keenable); null: Wikipedia, as before. */
-export async function webSearchByChoice(q: string, signal?: AbortSignal): Promise<Array<{ title: string; summary: string; url: string }> | null> {
+export async function webSearchByChoice(q: string, signal?: AbortSignal): Promise<Array<{ title: string; summary: string; url: string; source?: string }> | null> {
+	await keysReady();
 	const o = chosen("web-search");
 	if (o.id === "gaziyav" || !o.provider) return null;
 	const into = fs.mkdtempSync(path.join(os.tmpdir(), "gz-web-"));
 	try {
 		const r = await runService(o.provider, "web-search", { query: [q] }, { model: o.model, into, signal });
 		const hits = (r.receipt.hits ?? (r.receipt.searches as Array<{ hits?: unknown[] }> | undefined)?.[0]?.hits ?? []) as Array<{ title?: string; url?: string; excerpt?: string }>;
-		return hits.slice(0, 6).map((h) => ({ title: String(h.title ?? ""), summary: String(h.excerpt ?? ""), url: String(h.url ?? "") }));
+		const by = o.provider.charAt(0).toUpperCase() + o.provider.slice(1);
+		if (!hits.length) return null;
+		return hits.slice(0, 6).map((h) => ({ title: String(h.title ?? ""), summary: String(h.excerpt ?? ""), url: String(h.url ?? ""), source: by }));
 	} finally {
 		fs.rmSync(into, { recursive: true, force: true });
 	}

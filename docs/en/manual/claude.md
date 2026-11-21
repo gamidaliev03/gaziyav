@@ -31,7 +31,7 @@ There are two ways to talk to Claude: the **chat inside Gaziyav** (Mac app, at t
 ## The Claude app
 
 1. Install the Claude app for Mac (or Claude Code). Anthropic's help pages say desktop extensions are available to all users of Claude Desktop.
-2. In Gaziyav: Settings → **AI** → **Claude** → **Connect Claude**. One press sets it all up: Claude for Mac opens the Gaziyav extension and installs it; for Claude Code, the editing skill and the server are added. The status line shows what is connected; **Connect again** repairs the connection.
+2. In Gaziyav: Settings → **Services** → **Claude** → **Connect Claude**. One press sets it all up: Claude for Mac opens the Gaziyav extension and installs it; for Claude Code, the editing skill and the server are added. The status line shows what is connected; **Connect again** repairs the connection.
 3. Open a project in Gaziyav and talk to Claude in its own window. If Gaziyav is closed, Claude starts it in the background.
 
 When Gaziyav updates, Claude's skill is updated on the next start.

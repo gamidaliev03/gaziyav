@@ -18,6 +18,7 @@ import type {
 import { generateUUID } from "@/utils/id";
 import type { MediaTime } from "@/wasm";
 import { buildEmptyTrack } from "@/timeline/placement/track-factory";
+import { RETIMABLE_ELEMENT_TYPES } from "@/timeline/types";
 
 export function listTracks(tracks: SceneTracks): TimelineTrack[] {
 	return [...tracks.overlay, tracks.main, ...tracks.audio];
@@ -231,6 +232,9 @@ export interface ElementAttributes {
 	hasRetime?: boolean;
 }
 
+/** Clip types with a speed (RETIMABLE_ELEMENT_TYPES): video and audio. */
+const hasSpeed = (type: ElementType): boolean => (RETIMABLE_ELEMENT_TYPES as readonly ElementType[]).includes(type);
+
 export function captureAttributes(element: TimelineElement): ElementAttributes {
 	return {
 		type: element.type,
@@ -240,7 +244,8 @@ export function captureAttributes(element: TimelineElement): ElementAttributes {
 				? element.effects.map((effect) => ({ ...effect, params: { ...effect.params } }))
 				: undefined,
 		animations: element.animations ? structuredClone(element.animations) : undefined,
-		hasRetime: "trimStart" in element,
+		// only a clip with a picture or sound that plays has a speed (a photo's or a title's «no speed» never resets a video's)
+		hasRetime: hasSpeed(element.type),
 		retime: "retime" in element && element.retime ? structuredClone(element.retime) : undefined,
 	};
 }
@@ -371,7 +376,7 @@ export function buildAttributesPatch({
 		Object.assign(patch, { effects: [...kept, ...incoming] });
 		changed = true;
 	}
-	if (include.has("speed") && source.hasRetime && "trimStart" in target) {
+	if (include.has("speed") && source.hasRetime && hasSpeed(target.type)) {
 		const current = "retime" in target ? target.retime : undefined;
 		if (JSON.stringify(current ?? null) !== JSON.stringify(source.retime ?? null)) {
 			Object.assign(patch, { retime: source.retime ? structuredClone(source.retime) : undefined });

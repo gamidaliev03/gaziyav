@@ -7,9 +7,14 @@
 import fs from "node:fs";
 import { explain, StudioError } from "@/studio/server/errors";
 import { isAbility, optionOf, optionsOf, ROWS, SERVICES } from "@/studio/server/providers/registry";
-import { choose, chosen, keysView, readChoices, usable } from "@/studio/server/providers/services";
+import { choose, chosen, keysReady, keysView, readChoices, usable } from "@/studio/server/providers/services";
 import { checkFree, checkService } from "@/studio/server/providers/check";
 import { serviceVoices, voiceSampleFile } from "@/studio/server/providers/voices";
+import { ELEVEN_FAL_CATALOG } from "@/fal/eleven-voices";
+import { emptyView } from "@/ai/empty";
+import { falModel, modelsFor } from "@/fal/models";
+import { languagesOf, voicesOf } from "@/fal/model-voices";
+import { VOICES } from "@/generate/voices";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -36,6 +41,8 @@ function state() {
 		use: Object.fromEntries(ROWS.map((r) => [r.id, saved[r.id] ?? "gaziyav"])),
 		live: Object.fromEntries(ROWS.map((r) => [r.id, chosen(r.id).id])),
 		keys: keysView(),
+		// a service whose account had no money left (cleared by a run that works, a new key or a check)
+		empty: emptyView(),
 	};
 }
 
@@ -45,8 +52,20 @@ export async function GET(req: Request, ctx: Ctx) {
 	const [head] = (await ctx.params).path ?? [];
 	const q = new URL(req.url).searchParams;
 	try {
+		await keysReady();
 		if (!head) return json(state());
-		if (head === "voices") return json({ voices: await serviceVoices() });
+		// Every service's voices, each with whether its key is in: a voice whose key he lacks is listed apart, greyed,
+		// under that key's name. ElevenLabs' own voices that speak through fal are the pickers' fal list, not here.
+		// Every speech model's own voices and languages — the ONE list the pickers and the connector read
+		// (fal/model-voices.ts): ?model=<fal id> gives one model, none gives all of them.
+		if (head === "model-voices") {
+			const ids = q.get("model") ? [String(q.get("model"))] : [...new Set(modelsFor("tts").map((m) => m.id))];
+			return json({
+				ready: VOICES.map((v) => ({ id: v.id, name: v.name, note: v.tone })),
+				models: ids.map((id) => ({ id, title: falModel(id)?.title ?? id, languages: languagesOf(id).map((l) => ({ code: l.code, ru: l.ru, en: l.en })), voices: voicesOf(id).map((v) => ({ id: v.id, name: v.name, language: v.lang })) })),
+			});
+		}
+		if (head === "voices") return json({ voices: (await serviceVoices()).filter((v) => !(v.service === "elevenlabs" && ELEVEN_FAL_CATALOG.has(v.id.slice("svc:elevenlabs:".length)))) });
 		if (head === "voice-sample") {
 			const file = await voiceSampleFile(String(q.get("p") ?? ""), String(q.get("v") ?? ""));
 			return new Response(new Uint8Array(fs.readFileSync(file)), { headers: { "Content-Type": file.endsWith(".mp3") ? "audio/mpeg" : "audio/mp4", "Cache-Control": "max-age=3600" } });
@@ -63,6 +82,7 @@ export async function POST(req: Request, ctx: Ctx) {
 	const [head] = (await ctx.params).path ?? [];
 	try {
 		const body = (await req.json().catch(() => ({}))) as { row?: unknown; option?: unknown; service?: unknown };
+		await keysReady();
 		if (head === "use") {
 			if (!isAbility(body.row)) throw new StudioError("This service isn't offered for that.");
 			choose(body.row, String(body.option ?? "gaziyav"));

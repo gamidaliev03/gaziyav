@@ -401,7 +401,7 @@ export async function planQuick(r: PlanRequest, face: Box | null, log: Log, sign
 	const facts = factSource(r);
 	const temperature = r.mode === "variation" ? 0.95 : 0.6;
 	const ask = (messages: Message[], t: number) =>
-		chat({ key: s.deepseekKey, model: s.deepseekModel, messages, json: true, temperature: t, maxTokens: 8000, thinking: false, timeout: 120, signal });
+		chat({ key: s.deepseekKey, model: s.deepseekModel, messages, json: true, temperature: t, maxTokens: 8000, thinking: false, timeout: 120, signal, brainModel: r.preset ? "fable" : undefined });
 	const messages: Message[] = [
 		{ role: "system", content: SYSTEM },
 		{ role: "user", content: user },

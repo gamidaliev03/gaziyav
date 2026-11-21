@@ -10,8 +10,8 @@ export const RU_VOICEAI: Record<string, string> = {
 	"Make a face say new words": "Губы под новые слова",
 	"Dub a clip into another language": "Перевод клипа на другой язык",
 	"Text to a voice, 10 languages": "Текст в голос, 10 языков",
-	"Connected: Settings → AI holds the key and the models": "Подключено: ключ и модели — в Настройках → ИИ",
-	"Add a fal.ai key in Settings → AI: pictures, video and voice run on it": "Добавьте ключ fal.ai в Настройках → ИИ: на нём работают картинки, видео и голос",
+	"Connected: Settings → Services holds the key and the models": "Подключено: ключ и модели — в Настройках → Сервисы",
+	"Add a fal.ai key in Settings → Services: pictures, video and voice run on it": "Добавьте ключ fal.ai в Настройках → Сервисы: на нём работают картинки, видео и голос",
 	// Color match: the reference is the frame under the playhead
 	"Park the playhead on the shot whose look you want": "Поставьте плейхед на кадр, чей вид нужен",
 	"or a picture from Media": "или картинка из «Медиа»",

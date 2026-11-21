@@ -12,11 +12,11 @@
 
 | You see | Do this |
 |---|---|
-| The button asks for a key | **Settings → AI → fal.ai**, paste your key, Save. |
+| The button asks for a key | **Settings → Services → fal.ai**, paste your key, Save. |
 | «not enough balance» or similar | Add credit in your fal.ai dashboard, then **Retry** on the run. Nothing was lost. |
 | A timeout | **Retry**. The message says how long it actually waited. Long clips are split into pieces; a failed piece retries by itself once. |
 | The price shows a spinner | Gaziyav is working out the exact plan; the price appears before anything can be sent. |
-| A confirmation every time | Raise «Confirm spending above» in **Settings → AI**. |
+| A confirmation every time | Raise «Confirm spending above» in **Settings → Services**. |
 | The lips look off | Try a stronger model from the list; its price for this clip is shown. Sync lipsync‑2 handles head turns and close-ups better. |
 
 ## Captions, local tools, music and sounds

@@ -2,7 +2,7 @@
 // - Small models (a download up to 1 GB: speech recognition first, then Enhance voice, Separate, Voice changer,
 //   CleanUp, Retouch) come by themselves once the first project has been opened — a couple of minutes after it, so the
 //   first project opens and plays as fast as ever; on every later launch a couple of minutes after the start.
-// - Large models (voice, lipsync, face swap, pictures, music) only when Settings → AI → «Download large models in the
+// - Large models (voice, lipsync, face swap, pictures, music) only when Settings → Services → «Download large models in the
 //   background» is on (off by default); otherwise they download on first use, inside the feature's own progress.
 // - One model at a time, at a capped speed (3 MB/s), and never beside the user's own work: while an export, any AI
 //   tool or a download the user asked for runs, the download stands still (the connection is let go, the bytes stay on
@@ -50,7 +50,7 @@ export interface BackgroundStatus {
 	progress?: number;
 	/** Why it stands still, as words for the line («the export is running»). */
 	reason?: string;
-	/** Settings → AI → «Download large models in the background». */
+	/** Settings → Services → «Download large models in the background». */
 	large: boolean;
 	/** What is left for the queue, in order. */
 	left: ModelId[];
@@ -350,7 +350,7 @@ export function undeclineModel(id: string) {
 	rt.skip.delete(id as ModelId);
 }
 
-/** Settings → AI → «Download large models in the background». Off stops a large one the queue is downloading. */
+/** Settings → Services → «Download large models in the background». Off stops a large one the queue is downloading. */
 export function setLargeInBackground(on: boolean) {
 	saveSettings({ backgroundLargeModels: on });
 	if (!on) {

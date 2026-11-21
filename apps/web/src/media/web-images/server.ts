@@ -1,8 +1,11 @@
-// Server side of web image search: Wikimedia Commons (free, no key). Results are cached per (query, page); downloads
-// are proxied (no CORS issues) and size-checked.
+// Server side of web image search: a keyed Pixabay / Pexels first the moment its key is pasted, then the free web
+// (Wikimedia Commons, Openverse, NASA) as the fallback — the order and the source switch are media-search.ts's (principle 1).
+// Results are cached per (source, query, page); downloads are proxied (no CORS issues) and size-checked.
 import { routed } from "@/studio/server/http";
 import type { WebImage, WebImageSearchResult } from "./types";
-import { foundUrl, searchPicturesByChoice } from "@/studio/server/providers/search";
+import { chosen, serviceKey } from "@/studio/server/providers/services";
+import { foundUrl, freePictures, pexelsPictures, pixabayPictures } from "@/studio/server/providers/search";
+import { FREE_FOR, planFor, SOURCE_NAME, type SourcePick } from "@/studio/server/providers/media-search";
 
 const PAGE = 12;
 const TIMEOUT_MS = 8000;
@@ -101,30 +104,59 @@ function cached(key: string, run: () => Promise<{ items: WebImage[]; hasMore: bo
 	return hit;
 }
 
-export async function searchWebImages(query: string, page: number): Promise<WebImageSearchResult> {
+const asWeb = (p: { id: string } & Omit<WebImage, "provider">): WebImage => ({ ...p, provider: (p.id.split(":")[0] as WebImage["provider"]) || "commons" });
+
+/** Interleaves lists so each source shows on the first screen. */
+function interleave(lists: WebImage[][]): WebImage[] {
+	const out: WebImage[] = [];
+	for (let i = 0; lists.some((l) => i < l.length); i++) for (const l of lists) if (l[i]) out.push(l[i]);
+	return out;
+}
+
+export async function searchWebImages(query: string, page: number, pick?: SourcePick): Promise<WebImageSearchResult> {
 	const q = query.trim().slice(0, 200);
 	if (!q) return { items: [], hasMore: false, providers: [] };
-	// Settings → Services → Image search: another service when one is chosen (Commons below stays the default).
-	const by = await searchPicturesByChoice(q, page).catch((error: Error) => {
-		throw new WebImageError(error.message);
-	});
-	if (by) return { items: by.items.map((i) => ({ ...i, provider: "commons" as const })), hasMore: by.hasMore, providers: ["commons"] };
-	const jobs = [cached(`commons|${q}|${page}`, () => searchCommons(q, page))];
-	const settled = await Promise.allSettled(jobs);
-	const ok = settled.flatMap((s) => (s.status === "fulfilled" ? [s.value] : []));
-	const firstError = settled.find((s) => s.status === "rejected") as PromiseRejectedResult | undefined;
-	if (!ok.length) throw firstError?.reason instanceof WebImageError ? firstError.reason : new WebImageError("Image search failed — try again.");
-	// Interleave providers so both show up on the first screen.
-	const items: WebImage[] = [];
-	const lists = ok.map((r) => r.items);
-	for (let i = 0; lists.some((l) => i < l.length); i++) for (const l of lists) if (l[i]) items.push(l[i]);
-	// Prefetch the next page in the background (Kadr does the same).
-	void cached(`commons|${q}|${page + 1}`, () => searchCommons(q, page + 1)).catch(() => {});
+	const plan = await planFor("picture", pick);
+	if (!plan.keyed.length && !plan.free) return { items: [], hasMore: false, providers: [], searched: [], ...(plan.note ? { note: plan.note } : {}) };
+	// Keyed services first (their pictures on top), the free web behind them.
+	const row = chosen("image-search");
+	const pixabayType = row.provider === "pixabay" && row.model ? row.model : "photo";
+	const keyed = plan.keyed.map((id) =>
+		cached(`${id}|${q}|${page}`, async () => {
+			const items = id === "pixabay" ? await pixabayPictures(q, page, serviceKey("pixabay"), pixabayType) : await pexelsPictures(q, page, serviceKey("pexels"));
+			return { items: items.map(asWeb), hasMore: items.length >= PAGE - 2 };
+		}),
+	);
+	const free = plan.free
+		? [
+				cached(`commons|${q}|${page}`, () => searchCommons(q, page)),
+				cached(`free|${q}|${page}`, async () => {
+					const items = await freePictures(q, page);
+					return { items: items.map(asWeb), hasMore: items.length >= PAGE - 2 };
+				}),
+			]
+		: [];
+	const [k, f] = await Promise.all([Promise.allSettled(keyed), Promise.allSettled(free)]);
+	const ok = (s: PromiseSettledResult<{ items: WebImage[]; hasMore: boolean }>[]) => s.flatMap((x) => (x.status === "fulfilled" ? [x.value] : []));
+	const fails = [...k, ...f].filter((s) => s.status === "rejected") as PromiseRejectedResult[];
+	const keyedOk = ok(k);
+	const freeOk = ok(f);
+	if (!keyedOk.length && !freeOk.length) {
+		const first = fails[0]?.reason;
+		throw first instanceof WebImageError ? first : new WebImageError(first instanceof Error && first.message ? first.message : "Image search failed — try again.");
+	}
+	const failedKeyed = plan.keyed.filter((_, i) => k[i]?.status === "rejected").map((id) => SOURCE_NAME[id]);
+	const note = [plan.note, failedKeyed.length ? `${failedKeyed.join(" and ")} didn't answer (${((k.find((x) => x.status === "rejected") as PromiseRejectedResult).reason as Error)?.message ?? "error"}); the free web answered.` : ""].filter(Boolean).join(" ") || undefined;
+	const items = [...interleave(keyedOk.map((r) => r.items)), ...interleave(freeOk.map((r) => r.items))];
+	// The next page in the background (Kadr does the same), Commons only: keyed services count every request.
+	if (plan.free) void cached(`commons|${q}|${page + 1}`, () => searchCommons(q, page + 1)).catch(() => {});
+	const providers = [...new Set(items.map((i) => i.provider))];
 	return {
 		items,
-		hasMore: ok.some((r) => r.hasMore),
-		providers: ["commons"],
-		...(firstError ? { error: firstError.reason instanceof Error ? firstError.reason.message : undefined } : {}),
+		hasMore: [...keyedOk, ...freeOk].some((r) => r.hasMore),
+		providers,
+		searched: [...plan.keyed, ...(plan.free ? FREE_FOR.picture : [])].map((id) => SOURCE_NAME[id]),
+		...(note ? { note } : {}),
 	};
 }
 
@@ -136,7 +168,7 @@ export async function downloadWebImage(url: string): Promise<{ bytes: ArrayBuffe
 	} catch {
 		throw new WebImageError("Not an image link.");
 	}
-	if (parsed.protocol !== "https:" || !(ALLOWED_HOSTS.has(parsed.hostname) || foundUrl(parsed.href) || foundUrl(url))) throw new WebImageError("Only Wikimedia Commons images can be added.");
+	if (parsed.protocol !== "https:" || !(ALLOWED_HOSTS.has(parsed.hostname) || foundUrl(parsed.href) || foundUrl(url))) throw new WebImageError("Only pictures a search found can be added.");
 	const res = await fetch(routed(parsed.href), { headers: { "User-Agent": UA }, signal: AbortSignal.timeout(30000) }).catch(() => null);
 	if (!res?.ok) throw new WebImageError("The image could not be downloaded — check the internet connection.");
 	const type = res.headers.get("content-type") ?? "image/jpeg";

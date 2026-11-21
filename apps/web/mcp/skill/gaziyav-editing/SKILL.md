@@ -90,6 +90,10 @@ running…» = go on, and send the very same call again to collect it. «Gaziyav
 in one line. The user says stop → `status {cancel:"all"}`.
 
 ## Traps the journal shows
+- Speech in a language: `find_content {kind:"voice", query:"<language>"}` → a voice OF that language →
+  `generate {kind:"voice", text, speaker, language}` (never a voice name from memory: an unknown one is refused with
+  the nearest). Before placing it for good, read it back: `analyze {what:"words", id}`; when Whisper reads that
+  language poorly (Vietnamese, Thai, Chinese…), say the check itself is unsure.
 - The main track has no gaps: a clip placed or moved there stands right after the one before; a free place is a
   track above (`track:"new"`). The `edit` answer says where a clip landed and the timeline's new length: read it.
 - `undo` takes back your last changing call and says which; after the user's own edits it refuses: use `edit`.

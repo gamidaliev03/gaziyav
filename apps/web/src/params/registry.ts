@@ -723,11 +723,21 @@ elementParamRegistry.register({
 elementParamRegistry.register({ key: "audio", definition: audioElementParams });
 elementParamRegistry.register({ key: "effect", definition: [] });
 
+/** A compound clip's params: a layer's, plus the sound of a clip (its sound is what is inside it: montage/compound-sound.ts). */
+// No blend mode: a compound would need its whole picture blended at once (the renderer has no group of layers yet), so
+// the row stays off the screen rather than change nothing.
+const compoundParams: readonly ElementParamDefinition[] = [
+	...visualElementParams.filter((param) => param.key !== "blendMode"),
+	...LAYER_SHADOW_PARAMS,
+	...audioElementParams,
+];
+
 export function getElementParams({
 	element,
 }: {
 	element: TimelineElement;
 }): readonly ElementParamDefinition[] {
+	if (element.type === "graphic" && element.params?.compound === true) return compoundParams;
 	return elementParamRegistry.has(element.type)
 		? elementParamRegistry.get(element.type)
 		: [];

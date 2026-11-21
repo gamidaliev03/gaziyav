@@ -115,7 +115,7 @@ interface Store {
 	clipRuns: Record<string, Run>;
 	/** Cloning consent, asked once per cloned voice: the source media id → when it was given. */
 	consents: Record<string, number>;
-	/** A paid step whose total is above this many dollars asks first (Settings → AI); below it the button is the consent. */
+	/** A paid step whose total is above this many dollars asks first (Settings → Services); below it the button is the consent. */
 	confirmAbove: number;
 	/** The last length choice for a voice shorter than the clip (new clips start with it). */
 	lastFit?: FitChoice;

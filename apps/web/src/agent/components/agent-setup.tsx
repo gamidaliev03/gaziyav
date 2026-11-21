@@ -1,7 +1,7 @@
 "use client";
 
 // Gaziyav AI thinks on fal.ai (OpenRouter's models through the one fal key). The chooser by the prompt comes up when a
-// request is sent with no key yet (it sends the user to Settings → AI) or from the AI badge (the model).
+// request is sent with no key yet (it sends the user to Settings → Services) or from the AI badge (the model).
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -188,7 +188,7 @@ export function BrainChooser({ open, onOpenChange, onReady, request, children }:
 					</Button>
 				) : (
 					<div className="flex flex-col gap-2 text-xs" data-brain-nokey>
-						<span className="text-muted-foreground">{t("Gaziyav AI thinks on your fal.ai key. Add it once in Settings → AI.")}</span>
+						<span className="text-muted-foreground">{t("Gaziyav AI thinks on your fal.ai key. Add it once in Settings → Services.")}</span>
 						<Button
 							size="sm"
 							onClick={() => {
@@ -200,13 +200,13 @@ export function BrainChooser({ open, onOpenChange, onReady, request, children }:
 						</Button>
 					</div>
 				)}
-				<span className="text-muted-foreground mt-2 block text-[11px]">{t("The model is chosen in Settings → AI → AI agent.")}</span>
+				<span className="text-muted-foreground mt-2 block text-[11px]">{t("The model is chosen in Settings → Services → AI agent.")}</span>
 			</PopoverContent>
 		</Popover>
 	);
 }
 
-/** Settings → AI → API keys: one row per AI (status, Add / Change / Remove, the model), and which one Gaziyav AI uses. */
+/** Settings → Services → API keys: one row per AI (status, Add / Change / Remove, the model), and which one Gaziyav AI uses. */
 export function ApiKeysGroup() {
 	const t = useT();
 	const { setup, change } = useAgentSetup();

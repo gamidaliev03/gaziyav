@@ -119,7 +119,8 @@ export function placeOf(sectionId: string, kind: ElementKind): Place {
 		case "text.animation":
 			return { block: "effects", rank: 110 };
 		case "clip.animation":
-			return { block: "effects", rank: 120, folded: true };
+			// an AI plate's In / Out lie open where a built-in plate's (a text's) do
+			return kind === "ai" ? { block: "effects", rank: 110 } : { block: "effects", rank: 120, folded: true };
 		case "masks":
 			return { block: "effects", rank: 200, folded: true };
 		case "cutout.remove":

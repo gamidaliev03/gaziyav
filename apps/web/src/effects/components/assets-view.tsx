@@ -171,7 +171,7 @@ function EffectItem({ effect, photo }: { effect: EffectDefinition; photo: string
 				<div
 					role="button"
 					tabIndex={-1}
-					aria-label={`Apply ${effect.name}`}
+					aria-label={t("Apply {name}", { name: t(effect.name) })}
 					className="size-full cursor-pointer"
 					onMouseEnter={() => setHovered(true)}
 					onMouseLeave={() => setHovered(false)}

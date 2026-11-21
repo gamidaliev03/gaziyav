@@ -4,6 +4,7 @@ import { fold, HugeiconsIcon } from "@/components/ui/icon";
 import { ArrowDown01Icon } from "@hugeicons/core-free-icons";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { t } from "@/i18n";
 
 const sectionExpandedCache = new Map<string, boolean>();
 const mountedSectionKeys = new Set<string>();
@@ -122,7 +123,7 @@ export function SectionHeader({
 					<Button
 						variant="ghost"
 						size="icon"
-						aria-label={isOpen ? "Collapse section" : "Expand section"}
+						aria-label={isOpen ? t("Collapse section") : t("Expand section")}
 						onClick={handleClick}
 					>
 						{chevronIcon}

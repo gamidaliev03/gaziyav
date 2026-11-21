@@ -1,3 +1,5 @@
+import { CompoundGroupNode } from "./nodes/compound-group-node";
+import { resolveCompoundGroup } from "./compound-group";
 import { videoCache as sharedVideoCache } from "@/services/video-cache/service";
 import { toast } from "sonner";
 import { type FollowOffset, followPlace } from "@/motion/follow";
@@ -190,6 +192,8 @@ async function resolveNode({
 		node.resolved = await resolveBlurBackgroundNode({ node, context });
 	} else if (node instanceof EffectLayerNode) {
 		node.resolved = resolveEffectLayerNode({ node, context });
+	} else if (node instanceof CompoundGroupNode) {
+		node.resolved = resolveCompoundGroup(node, context.time, context.renderer);
 	} else if (node instanceof LayerTransitionNode) {
 		node.resolved = resolveLayerTransitionNode({ node, context });
 		// Inside a pair's window only sides A and B are drawn (the live composite below is not decoded at all).

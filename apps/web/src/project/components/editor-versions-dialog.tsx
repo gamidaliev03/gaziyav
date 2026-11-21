@@ -11,6 +11,7 @@ import { EditorCore } from "@/core";
 import { useT } from "@/i18n";
 import { listProjectVersions, openVersionAsCopy, type ProjectVersion } from "@/project/versions";
 import { cn } from "@/utils/ui";
+import { uiLocale } from "@/i18n/locale";
 
 const REASON: Record<string, string> = {
 	open: "Opened",
@@ -20,7 +21,8 @@ const REASON: Record<string, string> = {
 	"before-join": "Before joining timelines",
 	kept: "Kept on disk",
 };
-const when = (ms: number) => new Date(ms).toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+// in the interface's language, not the Mac's (as the project's own name is)
+const when = (ms: number) => new Date(ms).toLocaleString(uiLocale(), { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
 /** Off until «Open as a copy» is proven on a built app (see the footer). */
 const OPEN_AS_COPY = true;

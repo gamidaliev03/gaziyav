@@ -46,6 +46,7 @@ import {
 	type RecoveryJournalEntry,
 } from "@/services/storage/recovery";
 import { isStorageQuotaExceededError, readStorageQuotaStatus } from "@/services/storage/quota";
+import { uiLocale } from "@/i18n/locale";
 
 const SAVE_ERROR_TOAST_ID = "project-save-error";
 
@@ -180,7 +181,9 @@ export class ProjectManager {
 				throw new Error(`Project with id ${id} not found`);
 			}
 			if (result.fromBackup) {
-				toast.info(`The project file was damaged — opened the copy from ${new Date(result.fromBackup).toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}`, { duration: 8000 });
+				// the date in the interface's language (the window's locale is the Mac's)
+				const when = new Date(result.fromBackup).toLocaleString(uiLocale(), { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+				toast.info(t("The project file was damaged — opened the copy from {date}", { date: when }), { duration: 8000 });
 			}
 
 			// an older project's several timelines become one + compound clips in Media, once (project/join-on-open.ts)

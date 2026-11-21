@@ -119,7 +119,7 @@ export async function POST(req: Request, ctx: Ctx) {
 				try {
 					return json(await writeCaption({ material: String(body.material ?? ""), platforms: Array.isArray(body.platforms) ? (body.platforms as never[]) : [], lang: body.lang === "ru" ? "ru" : "en", signal: req.signal }));
 				} catch (error) {
-					const message = error instanceof Error ? error.message : "Gaziyav AI didn't manage this one: nothing was changed. Press the button once more.";
+					const message = error instanceof Error ? error.message : "Gaziyav AI didn't manage this — nothing was changed.";
 					return json({ error: message, setup: message === BRAIN_OFF });
 				}
 			}

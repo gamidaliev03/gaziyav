@@ -198,12 +198,12 @@ export function ShortcutsDialog({ isOpen, onOpenChange }: { isOpen: boolean; onO
 							) : prompt.kind === "invalid" ? (
 								prompt.message
 							) : (
-								"Your changes are not saved. Close without saving?"
+								t("Your changes are not saved. Close without saving?")
 							)}
 						</span>
 						<span className="flex shrink-0 gap-1">
 							<Button size="sm" variant="secondary" className="h-6 px-2 text-xs" onClick={() => setPrompt(null)}>
-								{prompt.kind === "discard" ? "Keep editing" : prompt.kind === "invalid" ? "OK" : "Cancel"}
+								{prompt.kind === "discard" ? t("Keep editing") : prompt.kind === "invalid" ? t("OK") : t("Cancel")}
 							</Button>
 							{prompt.kind !== "invalid" && (
 								<Button
@@ -217,7 +217,7 @@ export function ShortcutsDialog({ isOpen, onOpenChange }: { isOpen: boolean; onO
 										} else close();
 									}}
 								>
-									{prompt.kind === "conflict" ? "Override" : "Discard"}
+									{prompt.kind === "conflict" ? t("Override") : t("Discard")}
 								</Button>
 							)}
 						</span>
@@ -248,7 +248,7 @@ export function ShortcutsDialog({ isOpen, onOpenChange }: { isOpen: boolean; onO
 							{CONTEXTUAL_KEYS.map(([label, contextKeys]) => (
 								<div key={label} className="flex items-center justify-between py-1.5">
 									<span className="text-sm">{label}</span>
-									<span className="text-muted-foreground text-xs">{contextKeys}</span>
+									<span className="text-muted-foreground text-xs">{contextKeys.replace(/\bSpace\b/g, t("Space"))}</span>
 								</div>
 							))}
 						</section>

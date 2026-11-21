@@ -5,7 +5,7 @@ const { contextBridge, ipcRenderer, webUtils } = require("electron");
 // over the same connection as the chat, with no tools (modules/agent-host.js oneShot; gz1-oneshot-api.md).
 contextBridge.exposeInMainWorld("gaziyavAI", {
 	/** ({ task, prompt, system?, json?, model? }) → { ok: true, text, json? } | { ok: false, error (one plain line), code } */
-	text: (args) => ipcRenderer.invoke("gaziyav-ai:text", args && typeof args === "object" ? { task: String(args.task ?? "text"), prompt: String(args.prompt ?? ""), system: String(args.system ?? ""), json: args.json === true, model: String(args.model ?? "") } : {}),
+	text: (args) => ipcRenderer.invoke("gaziyav-ai:text", args && typeof args === "object" ? { task: String(args.task ?? "text"), prompt: String(args.prompt ?? ""), system: String(args.system ?? ""), json: args.json === true, model: String(args.model ?? ""), images: Array.isArray(args.images) ? args.images.slice(0, 6).map((i) => ({ data: String(i?.data ?? ""), mime: String(i?.mime ?? i?.mimeType ?? "") })) : [] } : {}),
 	/** → { ready, state: "ready" | "sign-in" | "missing" | "checking", line } — line: how to connect, in the UI's language */
 	status: () => ipcRenderer.invoke("gaziyav-ai:status"),
 });

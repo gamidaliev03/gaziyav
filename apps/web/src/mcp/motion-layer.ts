@@ -178,7 +178,9 @@ export async function motionLayer(args: Args): Promise<Seen> {
 
 	// ── a new layer ──
 	const start = args.start === undefined ? editor.playback.getCurrentTime() / TICKS_PER_SECOND : Number(args.start);
-	const kind = String(args.kind ?? (code ? "Custom" : ""));
+	// Own code makes an own layer whatever kind was guessed beside it (a cat job sent kind:"Title" with its code: «Unknown kind»).
+	const asked = String(args.kind ?? "");
+	const kind = code && !KIT.includes(asked) && !MOGRAPH_BY_KIND.has(asked) ? "Custom" : asked || (code ? "Custom" : "");
 	let element: CreateGraphicElement;
 	if (kind === "Custom") {
 		if (!code) throw new Error("An own layer needs code: TSX that exports the component (editing_guide topic:motion has the rules).");
@@ -206,7 +208,8 @@ export async function motionLayer(args: Args): Promise<Seen> {
 		const k = KIND_BY_ID.get(kind)!;
 		element = { type: "graphic", name: String(args.name || k.label), definitionId: `${AI_PREFIX}${kind}`, startTime: ticks(start), duration: ticks(Math.max(0.3, Number(args.duration) || 3)), trimStart: ticks(0), trimEnd: ticks(0), params: { ...layoutDefaults(k.fields), ...props } };
 	} else {
-		throw new Error(`Unknown kind "${kind}". A template from find_content motion, a kit layer (${KIT.join(", ")}), or code for your own.`);
+		const near = KIT.find((k) => k.toLowerCase().includes(kind.toLowerCase()) || kind.toLowerCase().includes(k.toLowerCase()));
+		throw new Error(`Unknown kind "${kind}"${near ? ` (did you mean ${near}?)` : ""}. kind is a kit layer — ${KIT.join(" | ")} — or a template's kind from find_content {kind:"motion"}; for your own layer send code (+ component) and no kind.`);
 	}
 	const before = new Set(all().map((x) => x.element.id));
 	const track = typeof args.track === "string" && args.track !== "new" ? all().find((x) => x.track.id.startsWith(String(args.track)))?.track : undefined;

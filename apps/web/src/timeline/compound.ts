@@ -10,6 +10,8 @@ import {
 	projectFps,
 	ScenesSnapshotCommand,
 } from "@/montage/compositions";
+import { OUTER_MIX, readOuterMix } from "@/montage/compound-sound";
+import { COMPOUND_RATE, compoundRate } from "@/montage/compound-speed";
 import { expandToGroups } from "@/timeline/groups";
 import { buildEmptyTrack } from "@/timeline/placement";
 import { buildDefaultScene } from "@/timeline/scenes";
@@ -159,8 +161,29 @@ function holdCompositions(scene: TScene): TScene {
 	return { ...scene, tracks: { overlay: scene.tracks.overlay.map(hold), main: hold(scene.tracks.main), audio: scene.tracks.audio.map(hold) } };
 }
 
-const release = <T extends TimelineElement>(element: T): T =>
+const releaseHeld = <T extends TimelineElement>(element: T): T =>
 	element.type === "graphic" && element.definitionId === HELD_COMPOSITION ? ({ ...element, definitionId: COMPOSITION_DEF } as T) : element;
+
+/**
+ * A clip coming out of a compound keeps the compound's sound as its own settings (flattening gave it the volume, mute,
+ * pan, ducking and effects already): the compound's fades become the fade of the clip that starts / ends with it. The
+ * playback-only outer layer goes, so nothing hidden is saved with the clip.
+ */
+function settleCompoundSound<T extends TimelineElement>(element: T): T {
+	const layers = readOuterMix(element.params as Record<string, unknown>);
+	if (layers.length === 0) return element;
+	const params: Record<string, unknown> = { ...(element.params as Record<string, unknown>) };
+	delete params[OUTER_MIX];
+	const n = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : 0);
+	const tick = 1;
+	for (const layer of layers) {
+		if (layer.fadeIn > 0 && element.startTime <= layer.start + tick) params.fadeIn = Math.max(n(params.fadeIn), layer.fadeIn);
+		if (layer.fadeOut > 0 && endOf(element) >= layer.start + layer.duration - tick) params.fadeOut = Math.max(n(params.fadeOut), layer.fadeOut);
+	}
+	return { ...element, params: params as T["params"] };
+}
+
+const release = <T extends TimelineElement>(element: T): T => settleCompoundSound(releaseHeld(element));
 
 /**
  * ⌥⇧G, and «Flatten» on an old AI composition: each selected compound clip / composition is replaced by the clips it
@@ -274,7 +297,8 @@ export function syncCompoundLength(editor: EditorCore, compoundId: string, inner
 	const track = [parent.tracks.main, ...parent.tracks.overlay].find((t) => (t.elements as TimelineElement[]).some((e) => e.id === compoundId));
 	const element = (track?.elements as TimelineElement[] | undefined)?.find((e) => e.id === compoundId);
 	if (!track || !element || element.type !== "graphic" || element.params?.compound !== true) return false;
-	const contentEnd = Math.max(0, ...tracksOf(inner.tracks).flatMap((t) => (t.elements as TimelineElement[]).map(endOf)));
+	// in the parent's time: a compound at a speed of its own plays its content faster or slower (compound-speed.ts)
+	const contentEnd = Math.round(Math.max(0, ...tracksOf(inner.tracks).flatMap((t) => (t.elements as TimelineElement[]).map(endOf))) / compoundRate(element));
 	if (contentEnd <= element.trimStart) return false;
 	const fitted = typeof element.params.compoundLength === "number" ? element.params.compoundLength : element.trimStart + element.duration;
 	const whole = element.trimStart + element.duration >= fitted;
@@ -286,6 +310,35 @@ export function syncCompoundLength(editor: EditorCore, compoundId: string, inner
 				trackId: track.id,
 				elementId: element.id,
 				patch: { duration: duration as MediaTime, params: { ...element.params, compoundLength: contentEnd } } as Partial<TimelineElement>,
+			},
+		],
+	});
+	return true;
+}
+
+/**
+ * The compound's speed (0.1–10×, Speed tab): its length, trims and fitted length scale so it keeps playing the same
+ * part of its timeline, one undo step; the magnet closes or opens the main track after it.
+ */
+export function setCompoundSpeed(editor: EditorCore, trackId: string, compoundId: string, nextRate: number): boolean {
+	const element = editor.timeline.getElementsWithTracks({ elements: [{ trackId, elementId: compoundId }] })[0]?.element;
+	if (!element || element.type !== "graphic" || element.params?.compound !== true) return false;
+	const from = compoundRate(element);
+	const to = compoundRate({ params: { [COMPOUND_RATE]: nextRate } });
+	if (Math.abs(from - to) < 1e-6) return false;
+	const k = from / to;
+	const fitted = typeof element.params.compoundLength === "number" ? { compoundLength: Math.round(element.params.compoundLength * k) } : {};
+	editor.timeline.updateElements({
+		updates: [
+			{
+				trackId,
+				elementId: compoundId,
+				patch: {
+					duration: Math.max(1, Math.round(element.duration * k)) as MediaTime,
+					trimStart: Math.round(element.trimStart * k) as MediaTime,
+					trimEnd: Math.round(element.trimEnd * k) as MediaTime,
+					params: { ...element.params, ...fitted, [COMPOUND_RATE]: to },
+				} as Partial<TimelineElement>,
 			},
 		],
 	});

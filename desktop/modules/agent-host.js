@@ -291,6 +291,7 @@ function registerHostIpc() {
 			gaziyav: { mcp: async () => gaziyavMcp(), tools: ["Skill", "Read", "TodoWrite"], allowed: ["mcp__Gaziyav", "Skill", "Read", "TodoWrite"], instructions: openingWords },
 		},
 		onConnectionResult: () => void tellRoster(false),
+		explain: plainError,
 	});
 	chatIpc.registerChatIpc(ipcMain, {
 		trusted,
@@ -474,7 +475,21 @@ function registerPageIpc() {
  * prompt. `task`: what kind of job (logs only); `json`: the answer is parsed as JSON (the first {…} or […] in it).
  * @returns {Promise<{ ok: true, text: string, json?: unknown } | { ok: false, error: string, code?: string }>}
  */
-async function oneShot({ task = "text", prompt = "", system = "", json = false, model = "" } = {}) {
+/** Pictures sent with a one-shot: [{ data: base64 (PNG / JPEG / WebP / GIF), mime }], at most 6, each at most 8 MB. */
+function imageBlocksOf(images) {
+	if (!Array.isArray(images)) return [];
+	return images
+		.filter((i) => i && typeof i.data === "string" && /^image\/(png|jpe?g|webp|gif)$/.test(String(i.mime ?? i.mimeType ?? "")))
+		.slice(0, 6)
+		.filter((i) => i.data.length <= 11_000_000)
+		.map((i) => ({ type: "image", data: i.data.replace(/^data:[^,]+,/, ""), mimeType: String(i.mime ?? i.mimeType).replace("jpg", "jpeg") }));
+}
+
+/**
+ * `images`: pictures the answer is about (a rendered frame to judge, say), as ACP image blocks after the words.
+ * `model`: a word of the model's value or name in the session's own list («haiku» by default; «sonnet», «opus»…).
+ */
+async function oneShot({ task = "text", prompt = "", system = "", json = false, model = "", images = [] } = {}) {
 	try {
 		await loadHost();
 	} catch {
@@ -503,8 +518,10 @@ async function oneShot({ task = "text", prompt = "", system = "", json = false, 
 		const opt = info.configOptions?.find((o) => o?.category === "model");
 		const choice = opt?.options?.find((c) => `${c.value} ${c.name ?? ""}`.toLowerCase().includes(want));
 		if (choice && opt.currentValue !== choice.value) await session.setConfigOption(opt.id, choice.value).catch(() => {});
-		await session.prompt([{ type: "text", text: json ? `${text}\n\nAnswer with JSON only.` : text }]);
-		log(`oneshot ${task}: ${Date.now() - started} ms`);
+		const pictures = info.promptCapabilities?.image === false ? [] : imageBlocksOf(images);
+		if (Array.isArray(images) && images.length && !pictures.length) log(`oneshot ${task}: pictures not sent (none readable, or the agent takes none)`);
+		await session.prompt([{ type: "text", text: json ? `${text}\n\nAnswer with JSON only.` : text }, ...pictures]);
+		log(`oneshot ${task}: ${Date.now() - started} ms${pictures.length ? ` (${pictures.length} picture(s))` : ""} on ${choice?.value ?? opt?.currentValue ?? "?"}`);
 		if (!json) return { ok: true, text: said.trim() };
 		const m = /[[{][\s\S]*[\]}]/.exec(said);
 		try {
@@ -514,8 +531,9 @@ async function oneShot({ task = "text", prompt = "", system = "", json = false, 
 		}
 	} catch (e) {
 		log(`oneshot ${task} failed: ${String(e?.message ?? e).slice(0, 300)}`);
-		const code = e?.code === "not-installed" ? "not-installed" : e?.code === "sign-in" ? "sign-in" : "failed";
-		return { ok: false, error: code === "failed" ? words().failed : words().connect, code };
+		const m = String(e?.message ?? e);
+		const code = e?.code === "not-installed" ? "not-installed" : e?.code === "sign-in" || /sign.?in|log.?in|authenticat|unauthori/i.test(m) ? "sign-in" : /ENOTFOUND|ECONN|EAI_AGAIN|ETIMEDOUT|fetch failed|network|offline/i.test(m) ? "offline" : /usage limit|rate.?limit|limit (reached|exceeded)|quota/i.test(m) ? "limit" : "failed";
+		return { ok: false, error: code === "failed" ? words().failed : code === "not-installed" ? words().install : words().connect, code };
 	} finally {
 		session.close();
 	}
@@ -527,13 +545,26 @@ async function oneShotStatus() {
 		return { ready: false, state: "checking", line: words().notReady };
 	}
 	const [a] = await roster(false);
-	return { ready: a.status === "ready", state: a.status, line: a.status === "ready" ? "" : words().connect };
+	return { ready: a.status === "ready", state: a.status, line: a.status === "ready" ? "" : a.status === "missing" ? words().install : words().connect };
 }
+/** An agent's failure as the person reads it: one plain line in the UI's language (the raw one goes to the log). */
+function plainError(e) {
+	const raw = String(e?.message ?? e ?? "");
+	const code = String(e?.code ?? "");
+	log("agent failed:", code, raw.replace(/\s+/g, " ").slice(0, 400));
+	const ru = language() === "ru";
+	if (code === "not-installed" || /not installed/i.test(raw)) return ru ? "Claude не установлен на этом Mac. Установите приложение Claude (claude.com/download), войдите в нём — и чат заработает." : "Claude isn't installed on this Mac. Install the Claude app (claude.com/download), sign in there, and the chat will work.";
+	if (code === "sign-in" || /sign ?in|log ?in|auth|401|unauthori[sz]ed/i.test(raw)) return ru ? "Claude не вошёл в аккаунт. Нажмите «Подключить» под полем ввода и войдите." : "Claude isn't signed in. Press Connect under the message box and sign in.";
+	if (/usage limit|rate limit|limit reached|quota|429|overloaded|529/i.test(raw)) return ru ? "Лимит Claude на сейчас исчерпан. Попробуйте чуть позже." : "Claude's limit is used up for now. Try again a bit later.";
+	if (/ENOTFOUND|ECONNREFUSED|ECONNRESET|ETIMEDOUT|EAI_AGAIN|network|fetch failed|offline|socket/i.test(raw)) return ru ? "Нет связи с Claude. Проверьте интернет и отправьте сообщение ещё раз." : "Can't reach Claude. Check the internet and send the message again.";
+	return ru ? "Claude сейчас не ответил. Отправьте сообщение ещё раз." : "Claude didn't answer this time. Send the message again.";
+}
+
 function words() {
 	const ru = language() === "ru";
 	return ru
-		? { connect: "Подключите Claude: откройте чат справа и нажмите «Подключить».", failed: "Gaziyav AI сейчас не ответил.", empty: "Нечего отправить.", notReady: "Gaziyav AI ещё запускается." }
-		: { connect: "Connect Claude: open the chat on the right and press Connect.", failed: "Gaziyav AI didn't answer.", empty: "Nothing to send.", notReady: "Gaziyav AI is still starting." };
+		? { install: "Установите приложение Claude (claude.com/download) и войдите в нём — тогда Gaziyav AI заработает.", connect: "Подключите Claude: откройте чат справа и нажмите «Подключить».", failed: "Gaziyav AI сейчас не ответил.", empty: "Нечего отправить.", notReady: "Gaziyav AI ещё запускается." }
+		: { install: "Install the Claude app (claude.com/download) and sign in there — then Gaziyav AI works.", connect: "Connect Claude: open the chat on the right and press Connect.", failed: "Gaziyav AI didn't answer.", empty: "Nothing to send.", notReady: "Gaziyav AI is still starting." };
 }
 
 /**

@@ -17,7 +17,7 @@ import { CancelledError, StudioError } from "@/studio/server/errors";
 import { probe } from "@/studio/server/media";
 import { studioHome } from "@/studio/server/settings";
 import { findTool, reason, run } from "@/studio/server/tools";
-import { chosenProvider, runService } from "@/studio/server/providers/services";
+import { chosenProvider, keysReady, runService } from "@/studio/server/providers/services";
 
 export type Kind = "video" | "image" | "audio";
 
@@ -73,7 +73,7 @@ function view(m: FalModel): CloudModel {
 
 export function status() {
 	const on = (["fal", "kie", "argo"] as const).map(provider).filter((p) => p.hasKey());
-	return on.length ? { connected: true as const, name: on.map((p) => p.label).join(" + ") } : { connected: false as const, error: "Add your fal.ai, kie.ai or ArgoLink key in Settings → AI." };
+	return on.length ? { connected: true as const, name: on.map((p) => p.label).join(" + ") } : { connected: false as const, error: "Add your fal.ai, kie.ai or ArgoLink key in Settings → Services." };
 }
 
 /** A video model as the agent's list shows it: the text endpoint of each family (a start picture runs its picture one). */
@@ -174,6 +174,7 @@ function modelOf(g: GenerateInput): FalModel {
 }
 
 export async function check(g: GenerateInput): Promise<void> {
+	await keysReady();
 	if (serviceRoute(g)) return;
 	if (g.kind === "audio") throw new StudioError("Music generation isn't part of this app.");
 	if (g.kind === "video") {
@@ -256,6 +257,7 @@ async function videoUrls(g: GenerateInput, m: VideoModel, linkOf: LinkOf) {
 /** The price in US dollars before anything is spent (fal's list price). */
 export async function estimate(g: GenerateInput): Promise<{ cost: number }> {
 	// A service chosen in Settings → Services bills its own key: no price is known here.
+	await keysReady();
 	if (serviceRoute(g)) return { cost: 0 };
 	await check(g);
 	if (g.kind === "video") {
@@ -451,11 +453,12 @@ export interface Started {
  * twice (C2: 9 paid re-runs, $1.35, on 10.11). `again` makes a new take.
  */
 export async function generate(g: GenerateInput, allowed?: number, o: GenerateOptions = {}): Promise<Started> {
+	await keysReady();
 	const svc = serviceRoute(g);
 	if (svc) return startService(g, svc);
 	// The model decides, not the switch: a form opened before a flip still runs what it shows.
 	const api = provider(g.kind === "video" ? videoModel(g.model)?.api : falModel(g.model)?.api);
-	if (!api.hasKey()) throw new StudioError(api.id === "kie" ? "Add your kie.ai key first: Settings → AI." : api.id === "argo" ? "Add your ArgoLink key first: Settings → AI." : "Add your fal.ai key first: Settings → AI (fal.ai).");
+	if (!api.hasKey()) throw new StudioError(api.id === "kie" ? "Add your kie.ai key first: Settings → Services." : api.id === "argo" ? "Add your ArgoLink key first: Settings → Services." : "Add your fal.ai key first: Settings → Services (fal.ai).");
 	const { cost } = await estimate(g);
 	if (allowed !== undefined && !(cost <= allowed + 1e-9)) throw new StudioError(`This now costs $${cost.toFixed(3)} (you allowed $${allowed.toFixed(3)}). Nothing was spent — ask again.`);
 	// Named before anything is uploaded: each input by its content hash (the key jobKey makes of the real links).
@@ -511,7 +514,7 @@ function startService(g: GenerateInput, svc: NonNullable<ReturnType<typeof servi
 				const ext = path.extname(file).slice(1).toLowerCase() || (g.kind === "video" ? "mp4" : "png");
 				view.files.push({ path: file, name: resultName(g.prompt, title, id, i, ext), kind: g.kind });
 			}
-			if (!view.files.length) throw new StudioError("The service didn't make it: try again, or pick another service.");
+			if (!view.files.length) throw new StudioError("The service didn't make it — nothing was changed. Another service can be picked in Settings → Services.");
 			view.state = "succeeded";
 			view.progress = 100;
 		} catch (error) {

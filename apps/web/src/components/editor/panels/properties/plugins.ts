@@ -15,3 +15,5 @@ import "@/cleanup/inspector";
 import "@/transitions/components/layer-transition-section";
 // shadow: the drop shadow of a video, photo, sticker, shape or AI layer → Basic (after Blend).
 import "@/shadow/shadow-section";
+// compound clips: Speed → tab "speed" (montage/compound-speed.ts)
+import "@/montage/components/compound-speed-section";

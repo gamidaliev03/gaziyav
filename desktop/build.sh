@@ -72,6 +72,8 @@ swiftc -O -target $SWIFT_TARGET -o "$RES/bin/neuralfx" "$HERE/native/neuralfx.sw
 swiftc -O -target $SWIFT_TARGET -o "$RES/bin/framejudge" "$HERE/native/framejudge.swift"
 # Gaziyav: lipsync, voice and face swap run on fal.ai — their on-device helpers (local-lipsync.py, local-tts.py) stay out.
 # local-faceswap.py stays: Retouch runs on it.
+# the money-free voice (21.11): when the paid speech cannot run, the same press speaks with local-tts.py (its model installed) or macOS `say`
+cp "$HERE/native/local-tts.py" "$RES/bin/"
 cp "$HERE/native/local-voices.py" "$HERE/native/local-faceswap.py" "$HERE/native/local-cleanup.py" "$HERE/native/local-separate.py" "$HERE/native/local-voicechange.py" "$RES/bin/"
 # music (11.11): the beat model's helper and its one-time converter (a part of Separate: ondevice/manifest.ts PARTS)
 cp "$HERE/native/local-beats.py" "$HERE/native/local-beats-convert.py" "$RES/bin/"

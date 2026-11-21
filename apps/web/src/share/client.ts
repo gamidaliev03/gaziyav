@@ -401,13 +401,13 @@ export function postLanguage(existing: Partial<PostText> | undefined, ui: string
 	return ui === "en" ? "en" : "ru";
 }
 
-/** Title, description and hashtags from Gaziyav AI; `setup` when no AI is set up (the sheet offers Settings → AI). */
+/** Title, description and hashtags from Gaziyav AI; `setup` when no AI is set up (the sheet offers Settings → Services). */
 export async function writeWithAgent(editor: EditorCore, platforms: Platform[], existing?: Partial<PostText>): Promise<PostText> {
 	try {
 		const r = await post<PostText>("write", { material: projectMaterial(editor), platforms, lang: postLanguage(existing, useLang.getState().lang) });
 		return { title: r.title ?? "", description: r.description ?? "", hashtags: r.hashtags ?? "" };
 	} catch (error) {
-		// Gaziyav AI's own «has no AI yet» line: the sheet offers Settings → AI instead of Retry.
+		// Gaziyav AI's own «has no AI yet» line: the sheet offers Settings → Services instead of Retry.
 		const message = (error as Error).message;
 		throw Object.assign(new Error(message), { setup: /has no AI yet/i.test(message) });
 	}

@@ -37,7 +37,7 @@ function FaceSwapSection({ element }: { element: TimelineElement }) {
 		if (!useFal.getState().status) void useFal.getState().refresh();
 	}, []);
 	// With only a kie.ai key it says why: face swap is fal's alone.
-	const unsupported = fal && !fal.key ? (fal.kie.key ? "Face swap isn't on kie.ai: it runs on fal.ai. Add a fal.ai key in Settings → AI." : "Add your fal.ai key in Settings → AI (fal.ai) to swap faces.") : undefined;
+	const unsupported = fal && !fal.key ? (fal.kie.key ? "Face swap isn't on kie.ai: it runs on fal.ai. Add a fal.ai key in Settings → Services." : "Add your fal.ai key in Settings → Services (fal.ai) to swap faces.") : undefined;
 	const [pick, setPick] = useState<string>("hero");
 	const [consent, setConsent] = useState(false);
 	const [adding, setAdding] = useState(false);

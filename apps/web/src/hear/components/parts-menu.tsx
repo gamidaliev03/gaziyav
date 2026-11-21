@@ -108,6 +108,6 @@ function SplitPartsSection({ element, trackId }: { element: TimelineElement; tra
 }
 
 const isUploadAudio = (e: TimelineElement) => e.type === "audio" && (e.sourceType === "upload" || e.sourceType === "library");
-const videoWithSound = (e: TimelineElement) => e.type === "video" && EditorCore.getInstance().media.getAssets().find((a) => a.id === e.mediaId)?.hasAudio !== false;
+const videoWithSound = (e: TimelineElement) => e.type === "video" && e.isSourceAudioEnabled !== false && EditorCore.getInstance().media.getAssets().find((a) => a.id === e.mediaId)?.hasAudio !== false;
 registerInspectorSection({ id: "audio.parts@basic", tab: "basic", title: "Split into parts", order: 415, defaultOpen: true, appliesTo: isUploadAudio, render: (props) => <SplitPartsSection {...props} /> });
 registerInspectorSection({ id: "audio.parts@audio", tab: "audio", title: "Split into parts", order: 415, defaultOpen: false, appliesTo: videoWithSound, render: (props) => <SplitPartsSection {...props} /> });

@@ -70,7 +70,7 @@ export function ToolHub({ tab, tools, render }: { tab: Tab; tools: Tool[]; rende
 						className="text-muted-foreground hover:text-foreground mt-3 flex w-full items-center gap-1.5 rounded-lg px-1 py-1 text-left text-[11px] leading-snug transition-colors"
 					>
 						<HugeiconsIcon icon={Settings01Icon} className="size-3.5 shrink-0" />
-						{anyKey ? t("Connected: Settings → AI holds the key and the models") : t("Add a fal.ai key in Settings → AI: pictures, video and voice run on it")}
+						{anyKey ? t("Connected: Settings → Services holds the key and the models") : t("Add a fal.ai key in Settings → Services: pictures, video and voice run on it")}
 					</button>
 				</div>
 			</div>

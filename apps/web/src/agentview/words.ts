@@ -602,7 +602,7 @@ export function firstSentence(content: string, max = 72): string {
 export function reasonOf(content: string): Phrase {
 	const text = ownAnswer(content);
 	if (/more than this video's budget has left/i.test(text)) return P("It would go over this video's budget");
-	if (/there is no ([\w.]+) key/i.test(text)) return P("No {api} key: add it in Settings → AI", { api: /there is no ([\w.]+) key/i.exec(text)?.[1] ?? "AI" });
+	if (/there is no ([\w.]+) key/i.test(text)) return P("No {api} key: add it in Settings → Services", { api: /there is no ([\w.]+) key/i.exec(text)?.[1] ?? "AI" });
 	if (/EMPTY \(refused|Exhausted balance|has \$[\d.]+ left, this costs/i.test(text)) return P("Not enough money on the AI account");
 	if (/The open project is now/i.test(text)) return P("Another project is open now");
 	if (/No project is open|Open the project first/i.test(text)) return P("No project is open");

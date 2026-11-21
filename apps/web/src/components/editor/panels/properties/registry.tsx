@@ -52,7 +52,8 @@ const TAB_ORDER: Record<ElementKind, InspectorTabId[]> = {
 	sticker: ["basic", "color", "effects", "animation"],
 	shape: ["shape", "basic", "cutout", "color", "effects", "animation"],
 	ai: ["ai", "basic", "cutout", "color", "effects", "animation"],
-	text: ["text", "style", "basic", "color", "animation", "tts"],
+	// "effects" shows only while the text has an effect on it (sections/builtin.tsx hasEffects)
+	text: ["text", "style", "basic", "color", "effects", "animation", "tts"],
 	audio: ["basic", "speed", "ai"],
 	effect: ["effects"],
 };

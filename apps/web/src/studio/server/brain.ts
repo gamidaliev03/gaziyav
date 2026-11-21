@@ -25,6 +25,10 @@ export interface BrainRequest {
 	system?: string;
 	prompt: string;
 	json?: boolean;
+	/** A word of the model to answer with («fable», «sonnet»; default the app's, haiku). */
+	model?: string;
+	/** Pictures to look at (base64, the data: prefix allowed), up to 6. */
+	images?: Array<{ data: string; mime: string }>;
 	/** The language the user's words are wanted in ("ru", "en"…), when the feature knows it; else the app adds the
 	 * interface's (providers-ai-text.js). */
 	lang?: string;
@@ -158,8 +162,8 @@ async function once(ask: BrainRequest, signal: AbortSignal | undefined, timeout:
 	});
 }
 
-export const BRAIN_SLOW = "Gaziyav AI is taking too long: nothing was changed. Press the button once more in a minute.";
-export const BRAIN_MISS = "Gaziyav AI didn't manage this one: nothing was changed. Press the button once more.";
+export const BRAIN_SLOW = "Gaziyav AI took too long — nothing was changed.";
+export const BRAIN_MISS = "Gaziyav AI didn't manage this — nothing was changed.";
 
 /**
  * One answer as text. `json`: the JSON alone, whatever came around it; an answer with no JSON that parses is asked
@@ -167,7 +171,15 @@ export const BRAIN_MISS = "Gaziyav AI didn't manage this one: nothing was change
  */
 export async function brainAsk(r: BrainRequest, { signal, timeout = 240 }: { signal?: AbortSignal; timeout?: number } = {}): Promise<string> {
 	if (signal?.aborted) throw new CancelledError();
-	const ask: BrainRequest = { task: r.task || "text", ...(r.system ? { system: r.system } : {}), prompt: r.prompt, json: !!r.json, ...(r.lang ? { lang: r.lang } : {}) };
+	const ask: BrainRequest = {
+		task: r.task || "text",
+		...(r.system ? { system: r.system } : {}),
+		prompt: r.prompt,
+		json: !!r.json,
+		...(r.lang ? { lang: r.lang } : {}),
+		...(r.model ? { model: r.model } : {}),
+		...(r.images?.length ? { images: r.images.slice(0, 6) } : {}),
+	};
 	const text = (await once(ask, signal, timeout)).trim();
 	if (!ask.json) {
 		if (!text) throw new StudioError(BRAIN_MISS);
@@ -187,7 +199,21 @@ export async function brainAsk(r: BrainRequest, { signal, timeout = 240 }: { sig
 type Part = { type: "text"; text: string } | { type: "image_url"; image_url: { url: string } };
 type Turn = { role: "system" | "user" | "assistant"; content: string | Part[] };
 
-const words = (c: Turn["content"]) => (typeof c === "string" ? c : c.map((p) => (p.type === "text" ? p.text : "[a picture: not sent]")).join("\n"));
+const words = (c: Turn["content"]) => (typeof c === "string" ? c : c.map((p) => (p.type === "text" ? p.text : "[the picture below]")).join("\n"));
+
+/** The pictures of a conversation (data: URLs of image_url parts), in order. */
+export function imagesOf(messages: Turn[]): Array<{ data: string; mime: string }> {
+	const out: Array<{ data: string; mime: string }> = [];
+	for (const m of messages) {
+		if (typeof m.content === "string") continue;
+		for (const p of m.content) {
+			if (p.type !== "image_url") continue;
+			const hit = /^data:(image\/(?:png|jpeg|webp|gif));base64,([\s\S]+)$/.exec(p.image_url.url);
+			if (hit) out.push({ mime: hit[1], data: hit[2] });
+		}
+	}
+	return out.slice(0, 6);
+}
 
 /** A conversation (system + turns) as the one-shot call's system prompt and one prompt. */
 export function promptOf(messages: Turn[], json?: boolean): { system: string; prompt: string } {
@@ -199,5 +225,5 @@ export function promptOf(messages: Turn[], json?: boolean): { system: string; pr
 }
 
 /** The text features' old shape (system + messages): one brain behind it. */
-export const brainChat = (task: string, messages: Turn[], o: { json?: boolean; signal?: AbortSignal; timeout?: number; lang?: string } = {}) =>
-	brainAsk({ task, ...promptOf(messages, o.json), json: o.json, ...(o.lang ? { lang: o.lang } : {}) }, { signal: o.signal, timeout: o.timeout });
+export const brainChat = (task: string, messages: Turn[], o: { json?: boolean; signal?: AbortSignal; timeout?: number; lang?: string; model?: string } = {}) =>
+	brainAsk({ task, ...promptOf(messages, o.json), json: o.json, ...(o.lang ? { lang: o.lang } : {}), ...(o.model ? { model: o.model } : {}), images: imagesOf(messages) }, { signal: o.signal, timeout: o.timeout });

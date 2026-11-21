@@ -39,7 +39,7 @@ export const RU_AI: Record<string, string> = {
 	"The voice wasn't made.": "Голос не получился.",
 	"Taking the voice sample": "Берём образец голоса",
 	"Hearing what it says": "Слушаю, что сказано",
-	// The Mac's temperature and memory (ondevice/thermal.ts, Settings → AI)
+	// The Mac's temperature and memory (ondevice/thermal.ts, Settings → Services)
 	"The Mac got hot — paused until it cools down · {time}": "Mac нагрелся — пауза, пока остынет · {time}",
 	"Cooled down — continuing": "Остыл — продолжаем",
 	"The Mac got hot — the export goes on (hardware codec), just slower": "Mac нагрелся — экспорт продолжается (аппаратный кодек), но медленнее",

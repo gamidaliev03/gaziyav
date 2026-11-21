@@ -10,6 +10,9 @@ import { getSourceSpanAtClipTime, splitRetimeAtClipTime } from "@/retime/split";
 import { AI_PREFIX, propsFromParams } from "./catalog";
 import { applyMotion, motionAt, readMotion, withoutMotion } from "./motion";
 import type { MontageItem } from "./types";
+import { hasCompoundPicture, hasCompoundSound, isTrackMuted, withCompoundPicture, withCompoundSound } from "./compound-sound";
+import { compoundRate, compoundWindow, trackToParentTime } from "./compound-speed";
+import { needsCompoundGroup, tagCompoundGroup } from "./compound-group";
 
 let TICKS = 120000;
 /** The editor's ticks per second (set once by compositions.ts from the wasm timebase). */
@@ -403,21 +406,48 @@ export function flattenCompositions({
 				const scene = scenes.find((s) => s.id === el.params.sceneId);
 				if (!scene) continue;
 				const tf = throughComposition(parent, el);
+				// A compound at a speed of its own (compound-speed.ts): its clips are cut in its own time, then retimed
+				// onto the parent's; its transform is still read in the parent's time.
+				const speed = compoundRate(el);
+				const sped = speed !== 1;
+				const innerTf: ParentTf = sped && tf.animated ? { ...tf, at: (t: number) => tf.at(el.startTime - el.trimStart + t / speed) } : tf;
 				const inner = flattenCompositions({
 					tracks: scene.tracks,
 					scenes,
 					canvas,
 					depth: depth + 1,
-					window: { start: el.startTime, end: el.startTime + el.duration, offset: el.startTime - el.trimStart },
+					window: sped ? compoundWindow(el, speed) : { start: el.startTime, end: el.startTime + el.duration, offset: el.startTime - el.trimStart },
 					owner: el.id,
-					parent: tf,
+					parent: innerTf,
 					fps,
 					keepAiLayers,
 				});
+				if (sped) {
+					const map = <K extends TimelineTrack>(t: K): K => trackToParentTime(t, el, speed);
+					inner.tracks = { overlay: inner.tracks.overlay.map(map), main: map(inner.tracks.main), audio: inner.tracks.audio.map(map) };
+					// motion graphics inside keep their own pace: placed and cut at the compound's speed
+					inner.items = inner.items.map((it) => ({ ...it, from: sec(el.startTime - el.trimStart) + it.from / speed, dur: it.dur / speed }));
+				}
 				// Inner items on the composition's main track move with that track's renamed copy.
 				const mainId = inner.tracks.main.id;
 				items.push(...inner.items.map((it) => (it.zTrack === mainId ? { ...it, zTrack: `${mainId}~${el.id}` } : it)));
-				out.push(...inner.tracks.overlay, { ...inner.tracks.main, id: `${inner.tracks.main.id}~${el.id}` });
+				// The compound's own sound (volume, mute, fades, pan, ducking, audio effects) and picture effects (Color,
+				// Effects) on every clip it plays: a compound is a clip like any other (compound-sound.ts).
+				const sound = hasCompoundSound(el, isTrackMuted(track));
+				const picture = hasCompoundPicture(el);
+				const carry = <K extends TimelineTrack>(t: K): K =>
+					sound || picture
+						? ({
+								...t,
+								elements: (t.elements as TimelineElement[]).map((e) => {
+									let next = sound ? withCompoundSound(e, el, isTrackMuted(track)) : e;
+									if (picture) next = withCompoundPicture(next, el);
+									return next;
+								}),
+							} as K)
+						: t;
+				inner.tracks = { overlay: inner.tracks.overlay.map(carry), main: carry(inner.tracks.main), audio: inner.tracks.audio.map(carry) };
+				const opened: OverlayTrack[] = [...inner.tracks.overlay, { ...inner.tracks.main, id: `${inner.tracks.main.id}~${el.id}` } as OverlayTrack];
 				if (el.params.alpha === false && canvas?.width && canvas?.height) {
 					const bg: GraphicElement = {
 						id: `${el.id}~bg`,
@@ -434,8 +464,10 @@ export function flattenCompositions({
 							"transform.scaleY": canvas.height / 512 + 0.01,
 						},
 					};
-					out.push({ ...buildEmptyTrack({ id: `${el.id}~bgtrack`, type: "graphic" }), elements: [throughParent(bg, tf, rate)] });
+					opened.push({ ...buildEmptyTrack({ id: `${el.id}~bgtrack`, type: "graphic" }), elements: [throughParent(bg, tf, rate)] });
 				}
+				// a compound with a mask is drawn as one picture: its tracks are marked with it (compound-group.ts)
+				out.push(...(needsCompoundGroup(el) ? opened.map((t) => tagCompoundGroup(t, el)) : opened));
 				extraAudio.push(...inner.tracks.audio);
 				continue;
 			}

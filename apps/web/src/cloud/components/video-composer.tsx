@@ -125,7 +125,7 @@ function SourcePick({ type, value, onChange, placeholder, field, optional = fals
 					if (v.startsWith("media:")) return onChange({ from: "media", id: v.slice(6) });
 				}}
 			>
-				<SelectTrigger className="h-8 text-xs" data-video-field={field}>
+				<SelectTrigger className="h-8 w-full min-w-0 overflow-hidden text-xs [&>span]:min-w-0 [&>span]:truncate" data-video-field={field}>
 					<SelectValue placeholder={placeholder} />
 				</SelectTrigger>
 				<SelectContent>
@@ -178,7 +178,8 @@ function SourcePick({ type, value, onChange, placeholder, field, optional = fals
 function Choice({ value, options, onChange, label, field, title }: { value: string; options: string[]; onChange: (v: string) => void; label?: (v: string) => string; field: string; title: string }) {
 	return (
 		<Select value={value} onValueChange={onChange}>
-			<SelectTrigger className="h-7 min-w-[4.5rem] flex-auto px-2 text-xs" data-video-field={field} title={title}>
+			{/* never wider than the panel: a long choice is cut with «…» (at 294 px one stuck out) */}
+			<SelectTrigger className="h-7 min-w-[4.5rem] max-w-full flex-auto overflow-hidden px-2 text-xs [&>span]:min-w-0 [&>span]:truncate" data-video-field={field} title={title}>
 				<SelectValue />
 			</SelectTrigger>
 			<SelectContent>
@@ -375,7 +376,7 @@ export function VideoComposer({ onStart, results }: { onStart: ReturnType<typeof
 		// space it has: the form scrolls inside it and the problem + Generate sit under the form, always in view and never
 		// over a control (a sticky footer covered the fields the browser had just scrolled to).
 		<div className="@container/vc flex h-full min-h-0 shrink-0 flex-col" data-video-composer data-video-mode-now={mode} data-video-model-now={model.id}>
-			<div ref={form} className="scrollbar-hidden flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-2 pb-2" data-video-form>
+			<div ref={form} className="scrollbar-hidden flex min-h-0 min-w-0 flex-1 flex-col gap-2 overflow-x-hidden overflow-y-auto px-2 pb-2 [&>*]:min-w-0 [&>*]:max-w-full" data-video-form>
 			<div className="hidden @max-[17rem]/vc:flex">
 				<Select value={mode} onValueChange={(v) => setMode(v as VideoMode)}>
 					<SelectTrigger className="h-8 w-full text-xs" aria-label={t("Video mode")} data-video-mode-trigger>

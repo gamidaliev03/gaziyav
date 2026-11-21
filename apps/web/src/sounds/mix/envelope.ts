@@ -17,6 +17,9 @@ import { TICKS_PER_SECOND } from "@/wasm";
 import { getClipTimeAtSourceTime } from "@/retime/resolve";
 import { FADE_MAX_SECONDS, type MixSettings, fadeGainAt, readMixSettings } from "./fades";
 import { isTrackSilent, silencedBySolo } from "@/sound/solo";
+import { resolveNumberAtTime } from "@/animation/values";
+import { dBToLinear } from "@/timeline/audio-state";
+import { type OuterMixLayer, readOuterMix } from "@/montage/compound-sound";
 
 export { FADE_MAX_SECONDS, fadeGainAt, readMixSettings, type MixSettings };
 
@@ -192,6 +195,8 @@ export interface ClipEnvelope {
 	/** Voice ranges; only used when the clip ducks. */
 	duckRanges: readonly DuckRange[];
 	trackMuted?: boolean;
+	/** The compound clips it plays inside: their fades / keyframed volume over their own time (montage/compound-sound.ts). */
+	outer?: OuterMixLayer[];
 }
 
 export function makeClipEnvelope({
@@ -208,6 +213,7 @@ export function makeClipEnvelope({
 	trackMuted?: boolean;
 }): ClipEnvelope {
 	const settings = readMixSettings(element);
+	const outer = readOuterMix(element.params as Record<string, unknown>);
 	return {
 		element,
 		startTime,
@@ -215,13 +221,33 @@ export function makeClipEnvelope({
 		settings,
 		duckRanges: settings.duck ? voiceRanges : [],
 		trackMuted,
+		...(outer.length ? { outer } : {}),
 	};
+}
+
+/** Gain of the compounds around the clip at a timeline time (seconds); 1 when it is in none. */
+function outerGainAt(outer: readonly OuterMixLayer[] | undefined, time: number): number {
+	if (!outer?.length) return 1;
+	let g = 1;
+	for (const layer of outer) {
+		const start = layer.start / TICKS_PER_SECOND;
+		const duration = layer.duration / TICKS_PER_SECOND;
+		const local = Math.min(Math.max(time - start, 0), duration);
+		g *= fadeGainAt({ fadeIn: Math.min(FADE_MAX_SECONDS, layer.fadeIn), fadeOut: Math.min(FADE_MAX_SECONDS, layer.fadeOut), duck: false }, local, duration);
+		if (layer.volume) {
+			g *= dBToLinear(
+				resolveNumberAtTime({ baseValue: layer.volume.base, animations: layer.volume.animations, propertyPath: "volume", localTime: Math.round(local * TICKS_PER_SECOND) }),
+			);
+		}
+	}
+	return g;
 }
 
 /** Does the envelope change over time (anything beyond a constant volume)? */
 export function isEnvelopeDynamic(env: ClipEnvelope): boolean {
 	const clipEnd = env.startTime + env.duration;
 	return (
+		!!env.outer?.length ||
 		env.settings.fadeIn > 0 ||
 		env.settings.fadeOut > 0 ||
 		hasAnimatedVolume({ element: env.element }) ||
@@ -241,7 +267,7 @@ export function envelopeGainAt(env: ClipEnvelope, localTime: number): number {
 	if (volume === 0) return 0;
 	const fade = fadeGainAt(env.settings, localTime, env.duration);
 	const duck = env.duckRanges.length ? 10 ** (duckDbAt(env.duckRanges, env.startTime + localTime) / 20) : 1;
-	return volume * fade * duck;
+	return volume * fade * duck * outerGainAt(env.outer, env.startTime + localTime);
 }
 
 /**
@@ -273,6 +299,13 @@ export function buildEnvelopeAutomation(
 		span(e, e + DUCK_RELEASE_SECONDS, 0.04);
 	}
 	if (hasAnimatedVolume({ element: env.element })) span(from, to, 1 / 60);
+	for (const layer of env.outer ?? []) {
+		const s = layer.start / TICKS_PER_SECOND - env.startTime;
+		const e = s + layer.duration / TICKS_PER_SECOND;
+		if (layer.fadeIn > 0) span(s, s + layer.fadeIn, Math.max(0.01, layer.fadeIn / 40));
+		if (layer.fadeOut > 0) span(e - layer.fadeOut, e, Math.max(0.01, layer.fadeOut / 40));
+		if (layer.volume) span(s, e, 1 / 60);
+	}
 
 	times.sort((a, b) => a - b);
 	const points: Array<{ localTime: number; gain: number }> = [];

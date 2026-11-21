@@ -11,8 +11,8 @@ import { studioHome } from "../settings";
 import { findTool, run } from "../tools";
 import { routed } from "../http";
 import catalog from "./voices.json";
-import { SERVICES } from "./registry";
-import { chosen, PORTED, runService, serviceKey } from "./services";
+import { needsKeyLine, SERVICES } from "./registry";
+import { chosen, keysReady, PORTED, runService, serviceKey } from "./services";
 
 type Row = { p: string; id: string; n: string; g: string; l: string; d: string; s: string; f: number };
 
@@ -118,17 +118,18 @@ export async function stand_in(service: string, female: boolean): Promise<string
 /** Text → speech by a service voice, into `out` (.m4a AAC, or .wav): its length. */
 export async function speakService(voiceId: string, text: string, out: string, o: { signal?: AbortSignal; onStatus?: (t: string) => void; language?: string } = {}): Promise<{ seconds: number }> {
 	const { service, voice } = parse(voiceId);
-	if (!serviceKey(service)) throw new StudioError("Add the service's key first: Settings → Services.");
+	await keysReady();
+	if (!serviceKey(service)) throw new StudioError(needsKeyLine(service, true));
 	const row = chosen("tts");
 	const into = fs.mkdtempSync(path.join(os.tmpdir(), "gz-speak-"));
 	try {
 		o.onStatus?.(`voicing on ${nameOf(service)}`);
 		const r = await runService(service, "tts", { text, voice, out: "voice", ...(o.language ? { language: o.language } : {}) }, { model: row.provider === service ? row.model : undefined, into, signal: o.signal });
 		const made = r.files.find((f) => /\.(mp3|wav|m4a|ogg)$/i.test(f)) ?? r.files[0];
-		if (!made) throw new StudioError("The service didn't make it: try again, or pick another service.");
+		if (!made) throw new StudioError("The service didn't make it — nothing was changed. Another service can be picked in Settings → Services.");
 		const wav = out.toLowerCase().endsWith(".wav");
 		const done = await run(findTool("ffmpeg"), ["-y", "-v", "error", "-i", made, "-ac", "1", ...(wav ? ["-ar", "48000", "-c:a", "pcm_s16le"] : ["-c:a", "aac", "-b:a", "160k"]), out], { timeout: 300, signal: o.signal });
-		if (done.status !== 0) throw new StudioError("Couldn't save the voice. Try again.");
+		if (done.status !== 0) throw new StudioError("Couldn't save the voice — nothing was changed.");
 		return { seconds: (await probe(out, o.signal)).duration };
 	} finally {
 		fs.rmSync(into, { recursive: true, force: true });

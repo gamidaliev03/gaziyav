@@ -8,6 +8,10 @@ export interface WebFact {
 	title: string;
 	summary: string;
 	url: string;
+	/** Where it came from: the service picked in Settings → Services, or Wikipedia. */
+	source?: string;
+	/** On the first fact only: one line when the picked service failed and Wikipedia answered instead. */
+	note?: string;
 }
 
 /** Seconds per request: a slow or hanging site never holds up Gaziyav AI's whole turn. */
@@ -24,8 +28,15 @@ export async function webSearch(query: string, lang?: string, signal?: AbortSign
 	const q = query.trim().slice(0, 200);
 	if (!q) throw new StudioError("Give the words to search.");
 	// Settings → Services → Web search: Brave, Tavily or Keenable when chosen (Wikipedia below stays the default).
-	const by = await webSearchByChoice(q, signal);
-	if (by) return by;
+	// A picked service that fails (no money, a refused key, down): Wikipedia answers instead, said once (principle 1).
+	let note: string | undefined;
+	try {
+		const by = await webSearchByChoice(q, signal);
+		if (by) return by;
+	} catch (error) {
+		if (signal?.aborted) throw error;
+		note = `The web search service picked in Settings → Services didn't answer (${(error as Error)?.message || "error"}); Wikipedia answered instead.`;
+	}
 	const wiki = lang && /^[a-z]{2}$/.test(lang) ? lang : /[а-яё]/i.test(q) ? "ru" : "en";
 	const base = `https://${wiki}.wikipedia.org`;
 	let hits: { title: string }[] = [];
@@ -49,5 +60,7 @@ export async function webSearch(query: string, lang?: string, signal?: AbortSign
 		}),
 	);
 	if (signal?.aborted) throw new CancelledError();
-	return pages.filter((p): p is WebFact => !!p);
+	const facts = pages.filter((p): p is WebFact => !!p).map((p) => ({ ...p, source: "Wikipedia" }));
+	if (note && facts[0]) facts[0] = { ...facts[0], note };
+	return facts;
 }

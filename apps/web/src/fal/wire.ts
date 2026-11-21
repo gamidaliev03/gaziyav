@@ -63,6 +63,15 @@ export function minimaxSpeechInput(s: { endpoint: string; text: string; voice: s
 	return { [field]: s.text, voice_setting, language_boost: s.boost, output_format: "url", audio_setting: { format: "mp3", sample_rate: 32000, bitrate: 128000, channel: 1 } };
 }
 
+/** fal's ElevenLabs speech models (fal-ai/elevenlabs/tts/*, schema read 21.11): `text`, `voice` = one of ElevenLabs' own
+ * voices by name, `language_code` (ISO 639-1), `speed` (Turbo / Multilingual). */
+export function elevenSpeechInput(s: { endpoint: string; text: string; voice: string; speed?: number; language?: string }): Record<string, unknown> {
+	const input: Record<string, unknown> = { text: s.text, voice: s.voice };
+	if (s.language && /^[a-z]{2}$/i.test(s.language)) input.language_code = s.language.toLowerCase();
+	if (s.speed && !/eleven-v3/.test(s.endpoint)) input.speed = Math.min(1.2, Math.max(0.7, s.speed));
+	return input;
+}
+
 /** fal's image_size for a shape (Seedream / FLUX). 4:5 has no name there: it was sent as portrait_4_3, a 3:4 picture. */
 function imageSize(id: string, shape: string): string | { width: number; height: number } | undefined {
 	if (shape === "4:5") return id.includes("flux") ? { width: 896, height: 1120 } : { width: 1536, height: 1920 };

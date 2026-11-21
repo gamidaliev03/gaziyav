@@ -39,6 +39,8 @@ import type { LibraryAudioDragData } from "@/timeline/drag";
 import { cn } from "@/utils/ui";
 import { useT } from "@/i18n";
 import { waveFraction } from "./wave-seek";
+import { SourceSwitch, useSearchSource } from "@/components/editor/panels/assets/source-switch";
+import { WebAudioRows } from "./web-audio";
 
 type Tab = "sfx" | "music" | "mine";
 const TAB_KEY = "opencut.sounds.tab";
@@ -440,6 +442,10 @@ function LibraryList({ kind }: { kind: "sfx" | "music" }) {
 	const [query, setQuery] = useState("");
 	const [purpose, setPurpose] = useState<Purpose | null>(null);
 	const add = useAddAtPlayhead();
+	const searchKind = kind === "sfx" ? "sound" : "music";
+	const { pick } = useSearchSource(searchKind);
+	const web = query.trim().length >= 2 && pick !== "library";
+	const libraryShown = pick !== "web" || !web;
 	const replacing = useMissingLibrary((s) => (s.replacing?.kind === kind ? s.replacing : null));
 	useEffect(() => {
 		if (!replacing) return;
@@ -482,9 +488,10 @@ function LibraryList({ kind }: { kind: "sfx" | "music" }) {
 					</button>
 				</div>
 			)}
+			{query.trim().length >= 2 && <SourceSwitch kinds={[searchKind]} audio />}
 			<PurposeChips main={main} more={more} purpose={purpose} onPick={setPurpose} />
-			{shown.length === 0 ? (
-				<p className="text-muted-foreground min-h-0 flex-1 py-6 text-center text-sm">Nothing found</p>
+			{!libraryShown ? null : shown.length === 0 ? (
+				<p className={cn("text-muted-foreground min-h-0 py-6 text-center text-sm", !web && "flex-1")}>Nothing found</p>
 			) : (
 				<List
 					className="scrollbar-hidden min-h-0 flex-1"
@@ -498,6 +505,7 @@ function LibraryList({ kind }: { kind: "sfx" | "music" }) {
 					onRowsRendered={({ startIndex, stopIndex }) => prefetchInView(shown.slice(startIndex, stopIndex + 1).flatMap((e) => (e.remote ? [e.id] : [])))}
 				/>
 			)}
+			{web && <WebAudioRows kind={searchKind} query={query} pick={pick} grow={!libraryShown || shown.length === 0} />}
 			<p className="text-muted-foreground text-[10px] tabular-nums">
 				{filtered ? `${matched.length} of ${items.length}` : items.length} {kind === "sfx" ? "sounds" : "tracks"}
 			</p>

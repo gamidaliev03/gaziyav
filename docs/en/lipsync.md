@@ -4,7 +4,7 @@
 
 Lipsync makes the same face in the same clip say new words. It is optional, runs on your own key and costs cents. You never need it to edit.
 
-You need a [fal.ai key](ai.md) in **Settings → AI**. fal bills everything below at its list price; Gaziyav adds nothing.
+You need a [fal.ai key](ai.md) in **Settings → Services**. fal bills everything below at its list price; Gaziyav adds nothing.
 
 ## The podcast flow
 
@@ -61,7 +61,7 @@ Plus the voice: Qwen3 speech at $0.09 per 1,000 characters (a sentence ≈ half 
 
 **Why it is cheap:** Gaziyav finds where somebody actually speaks and sends only those parts (with a quarter-second margin), never the silence. Pieces are split at your own cuts, never across them. For per-clip-priced models it packs short parts into one request. The price on the button is the plan for exactly what will be sent, so the button and the bill show the same number.
 
-**The spending limit:** in **Settings → AI**, «Confirm spending above [1] $». Below it, the button itself is your consent; above it, you confirm once.
+**The spending limit:** in **Settings → Services**, «Confirm spending above [1] $». Below it, the button itself is your consent; above it, you confirm once.
 
 ### Other models, same key
 

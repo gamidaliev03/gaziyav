@@ -32,7 +32,11 @@ export function listenForArgoKey() {
 	g.__gaziyavArgoListening = true;
 	port.on("message", (m) => {
 		const d = ((m as { data?: unknown })?.data ?? m) as { type?: string; provider?: string; key?: unknown };
-		if (d?.type === "provider-key" && d.provider === "argo") g.__gaziyavArgoKey = typeof d.key === "string" && d.key.trim() ? d.key.trim() : null;
+		if (d?.type === "provider-key" && d.provider === "argo") {
+			const next = typeof d.key === "string" && d.key.trim() ? d.key.trim() : null;
+			if (next !== g.__gaziyavArgoKey) clearEmpty("argo");
+			g.__gaziyavArgoKey = next;
+		}
 	});
 	port.postMessage({ type: "provider-key-request", provider: "argo" });
 }
@@ -51,7 +55,7 @@ const said = (text: string, transient = false) => new StudioError(text, { plain:
 
 function auth(): Record<string, string> {
 	const k = argoKey();
-	if (!k) throw said("Add your ArgoLink key first: Settings → AI.");
+	if (!k) throw said("Add your ArgoLink key first: Settings → Services.");
 	return { Authorization: `Bearer ${k}` };
 }
 
@@ -65,7 +69,8 @@ function failure(status: number, body: string): StudioError {
 	} catch {
 		detail = body.trim().slice(0, 200);
 	}
-	if (status === 401 || status === 403) return said("ArgoLink didn't accept the key. Check it in Settings → AI.");
+	if (status === 401 || status === 403) clearEmpty("argo");
+	if (status === 401 || status === 403) return said("ArgoLink didn't accept the key. Check it in Settings → Services.");
 	if (status === 402) {
 		noteEmpty("argo");
 		return said("ArgoLink: not enough balance. Top it up on argolink.io, then press Retry. Nothing was charged.");
