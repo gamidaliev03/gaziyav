@@ -23,7 +23,8 @@ func y(_ top: Double) -> Double { H - top * 2 }
 NSGradient(starting: rgb(0xFFFCF6), ending: rgb(0xF6F1E7))!.draw(in: NSRect(x: 0, y: 0, width: W, height: H), angle: -90)
 NSGradient(colors: [rgb(0xE8A33D, 0.16), rgb(0xE8A33D, 0)])!.draw(fromCenter: NSPoint(x: W / 2, y: y(70)), radius: 0, toCenter: NSPoint(x: W / 2, y: y(70)), radius: 520, options: [])
 
-// The Gaziyav mark: «Крыло» — the app's own icon (make_icon.swift → icon.icns, path in GAZIYAV_ICON; make-dmg.sh sets it),
+// The Gaziyav mark: the app's own icon (icon.icns — the mountains tile since 1.0.65; the wing master is icon.krylo.icns;
+// make_icon.swift draws the wing and would overwrite it),
 // drawn at the mark's size so the window shows exactly what lands in /Applications.
 func mark(cx: Double, cy: Double, size: Double) {
 	let path = ProcessInfo.processInfo.environment["GAZIYAV_ICON"] ?? "icon.icns"

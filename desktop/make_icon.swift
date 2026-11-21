@@ -1,3 +1,5 @@
+// icon.icns is brand/family/icon.icns, and this file's output is kept as icon.krylo.icns; running it overwrites icon.icns.
+// Draws the Gaziyav icon — «Крыло»:  three opaque feathers (grey, cream, amber with a gloss)
 // fanned from one root, separated by a dark outline, a soft amber glow under them, on a night tile in the Big Sur shape.
 // The master is ROOT/preview/logo/krylo-v2.svg (512 grid); the in-app mark is apps/web/src/components/brand/krylo-mark.tsx.
 // 128 px and up: the master with depth (the gloss, a soft shadow under each feather and under the tile).

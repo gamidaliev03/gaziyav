@@ -60,12 +60,52 @@ function clampWidth(w) {
 	return Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, Math.round(w)));
 }
 
-/** The folder the chat keeps a project's conversations in (and its agent works in): Chat/projects/<id>. */
-function projectFolder(id) {
-	const safe = String(id).replace(/[^\w.-]/g, "_").slice(0, 120) || "project";
-	const dir = path.join(projectsDir(), safe);
+/**
+ * The folder the chat keeps its conversations in (and its agent works in): ONE for the whole app, Chat/projects/_all.
+ * A chat is the person's with Claude, not a project's: when the editor goes to another project (the person's or one
+ * Claude made for a job) the conversation stays. The per-project folders of earlier builds are merged in once (copied,
+ * never moved or deleted), so no earlier chat is lost.
+ */
+function projectFolder() {
+	const dir = path.join(projectsDir(), "_all");
 	fs.mkdirSync(dir, { recursive: true });
+	mergeOldChats(dir);
 	return dir;
+}
+
+let merged = false;
+function mergeOldChats(dir) {
+	if (merged) return;
+	merged = true;
+	try {
+		const mark = path.join(dir, ".merged-1");
+		if (fs.existsSync(mark)) return;
+		const readJson = (f, d) => { try { return JSON.parse(fs.readFileSync(f, "utf8")); } catch { return d; } };
+		const outFile = path.join(dir, ".film", "chat", "sessions.json");
+		const out = readJson(outFile, {});
+		const sessions = new Map((Array.isArray(out.sessions) ? out.sessions : []).filter((x) => x && typeof x.id === "string").map((x) => [x.id, x]));
+		let last = typeof out.last === "string" ? out.last : null;
+		for (const name of fs.readdirSync(projectsDir())) {
+			if (name === "_all") continue;
+			const src = path.join(projectsDir(), name);
+			if (!fs.statSync(src).isDirectory()) continue;
+			const kept = readJson(path.join(src, ".film", "chat", "sessions.json"), {});
+			for (const x of Array.isArray(kept.sessions) ? kept.sessions : []) if (x && typeof x.id === "string" && !sessions.has(x.id)) sessions.set(x.id, x);
+			// the files of the conversations: turns, logs, pictures, attachments, the agent's own sessions (never overwritten)
+			for (const sub of [[".film", "chat", "turns"], [".film", "chat", "agent"], [".film", "logs"], [".film", "refs"], [".film", "attachments"]]) {
+				const from = path.join(src, ...sub);
+				if (fs.existsSync(from)) fs.cpSync(from, path.join(dir, ...sub), { recursive: true, force: false, errorOnExist: false });
+			}
+		}
+		fs.mkdirSync(path.dirname(outFile), { recursive: true });
+		const all = [...sessions.values()].sort((a, b) => String(b.updatedAt ?? b.createdAt ?? "").localeCompare(String(a.updatedAt ?? a.createdAt ?? "")));
+		if (!last && all[0]) last = all[0].id;
+		fs.writeFileSync(outFile, JSON.stringify({ version: 1, last, sessions: all }));
+		fs.writeFileSync(mark, new Date().toISOString());
+	} catch (e) {
+		log(`chat merge: ${String(e?.message ?? e).slice(0, 200)}`);
+		merged = false;
+	}
 }
 
 /** The project the editor shows, from its address (/editor/<id>); null on the projects list. */
@@ -489,7 +529,7 @@ function imageBlocksOf(images) {
  * `images`: pictures the answer is about (a rendered frame to judge, say), as ACP image blocks after the words.
  * `model`: a word of the model's value or name in the session's own list («haiku» by default; «sonnet», «opus»…).
  */
-async function oneShot({ task = "text", prompt = "", system = "", json = false, model = "", images = [] } = {}) {
+async function oneShotOn({ task = "text", prompt = "", system = "", json = false, model = "", images = [] } = {}) {
 	try {
 		await loadHost();
 	} catch {
@@ -532,11 +572,37 @@ async function oneShot({ task = "text", prompt = "", system = "", json = false, 
 	} catch (e) {
 		log(`oneshot ${task} failed: ${String(e?.message ?? e).slice(0, 300)}`);
 		const m = String(e?.message ?? e);
-		const code = e?.code === "not-installed" ? "not-installed" : e?.code === "sign-in" || /sign.?in|log.?in|authenticat|unauthori/i.test(m) ? "sign-in" : /ENOTFOUND|ECONN|EAI_AGAIN|ETIMEDOUT|fetch failed|network|offline/i.test(m) ? "offline" : /usage limit|rate.?limit|limit (reached|exceeded)|quota/i.test(m) ? "limit" : "failed";
+		const code = e?.code === "not-installed" ? "not-installed" : e?.code === "sign-in" || /sign.?in|log.?in|authenticat|unauthori/i.test(m) ? "sign-in" : /ENOTFOUND|ECONN|EAI_AGAIN|ETIMEDOUT|fetch failed|network|offline/i.test(m) ? "offline" : /usage limit|rate.?limit|limit (reached|exceeded)|quota|out of usage|usage credits/i.test(m) ? "limit" : "failed";
 		return { ok: false, error: code === "failed" ? words().failed : code === "not-installed" ? words().install : words().connect, code };
 	} finally {
 		session.close();
 	}
+}
+// A model that has run out of credits (his Fable did, 21.11: «You're out of usage credits. Switch to another model») must not
+// stop a text job: the same job goes on with the next model, strongest first. A model that failed while a later one
+// answered is remembered as out for ten minutes, so the next job does not wait for it again.
+const MODEL_CHAIN = ["fable", "opus", "sonnet", "haiku"];
+const modelOut = new Map();
+async function oneShot(a = {}) {
+	const want = String(a?.model || "haiku").toLowerCase();
+	const at = MODEL_CHAIN.indexOf(want);
+	const order = at >= 0 ? MODEL_CHAIN.slice(at) : [want, "sonnet", "haiku"];
+	const failed = [];
+	let last = null;
+	for (let i = 0; i < order.length; i++) {
+		const m = order[i];
+		if ((modelOut.get(m) ?? 0) > Date.now() && i < order.length - 1) continue;
+		const r = await oneShotOn({ ...a, model: m });
+		if (r.ok) {
+			for (const f of failed) modelOut.set(f, Date.now() + 10 * 60_000);
+			if (failed.length) log(`oneshot: ${failed.join(", ")} did not answer, ${m} did`);
+			return r;
+		}
+		last = r;
+		if (!["failed", "limit"].includes(r.code)) return r; // not installed, signed out, offline, empty, bad JSON: another model does not help
+		failed.push(m);
+	}
+	return last;
 }
 async function oneShotStatus() {
 	try {

@@ -106,13 +106,26 @@ export function startAgent(r: PlanRequest, origin: string): RunState {
 	};
 	const { mode, why } = classify(r);
 	state.mode = mode;
-	const timer = setTimeout(() => entry.controller.abort(new StudioError("timeout")), LIMIT[mode] * 1000);
+	// a library plate asked as «quick» may fall through to the full design: it gets the full time
+	const timer = setTimeout(() => entry.controller.abort(new StudioError("timeout")), LIMIT[r.preset ? "full" : mode] * 1000);
 	const signal = entry.controller.signal;
 	(async () => {
 		log(mode === "full" ? `Full motion design (${why})` : `Quick: motion kit (${why})`);
 		const face = await faceBox(r, signal);
 		log(face ? `Face found at y ${face.y.toFixed(2)}–${(face.y + face.h).toFixed(2)}` : r.face ? (faceNote.last ? `Couldn't check the face (${faceNote.last}) — keeping text in the safe zones` : "No face in the video") : "No video under the composition");
-		const result = mode === "full" ? await runFull(r, face, { log, signal, origin, runId: state.id }) : await planQuick(r, face, log, signal);
+		const full = () => runFull(r, face, { log, signal, origin, runId: state.id });
+		let result: PlanResult;
+		if (mode === "full") result = await full();
+		else {
+			try {
+				result = await planQuick(r, face, log, signal);
+			} catch (error) {
+				// The kit had nothing for these words: the same ask is designed from scratch instead of being sent back.
+				if (signal.aborted || !(error instanceof StudioError) || !/draw this one/.test(error.message)) throw error;
+				log("The kit has nothing for this — designing it from scratch");
+				result = await full();
+			}
+		}
 		log(`Done: ${result.layers.length} layer${result.layers.length === 1 ? "" : "s"}${result.sfx.length ? `, ${result.sfx.length} sound${result.sfx.length === 1 ? "" : "s"}` : ""}`);
 		return result;
 	})()
@@ -175,7 +188,9 @@ export function classify(r: PlanRequest): { mode: "quick" | "full"; why: string 
 	if (r.preset && typeof r.brief === "string") {
 		const q = r.brief.toLowerCase();
 		const shape = /в виде|в форме|shape|shaped|like a|с текстом|with text|с подписью|рисун|draw|дерев|tree|ракет|rocket|облак|cloud|стрелк|arrow|собак|dog|кот|cat|сердц|heart|звезд|star|цвет(ок|ы)|flower|солнц|sun|корон|crown|машин|car|дом|house/.test(q);
-		if (!STRONG_FULL.test(q) && !/анимац|animat|motion/.test(q) && !shape && KIT_ONLY.test(q)) return { mode: "quick", why: "the kit draws it as it is" };
+		// a long or described ask (an overlay, a frame, a REC badge with ISO…) is a design, not one kit block
+		const detailed = q.length > 60 || /оверлей|overlay|рамк|frame|видоискател|viewfinder|камер|camera|\brec\b|\biso\b|исо|прочее|и т\.?\s?д|etc/.test(q);
+		if (!STRONG_FULL.test(q) && !/анимац|animat|motion/.test(q) && !shape && !detailed && KIT_ONLY.test(q)) return { mode: "quick", why: "the kit draws it as it is" };
 		return { mode: "full", why: "designed from scratch for this request" };
 	}
 	if (r.layers.some((l) => l.kind === "Custom")) return { mode: "full", why: "refining its own components" };
@@ -217,8 +232,9 @@ const ASSET_LABEL: Record<string, string> = { lottie: "Searching icons", image: 
 const BUDGET = { plan: { tokens: 16000, timeout: 240 }, write: { tokens: 64000, timeout: 480 } };
 
 async function runFull(r: PlanRequest, face: Box | null, ctx: FullCtx): Promise<PlanResult> {
-	// Library plates (Templates → «Create with Gaziyav AI»): the strongest model the connection offers draws and judges them.
-	const plateModel = r.preset ? "fable" : undefined;
+	// Library plates (Templates → «Create with Gaziyav AI»): Sonnet draws and judges them (the owner, 21.11: «Sonnet is enough
+	// for such micro-tasks»; it is also quicker, and his Fable credits ran out). One-shot falls back to Haiku if it must.
+	const plateModel = r.preset ? "sonnet" : undefined;
 	const { log, signal } = ctx;
 	const s = loadSettings();
 	if (!brainReadyNow() && !agentReady()) throw new StudioError(BRAIN_OFF);
@@ -413,7 +429,7 @@ ${fonts || "none"}`;
 			break;
 		}
 	}
-	if (!built) throw new StudioError("Gaziyav AI couldn't make usable layers from these words: nothing was changed. Say it a little differently.");
+	if (!built) throw new StudioError("Gaziyav AI couldn't draw this one: nothing was changed.");
 	// Whatever still fails after the fixes never reaches the editor.
 	const layers = built.layers.filter((l) => !built!.broken.has(l));
 	const keep = untouched(r, layers);

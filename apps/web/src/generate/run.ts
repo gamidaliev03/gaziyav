@@ -89,7 +89,13 @@ const turns: Partial<Record<GeneratorKind, Promise<unknown>>> = {};
 export async function generate(
 	kind: GeneratorKind,
 	body: Record<string, unknown>,
-	options?: { place?: boolean; queue?: boolean; toMedia?: (asset: MediaAsset) => void },
+	options?: {
+		place?: boolean;
+		queue?: boolean;
+		toMedia?: (asset: MediaAsset) => void;
+		/** Why it wasn't made, for a caller that shows its own words (Claude's tools: «The voice wasn't made: …»). */
+		onFail?: (reason: string) => void;
+	},
 ): Promise<boolean> {
 	if (options?.queue) {
 		const prev = turns[kind] ?? Promise.resolve();
@@ -100,10 +106,16 @@ export async function generate(
 		turns[kind] = mine.catch(() => {});
 		return mine;
 	}
-	if (useGenerateStore.getState().running[kind]) return false;
+	if (useGenerateStore.getState().running[kind]) {
+		options?.onFail?.(`${TITLE[kind]} is already being made: wait for it to finish, then send this again`);
+		return false;
+	}
 	const editor = EditorCore.getInstance();
 	const projectId = editor.project.getActiveOrNull()?.metadata.id;
-	if (!projectId) return false;
+	if (!projectId) {
+		options?.onFail?.("no project is open");
+		return false;
+	}
 	// First use: the model downloads right here, inside this progress, before anything else; the panel's Cancel (and
 	// the job list's) stops that download, later the job.
 	const download = new AbortController();
@@ -131,6 +143,7 @@ export async function generate(
 		});
 		if (done.status === "cancelled") {
 			jobCenter.update(center, { status: "cancelled", cancel: undefined });
+			options?.onFail?.("it was stopped before it finished");
 			return false;
 		}
 		if (done.status !== "done") throw new Error(done.error || "The generator stopped");
@@ -147,10 +160,12 @@ export async function generate(
 		const e = error as Error;
 		if (e.name === "AbortError") {
 			jobCenter.update(center, { status: "cancelled", cancel: undefined });
+			options?.onFail?.("it was stopped before it finished");
 			return false;
 		}
 		jobCenter.fail(center, e.message);
 		toast.error(e.message);
+		options?.onFail?.(e.message);
 		return false;
 	} finally {
 		setRunning(kind, null);

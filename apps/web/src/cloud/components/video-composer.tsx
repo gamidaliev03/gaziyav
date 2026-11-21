@@ -35,6 +35,10 @@ type Source =
 	| { from: "clip"; elementId: string; trackId?: string; mediaId: string; name: string; type: SourceType; trim?: { from: number; length: number } }
 	| { from: "file"; file: File; seconds?: number };
 
+/** One input, as a double click would send it again (the same file, clip piece or Media item). */
+const sourceSig = (x: Source | null | undefined): string =>
+	!x ? "" : x.from === "media" ? `m:${x.id}` : x.from === "clip" ? `c:${x.elementId}:${x.trim?.from ?? ""}:${x.trim?.length ?? ""}` : `f:${x.file.name}:${x.file.size}:${x.file.lastModified}`;
+
 const PLACEHOLDERS: Record<VideoMode, string> = {
 	text: "What happens in the shot: subject, action, camera, light, style…",
 	image: "How the picture moves: action, camera, mood…",
@@ -260,6 +264,8 @@ export function VideoComposer({ onStart, results }: { onStart: ReturnType<typeof
 	const running = useRef(false);
 	/** When the last job was started: the second click of a double click (even after an instant answer) is ignored. */
 	const lastStart = useRef(0);
+	/** What that last press asked for: only the same request again within the second is a double click. */
+	const lastSig = useRef("");
 	/** Files already sent to fal: pressing Generate again doesn't send them again. */
 	const uploaded = useRef(new Map<string, { id: string; seconds?: number }>());
 
@@ -313,9 +319,12 @@ export function VideoComposer({ onStart, results }: { onStart: ReturnType<typeof
 	};
 
 	const generate = async () => {
-		if (running.current || Date.now() - lastStart.current < 1000 || problem) return;
+		// A double click is the same request twice within a second: dropped; new words or settings right after a run go.
+		const sig = JSON.stringify([mode, model?.id, prompt, options, ...[start, end, clip, sound, ...refs].map(sourceSig)]);
+		if (running.current || (sig === lastSig.current && Date.now() - lastStart.current < 1000) || problem) return;
 		running.current = true;
 		lastStart.current = Date.now();
+		lastSig.current = sig;
 		setBusy(true);
 		try {
 			const ids = (s?: { id: string }) => (s ? [s.id] : undefined);

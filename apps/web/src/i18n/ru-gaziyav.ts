@@ -626,14 +626,15 @@ function keyTail(text: string): string {
 		.replace(/\n\nDetails: /, "\n\nПодробности: ");
 }
 
-/** The provider sentences word by word («kie.ai: not enough credits. Top up on kie.ai, then press Retry. »). */
+/** The provider sentences word by word («kie.ai: not enough credits. Top up on kie.ai, then press Retry. »). The panels have
+ * no Retry (the form keeps the request: Generate runs it again), so the Russian never names one (principle 6). */
 function ruSentence(text: string): string {
 	return text
-		.replace(/kie\.ai: not enough credits\. Top up on kie\.ai, then press Retry\. /, "kie.ai: не хватает кредитов. Пополните kie.ai и нажмите «Повторить». ")
-		.replace(/ArgoLink: not enough balance\. Top it up on argolink\.io, then press Retry\. /, "ArgoLink: не хватает средств. Пополните на argolink.io и нажмите «Повторить». ")
-		.replace(/fal\.ai: the account balance is empty\. Top it up on fal\.ai \(Billing\), then press Retry\. /, "fal.ai: баланс счёта пуст. Пополните на fal.ai (Billing) и нажмите «Повторить». ")
+		.replace(/kie\.ai: not enough credits\. Top up on kie\.ai, then press Retry\. /, "kie.ai: не хватает кредитов. Пополните kie.ai. ")
+		.replace(/ArgoLink: not enough balance\. Top it up on argolink\.io, then press Retry\. /, "ArgoLink: не хватает средств. Пополните на argolink.io. ")
+		.replace(/fal\.ai: the account balance is empty\. Top it up on fal\.ai \(Billing\), then press Retry\. /, "fal.ai: баланс счёта пуст. Пополните на fal.ai (Billing). ")
 		.replace(/^(kie\.ai|ArgoLink|fal\.ai) couldn't make this: /, "$1 не смог это сделать: ")
 		.replace(/kie\.ai never started this task: it stayed (.+?) in its queue for (\d+) min\. /, "kie.ai так и не начал задачу: она простояла $1 в очереди $2 мин. ")
 		.replace(/The service didn't accept the API key: check it in Settings → Services \(⌘,\)\. /, "Сервис не принял ключ API: проверьте его в Настройках → Сервисы (⌘,). ")
-		.replace(/The (fal\.ai|kie\.ai|ArgoLink|service) balance is empty\. Top it up, then press Retry\. /, "Баланс $1 пуст. Пополните его и нажмите «Повторить». ");
+		.replace(/The (fal\.ai|kie\.ai|ArgoLink|service) balance is empty\. Top it up, then press Retry\. /, "Баланс $1 пуст. Пополните его. ");
 }

@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { EditorCore } from "@/core";
 import { useEditor } from "@/editor/use-editor";
 import { cn } from "@/utils/ui";
+import { useAssetsPanelStore } from "@/components/editor/panels/assets/assets-panel-store";
 import { Alert02Icon, Cancel01Icon, Settings01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@/components/ui/icon";
 import { estimatePoint, jobModelId, type Kind, modelName, type PointInput, type PointJob, type PointModel, pointModels, pointReference, resultToMedia, resultToTimeline, usePoint } from "../client";
@@ -21,6 +22,9 @@ import { manyKeys } from "@/fal/video";
 import { openFalSettings, useAnyKey, useFal, useKeys } from "@/fal/client";
 import { ActiveJobLine } from "./active-job";
 import { VideoComposer } from "./video-composer";
+
+/** A refusal for an empty balance (fal, kie.ai, ArgoLink, a service): the card offers the same words free. */
+const EMPTY_BALANCE = /balance|баланс|exhausted|top (it )?up|пополн|no money|нет денег/i;
 
 const KINDS: { id: Kind; label: string; placeholder: string }[] = [
 	{ id: "video", label: "Video", placeholder: "What happens in the shot: subject, action, camera, light, style…" },
@@ -162,6 +166,8 @@ function Composer({ onStart, kind: fixed }: { onStart: ReturnType<typeof usePoin
 	const running = useRef(false);
 	/** When the last job was started: the second click of a double click (even after an instant answer) is ignored. */
 	const lastStart = useRef(0);
+	/** What that last press asked for: only the same request again within the second is a double click. */
+	const lastSig = useRef("");
 	const canvas = useEditor((e) => e.project.getActiveOrNull()?.settings.canvasSize ?? null, ["project"]);
 	const portrait = !canvas || canvas.height >= canvas.width;
 	/** References already sent to fal, by Media id: pressing Generate again doesn't upload them again. */
@@ -251,9 +257,13 @@ function Composer({ onStart, kind: fixed }: { onStart: ReturnType<typeof usePoin
 	};
 
 	const generate = async () => {
-		if (running.current || Date.now() - lastStart.current < 1000) return;
+		// A double click is the same request twice within a second: dropped. New words or settings pressed right after a run
+		// are a new request and go (ai-matrix on v63k: a new prompt pressed 0.7 s after the last run did nothing at all).
+		const sig = JSON.stringify([input, pictures, startFrame]);
+		if (running.current || (sig === lastSig.current && Date.now() - lastStart.current < 1000)) return;
 		running.current = true;
 		lastStart.current = Date.now();
+		lastSig.current = sig;
 		setBusy(true);
 		try {
 			const { reference_count: _count, ...request } = input;
@@ -467,8 +477,21 @@ function ResultCard({ job }: { job: PointJob }) {
 								    the settings, so Generate runs it again — no separate Retry */}
 								<HugeiconsIcon icon={Alert02Icon} className="relative size-4 text-white/80" aria-hidden />
 								<span className="relative line-clamp-4 text-[11px] leading-snug text-white" data-point-error>
-									{t((job.error ?? "Failed").split("\n\nDetails:")[0].split("\n")[0])}
+									{t((job.error ?? "Failed").split("\n\nDetails:")[0].split("\n")[0]).replace(/,? then press Retry\./, ".")}
 								</span>
+								{/* An empty balance: the same words free — Media's web pictures and stock clips, one press (the form keeps
+								    the settings for when the balance is topped up). */}
+								{EMPTY_BALANCE.test(job.error ?? "") && job.prompt?.trim() && (
+									<button
+										type="button"
+										className="relative rounded bg-white/90 px-2 py-0.5 text-[11px] font-medium text-black hover:bg-white"
+										onClick={() => useAssetsPanelStore.getState().searchMedia(job.prompt)}
+										onDoubleClick={(e) => e.stopPropagation()}
+										data-point-free
+									>
+										{t("Find it free on the web")}
+									</button>
+								)}
 								<button
 									type="button"
 									aria-label={t("Remove")}

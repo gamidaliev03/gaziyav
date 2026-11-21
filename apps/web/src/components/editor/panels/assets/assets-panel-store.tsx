@@ -148,6 +148,11 @@ interface AssetsPanelStore {
 	highlightMediaId: string | null;
 	requestRevealMedia: (mediaId: string) => void;
 	clearHighlight: () => void;
+	/** Words for Media's search (its web pictures and free stock clips under it), set from another panel: an AI picture
+	 *  or clip refused for an empty balance offers the same words free there. Taken once by the Media view (not kept). */
+	mediaQuery: string | null;
+	searchMedia: (query: string) => void;
+	clearMediaQuery: () => void;
 
 	/* Media */
 	mediaViewMode: MediaViewMode;
@@ -193,6 +198,9 @@ export const useAssetsPanelStore = create<AssetsPanelStore>()(
 			requestRevealMedia: (mediaId) =>
 				set({ activeTab: "media", highlightMediaId: mediaId }),
 			clearHighlight: () => set({ highlightMediaId: null }),
+			mediaQuery: null,
+			searchMedia: (query) => set({ activeTab: "media", mediaQuery: query.trim().slice(0, 120) || null }),
+			clearMediaQuery: () => set({ mediaQuery: null }),
 			mediaViewMode: "grid",
 			setMediaViewMode: (mode) => set({ mediaViewMode: mode }),
 			mediaSortBy: "name",

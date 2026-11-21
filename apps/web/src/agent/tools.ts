@@ -1257,9 +1257,11 @@ async function generateThing(kind: "voice", args: Args) {
 	}
 	const { quote: _quote, place: _place, start: _start, again: _again, ...body } = args;
 	let made: MediaAsset | null = null;
-	const ok = await generate(kind, body, { queue: true, toMedia: (a) => (made = a) });
+	// What went wrong, in the generator's own words (the toast is for the person at the screen; Claude reads this).
+	let why = "";
+	const ok = await generate(kind, body, { queue: true, toMedia: (a) => (made = a), onFail: (reason) => (why = reason) });
 	const asset = made as MediaAsset | null;
-	if (!ok || !asset) fail(`The ${kind} wasn't made (see the message in the app). Nothing was charged.`);
+	if (!ok || !asset) fail(`The ${kind} wasn't made${why ? `: ${why}` : " (see the message in the app)"}. Nothing was charged.`);
 	const voice = asset as MediaAsset;
 	const out: Record<string, unknown> = { media: voice.id, name: voice.name, ...(voice.duration ? { seconds: Math.round(voice.duration * 100) / 100 } : {}), model: `${runsOn.title} on ${API_LABEL[apiOf(runsOn)]}${runsOn.id !== chosen.id ? ` (this voice's own model; Settings keep ${chosen.title})` : ""}`, voice: line(voiceChoice), language: lang ? `${lang.en} (${lang.code})` : "auto (from the text)", costUsd: Math.round(tts.cost * 1e4) / 1e4 };
 	// (principle 4) heard before it is trusted: Whisper reads the words back; for a language it reads less surely, say so

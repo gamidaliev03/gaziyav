@@ -22,7 +22,9 @@ SHOWN="$NAME"
 # Its icon is the family under Dagestan's mountains (brand/family, drawn by make-brand.swift); ICON_FILE= overrides.
 ICON="$HERE/icon.icns"
 ICON="${ICON_FILE:-$ICON}"
-VERSION="${VERSION:-1.0}"
+# The version a build carries: VERSION=…, else the shell's own package.json (one place to bump it), else 1.0 —
+# building without VERSION used to stamp 1.0 on a 1.0.6x app (and name the DMG after it).
+VERSION="${VERSION:-$(node -p 'require(process.argv[1]).version' "$HERE/package.json" 2>/dev/null || echo 1.0)}"
 APP="$OUT/$NAME.app"
 V="$HERE/vendor/$ARCH"
 export PATH="$HOME/.bun/bin:$HOME/.local/node/bin:$PATH"

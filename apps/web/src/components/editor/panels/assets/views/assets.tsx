@@ -274,6 +274,15 @@ export function MediaView() {
 	// "Web" in the header: the same search box, aimed at images on the web.
 	const [webMode, setWebMode] = useState(false);
 	const searchRef = useRef<HTMLInputElement>(null);
+	// Words sent here from another panel (an AI picture or clip refused for an empty balance): searched at once, the web
+	// pictures and free stock clips under the results.
+	const mediaQuery = useAssetsPanelStore((s) => s.mediaQuery);
+	useEffect(() => {
+		if (!mediaQuery) return;
+		setQuery(mediaQuery);
+		setWebMode(true);
+		useAssetsPanelStore.getState().clearMediaQuery();
+	}, [mediaQuery]);
 	// Smart search (typos, RU↔EN layout, translit) over names and kinds.
 	const visibleMediaItems = useMemo(
 		() =>

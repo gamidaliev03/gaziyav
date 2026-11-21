@@ -448,7 +448,7 @@ export async function planQuick(r: PlanRequest, face: Box | null, log: Log, sign
 	const result: PlanResult = { comment, mode: "quick", layers, sfx, calls, keep };
 	onlyWhatIsAsked(r.request, result);
 	if (keep.length) log(`Kept ${keep.length} layer${keep.length === 1 ? "" : "s"} the request didn't name`);
-	if (!result.layers.length && !keep.length) throw new StudioError("Gaziyav AI couldn't make usable layers from these words: nothing was changed. Say it a little differently.");
+	if (!result.layers.length && !keep.length) throw new StudioError("Gaziyav AI couldn't draw this one: nothing was changed.");
 	const notes = resolveLayout(result.layers, face, r.width / Math.max(1, r.height), pinOf(r.request));
 	if (notes.length) log(`Layout: ${notes.slice(0, 2).join(", ")}`);
 	return result;

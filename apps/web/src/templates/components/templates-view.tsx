@@ -133,7 +133,7 @@ function TemplateCard({ item, selected, onSelect }: { item: Template; selected: 
 				onClick={onSelect}
 				onPointerEnter={() => setHover(true)}
 				onPointerLeave={() => setHover(false)}
-				title={`${t("{name}: {parts} — double-click to add to the timeline, or drag onto it", { name: t(item.name), parts: item.parts.map((p) => t(partName(p))).join(" + ") })}\n${item.themes.map(themeName).join(" · ")}`}
+				title={`${t("{name}: {parts} — double-click to add to the timeline, or drag onto it", { name: t(item.name), parts: item.parts.map((p) => t(partName(p))).join(" + ") })}\n${item.themes.map((x) => t(themeName(x))).join(" · ")}`}
 				{...tileActivation(() => void applyTemplate(item))}
 				data-no-translate
 				draggable

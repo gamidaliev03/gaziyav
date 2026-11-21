@@ -10,7 +10,8 @@
 set -euo pipefail
 HERE="${0:A:h}"
 ARCH="${ARCH:-arm64}"
-VERSION="${VERSION:-1.0}"
+# The version the DMG is named after: VERSION=…, else the shell's own package.json (what build.sh stamps), else 1.0.
+VERSION="${VERSION:-$(node -p 'require(process.argv[1]).version' "$HERE/package.json" 2>/dev/null || echo 1.0)}"
 DIST="${OUT_DIR:-$HERE/dist}"
 APPNAME="${APP_DIR_NAME:-Gaziyav}"
 APP="$DIST/$APPNAME.app"
@@ -28,7 +29,13 @@ codesign --verify --deep --strict "$APP"
 REQ="Нужна macOS 14 или новее."
 [[ $ARCH == arm64 ]] && REQ="Для Mac на Apple silicon (M1 и новее), macOS 14 или новее."
 [[ $ARCH == x64 ]] && REQ="Для Mac на Intel, macOS 14 или новее. Локальный ИИ работает только на Apple silicon."
-FONT="$APP/Contents/Resources/web/apps/web/public/fonts/bundled/Unbounded.ttf"; [[ -f "$FONT" ]] || FONT="-"
+# Unbounded, the wordmark's own face. The app carries only its base fonts (the rest download on first use), so the
+# build often has no Unbounded.ttf: the source tree's copy draws the same picture (a missing face silently fell back
+# to the system's bold before this).
+FONT="$APP/Contents/Resources/web/apps/web/public/fonts/bundled/Unbounded.ttf"
+[[ -f "$FONT" ]] || FONT="$HERE/../apps/web/public/fonts/bundled/Unbounded.ttf"
+[[ -f "$FONT" ]] || FONT="-"
+[[ "$FONT" == "-" ]] && echo "make-dmg: no Unbounded.ttf — the wordmark falls back to the system font" >&2
 # The family DMG (its app's Resources/edition says «family») gets the family's window: the workshop's wood, the family's
 # arch and a paper card under the two icons (brand/family/dmg-art@2x.png), the same lines in cream. DMG_BACKGROUND_SWIFT= overrides.
 BG_SWIFT="$HERE/dmg/render-background.swift"

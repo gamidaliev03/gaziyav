@@ -86,7 +86,9 @@ export function brainReadyNow(): boolean {
  * Asks the app whether Claude is connected (at most `ms` of waiting). No answer at all (an app without the forwarding
  * module) is a no: the text features then keep their earlier AI, if one is set up (legacyReady in the callers).
  */
-export async function brainReady(ms = 1500): Promise<boolean> {
+// 20 s, not 1.5: the app loads Claude's side on first use, so the first answer after a launch takes a few seconds; a real
+// «not connected» comes back at once. (1.5 s made the first plate / text button after a launch say «not connected».)
+export async function brainReady(ms = 20000): Promise<boolean> {
 	if (g.__gaziyavBrainTest) return true;
 	const p = port();
 	if (!p) return false;
