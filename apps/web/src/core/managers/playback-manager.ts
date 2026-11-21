@@ -1,4 +1,5 @@
 import type { EditorCore } from "@/core";
+import { stopPreviews } from "@/preview/audio-focus";
 import {
 	addMediaTime,
 	clampMediaTime,
@@ -42,6 +43,8 @@ export class PlaybackManager {
 	}
 
 	play(): void {
+		// One sound at a time: a panel's sample or the library's track stops here (preview/audio-focus.ts).
+		stopPreviews();
 		const maxTime = this.editor.timeline.getTotalDuration();
 		if (maxTime <= 0) {
 			return;

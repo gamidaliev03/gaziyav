@@ -3,6 +3,7 @@ import { EditorCore } from "@/core";
 import { TracksSnapshotCommand } from "@/commands/timeline";
 import type { SceneTracks, TimelineElement, VideoTrack } from "@/timeline";
 import { generateUUID } from "@/utils/id";
+import { addMediaTime } from "@/wasm";
 import { warmShader } from "@/services/renderer/compositor/pipeline-warmup";
 import { TICKS_PER_SECOND } from "@/wasm";
 import { DEFAULT_TRANSITION_PARAMS, getTransitionDefinition } from "./definitions";
@@ -154,6 +155,64 @@ export function applyTransition({ cut, type }: { cut: CutRef; type: string }): b
 		...list.filter((t) => !(t.fromElementId === cut.fromElementId && t.toElementId === cut.toElementId)),
 		next,
 	]);
+	commit(tracks, after);
+	return true;
+}
+
+/** The source of a clip as it is read on the timeline: its media, and the ranges its two halves would join back on. */
+const mediaOf = (element: TimelineElement): string => (element as TimelineElement & { mediaId?: string }).mediaId ?? "";
+const plainClip = (element: TimelineElement): boolean =>
+	!(element as TimelineElement & { retime?: unknown }).retime &&
+	!(Array.isArray(element.animations) && element.animations.length > 0) &&
+	!(Array.isArray((element as TimelineElement & { beats?: unknown[] }).beats) && ((element as TimelineElement & { beats?: unknown[] }).beats?.length ?? 0) > 0);
+/** Close enough, in ticks: a split rounds one point and derives both halves from it, so the halves are exact; a
+ *  trimmed-back edge may be a tick off. */
+const SAME_SOURCE_TICKS = 2;
+
+/**
+ * Whether the cut is two halves of ONE clip cut in two (a split), so ⌫ can put the clip back together: the same media,
+ * the right half exactly where the left one ends in the source, and nothing else hanging on the right half (a clip with
+ * speed, animations or beats is left alone: joining it would silently drop them).
+ */
+export function canJoinCut(info: CutInfo | null | undefined): boolean {
+	if (!info || info.transition) return false;
+	const { from, to } = info;
+	if (from.type !== to.type || !mediaOf(from) || mediaOf(from) !== mediaOf(to)) return false;
+	if (!plainClip(from) || !plainClip(to)) return false;
+	if (from.startTime + from.duration !== to.startTime) return false;
+	// The left half ends in the source where the right one starts, and both end at the same place (split-elements.ts).
+	const leftEnds = addMediaTime({ a: from.trimStart, b: from.duration });
+	if (Math.abs(leftEnds - to.trimStart) > SAME_SOURCE_TICKS) return false;
+	const rightEnds = addMediaTime({ a: to.trimEnd, b: to.duration });
+	if (Math.abs(rightEnds - from.trimEnd) > SAME_SOURCE_TICKS) return false;
+	// Nothing may still point at the right half: a transition on its far cut would be orphaned by the join.
+	const tracks = getTracks();
+	const track = tracks ? videoTracks(tracks).find((t) => t.id === info.trackId) : undefined;
+	if (!track) return false;
+	return !getTransitions(track).some((t) => t.fromElementId === to.id || t.toElementId === to.id);
+}
+
+/** Puts a cut clip back together: the left half takes the right one's length and source end, the right one goes. One ⌘Z
+ *  brings the cut back (the whole scene is the undo step, as every other cut command). */
+export function joinCut(cut: CutRef): boolean {
+	const info = findCut(cut);
+	const tracks = getTracks();
+	if (!tracks || !info || !canJoinCut(info)) return false;
+	const merged: TimelineElement = {
+		...info.from,
+		duration: addMediaTime({ a: info.from.duration, b: info.to.duration }),
+		trimEnd: info.to.trimEnd,
+	};
+	const patchTrack = <T extends { id: string; elements: TimelineElement[] }>(track: T): T =>
+		track.id === cut.trackId
+			? { ...track, elements: track.elements.filter((e) => e.id !== info.to.id).map((e) => (e.id === info.from.id ? merged : e)) }
+			: track;
+	const after = {
+		...tracks,
+		main: patchTrack(tracks.main),
+		overlay: tracks.overlay.map((t) => (t.type === "video" ? patchTrack(t) : t)),
+		audio: tracks.audio.map((t) => patchTrack(t)),
+	} as SceneTracks;
 	commit(tracks, after);
 	return true;
 }

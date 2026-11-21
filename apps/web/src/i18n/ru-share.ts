@@ -85,4 +85,5 @@ export const RU_SHARE: Record<string, string> = {
 	"Writing…": "Пишем…",
 	"YouTube: the title is cut to 100 characters.": "YouTube: название обрезается до 100 символов.",
 	"Undo": "Отменить",
+	"Gaziyav AI is not connected: open the chat on the right and press Connect.": "Gaziyav AI не подключён: откройте чат справа и нажмите «Подключить».",
 };

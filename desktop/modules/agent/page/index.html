@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gaziyav AI</title>
+<script>
+  /* Gaziyav's theme (its «Вид → Оформление» drives the system's colour scheme in every page of the app) before the first paint */
+  (function () {
+    var m = matchMedia('(prefers-color-scheme: dark)');
+    var set = function () { document.documentElement.dataset.theme = m.matches ? 'dark' : 'light'; };
+    set();
+    m.addEventListener('change', set);
+  })();
+</script>
+  <script type="module" crossorigin src="./assets/index-mBHeDEzn.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-CV66SZ2z.css">
+</head>
+<body>
+<!-- the chat's column (the whole page: the app docks it at the right of the editor) and its layer for what floats -->
+<div id="of-chat" class="of-chat" data-side="right" data-studio-host-panel tabindex="-1"></div>
+<div id="of-chat-layer" class="of-chat" data-studio-host-panel tabindex="-1"></div>
+</body>
+</html>

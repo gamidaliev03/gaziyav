@@ -276,10 +276,7 @@ function PostSheet({ close }: { close: () => void }) {
 				</div>
 				{needsAi && (
 					<p className="text-muted-foreground -mt-2 flex items-center gap-2 text-xs" data-post-needs-ai>
-						{t("Gaziyav AI has no AI yet. Set one up, or write it yourself.")}
-						<button type="button" className="text-primary underline" onClick={() => openSettings("ai")}>
-							{t("Settings → AI")}
-						</button>
+						{t("Gaziyav AI is not connected: open the chat on the right and press Connect.")}
 					</p>
 				)}
 

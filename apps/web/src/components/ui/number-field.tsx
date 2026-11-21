@@ -272,7 +272,8 @@ function NumberField({
 						title="Drag to change"
 						aria-label="Drag to adjust value"
 						disabled={disabled}
-						className="text-muted-foreground [&_svg]:size-3.5! shrink-0 select-none pl-2.5 text-sm leading-none cursor-ew-resize"
+						// A drag handle is a finger's target too: 24 px inside the 28 px field (it was 12 px wide for «X»/«Y»).
+						className="text-muted-foreground [&_svg]:size-3.5! -ml-1 grid size-6 shrink-0 cursor-ew-resize place-items-center rounded text-sm leading-none select-none"
 						onMouseDown={(event) => event.preventDefault()}
 						onPointerDown={handleIconPointerDown}
 					>

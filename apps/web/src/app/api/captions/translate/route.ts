@@ -41,6 +41,6 @@ export async function POST(req: Request) {
 		}
 		return json({ lines: out });
 	} catch (error) {
-		return json({ error: error instanceof Error && error.message ? error.message : "Couldn't translate. Try again." });
+		return json({ error: error instanceof Error && error.message ? error.message : "Couldn't translate this time: nothing was changed. Press the button once more." });
 	}
 }

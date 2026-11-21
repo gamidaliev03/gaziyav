@@ -1,13 +1,16 @@
 "use client";
 
-// Left panel → Audio → Text to speech: the voice-over generator on this Mac (pictures, video and music come through
-// fal.ai). A voice-over goes onto the timeline at the playhead as soon as it is ready (it is made for the cut that is
-// open); other takes stay under the form until taken. Describe it, press the button.
+// Left panel → Audio → Voice (and AI → Voice-over): the voice-over generator on this Mac (pictures, video and music
+// come through fal.ai). One screen, top to bottom, in the order a person works: what to say → how → WHO says it →
+// Create. The chosen voice has a place of its own above the grid and a tick on its card, so «picked» is never a guess;
+// Create stays pinned to the bottom of the panel wherever the list has scrolled. A voice-over goes onto the timeline at
+// the playhead as soon as it is ready; other takes stay under the form until taken.
 import { useEffect, useMemo, useRef } from "react";
 import { HugeiconsIcon } from "@/components/ui/icon";
-import { AiMagicIcon, Cancel01Icon } from "@hugeicons/core-free-icons";
+import { AiMagicIcon, Cancel01Icon, VoiceIcon } from "@hugeicons/core-free-icons";
 import { estimate, falChoice, isCloneVoice, openFalSettings, useApiKey, useApiOf, useFal, useFalTts, useKeys } from "@/fal/client";
 import { VoiceModelSelect } from "@/fal/components/voice-model-select";
+import { useServiceCards } from "../service-voices";
 import { apiOf, price, usd } from "@/fal/models";
 import { useEditor } from "@/editor/use-editor";
 import { currentClip } from "@/studio/client/editor-bridge";
@@ -17,34 +20,33 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cancelGenerate, discardResult, generate, type GeneratorKind, resultUrl, takeResult, useDraft, useGenerateStore } from "../run";
 import { SourceResult } from "@/media/source-result";
-import { studioApi } from "@/studio/client/api";
 import { useT } from "@/i18n";
+import { cn } from "@/utils/ui";
 import { AddYourVoice, removeSavedVoice, useSavedVoices } from "./my-voices";
 import { myCards, readyCards, trendCards, useVoiceLang, VoicePicker } from "./voice-picker";
+import { VOICES } from "../voices";
 
 export { VOICES } from "../voices";
 
-function RunButton(props: { kind: GeneratorKind; disabled: boolean; onRun: () => void; label: string; needsFal?: boolean }) {
-	return (
-		<>
-			<RunOrProgress {...props} />
-			<LastResult kind={props.kind} />
-		</>
-	);
+function RunButton(props: { kind: GeneratorKind; disabled: boolean; onRun: () => void; label: string; needsFal?: boolean; ownKey?: boolean }) {
+	return <RunOrProgress {...props} />;
 }
 
-function RunOrProgress({ kind, disabled, onRun, label, needsFal = false }: { kind: GeneratorKind; disabled: boolean; onRun: () => void; label: string; needsFal?: boolean }) {
+function RunOrProgress({ kind, disabled, onRun, label, needsFal = false, ownKey = false }: { kind: GeneratorKind; disabled: boolean; onRun: () => void; label: string; needsFal?: boolean; ownKey?: boolean }) {
+	const t = useT();
 	const running = useGenerateStore((s) => s.running[kind]);
-	// No key for the voice model yet (or a cloned voice without a fal key): the button stays, off; LocalGenerator says where the key goes.
-	const unsupported = useApiKey("tts") === false || needsFal;
+	// No key for the voice model yet (or a cloned voice without a fal key): the button stays, off; the panel says where the key goes.
+	// (a service's voice, Settings → Services, speaks on its own key: never off for a missing fal key)
+	const noKey = useApiKey("tts") === false;
+	const unsupported = !ownKey && (noKey || needsFal);
 	if (running) {
 		return (
 			<div className="flex flex-col gap-1.5" data-generate-running={kind}>
-				<div className="bg-muted relative h-8 overflow-hidden rounded-md">
+				<div className="bg-muted relative h-9 overflow-hidden rounded-lg">
 					<div className="bg-primary/25 absolute inset-y-0 left-0 transition-[width] duration-300" style={{ width: `${Math.round(running.progress * 100)}%` }} />
 					<div className="relative flex h-full items-center justify-between px-3 text-xs">
 						<span className="truncate">{running.stage}</span>
-						<button type="button" aria-label="Cancel" className="text-muted-foreground hover:text-foreground" onClick={() => cancelGenerate(kind)}>
+						<button type="button" aria-label={t("Cancel")} className="text-muted-foreground hover:text-foreground" onClick={() => cancelGenerate(kind)}>
 							<HugeiconsIcon icon={Cancel01Icon} className="size-3.5" />
 						</button>
 					</div>
@@ -81,7 +83,7 @@ function LastResult({ kind }: { kind: GeneratorKind }) {
 	);
 }
 
-/** One voice sample at a time (a click on a voice plays its own recording, as in CapCut; a second click stops it). */
+/** Text to speech: what to say, how it sounds, who says it, then Create. */
 function VoiceForm({ projectId, cloneNeedsFal }: { projectId: string; cloneNeedsFal: boolean }) {
 	const t = useT();
 	// the price on «Create» follows the voice model picked above
@@ -113,7 +115,10 @@ function VoiceForm({ projectId, cloneNeedsFal }: { projectId: string; cloneNeeds
 	const lang = useVoiceLang(text);
 	const saved = useSavedVoices();
 	const addRef = useRef<HTMLInputElement>(null);
-	const cards = useMemo(() => [...trendCards(lang.ui, lang.sample), ...readyCards(), ...myCards(saved)], [lang.ui, lang.sample, saved]);
+	const services = useServiceCards();
+	const cards = useMemo(() => [...trendCards(lang.ui, lang.sample), ...readyCards(), ...myCards(saved), ...services], [lang.ui, lang.sample, saved, services]);
+	// A service's voice is billed by its service to its own key: no fal price on the button.
+	const ownKey = speaker.startsWith("svc:") && !trend;
 	const pick = (id: string) => {
 		if (id.startsWith("trend:")) setTrend(id.slice(6));
 		else {
@@ -121,56 +126,76 @@ function VoiceForm({ projectId, cloneNeedsFal }: { projectId: string; cloneNeeds
 			setTrend("");
 		}
 	};
-	const label = text.trim()
+	const value = trend ? `trend:${trend}` : speaker;
+	const label = text.trim() && !ownKey
 		? `${t("Create")} · ${estimate(tts, text.trim().length)}${cloned ? ` ${t("(+ a one-time clone {p})", { p: usd(price(falChoice("clone"), 30)) })}` : ""}`
 		: t("Create");
+	const words = text.trim().length;
 	return (
-		// The text and Create first, the voices under them (check-flow A3, 06.11: they sat below 17 tiles, out of sight); compact
-		// enough for the 1024×640 panel: a three-line box, the script button beside the style field.
-		<div className="flex flex-col gap-2.5 [@media(max-height:700px)]:gap-2">
-			<Textarea
-				value={text}
-				onChange={(e) => setText(e.target.value)}
-				placeholder="What should the voice say?"
-				rows={3}
-				className="min-h-16 resize-none text-sm [@media(max-height:700px)]:min-h-12"
-				data-generate-prompt="voice"
-			/>
-			<div className="flex items-center gap-1.5">
-				{!trend && !cloned && <input
-					value={style}
-					onChange={(e) => setStyle(e.target.value)}
-					placeholder="Style (optional): excited, calm, whisper…"
-					className="border-input placeholder:text-muted-foreground h-8 min-w-0 flex-1 rounded-md border bg-transparent px-2.5 text-xs outline-none focus:border-primary"
-				/>}
-				{projectId && <ScriptButton projectId={projectId} seconds={clipLen || 15} context={clipName || "voice-over"} />}
+		// One column, top to bottom, the way a person works: the words (as tall as the panel gives), how they sound, who
+		// says them, then Create — which never leaves the foot of the panel. The takes and «Your voice»'s file form sit
+		// under the voice field, so nothing important goes under the fold at 1024×640.
+		<div className="flex h-full min-h-0 flex-col" data-voice-form>
+			<div className="scrollbar-hidden flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto px-2 pt-1 pb-1.5">
+				{/* 1. the words: the biggest thing in the panel, because that is what a voice-over is made of */}
+				<div className="relative flex min-h-12 flex-1 flex-col">
+					<Textarea
+						value={text}
+						onChange={(e) => setText(e.target.value)}
+						placeholder={t("What should the voice say?")}
+						className="min-h-12 flex-1 resize-none pb-4 text-sm"
+						data-generate-prompt="voice"
+					/>
+					<span className="text-muted-foreground pointer-events-none absolute right-2 bottom-1 text-[10px] tabular-nums" data-voice-words>
+						{words ? t("{n} characters", { n: words }) : ""}
+					</span>
+				</div>
+				{/* 2. how it sounds */}
+				<div className="flex shrink-0 items-center gap-1.5">
+					{!trend && !cloned && (
+						<input
+							value={style}
+							onChange={(e) => setStyle(e.target.value)}
+							placeholder={t("Style (optional): excited, calm, whisper…")}
+							className="border-input placeholder:text-muted-foreground h-8 min-w-0 flex-1 rounded-md border bg-transparent px-2.5 text-xs outline-none focus:border-primary"
+							data-voice-style
+						/>
+					)}
+					{projectId && <ScriptButton className="h-8" projectId={projectId} seconds={clipLen || 15} context={clipName || "voice-over"} />}
+				</div>
+				{cloned && !cloneNeedsFal && apiOf(picked) !== "fal" && (
+					<p className="text-muted-foreground shrink-0 text-[11px] leading-snug" data-generate-clone-note>
+						{t("A cloned voice speaks on fal.ai with {model} ({price}/1k): kie.ai has no voice clones.", { model: tts.title, price: usd(price(tts, 1000)) })}
+					</p>
+				)}
+				{/* 3. who says it: one field with the editor's own list (as the Lipsync panel), ▶ for its sample, × to remove */}
+				<div className="shrink-0">
+					<VoicePicker label="tts" title="Voice" cards={cards} value={value} onPick={pick} onAdd={() => addRef.current?.click()} onRemove={(id) => void removeSavedVoice(id, t).then((gone) => gone && speaker === id && setSpeaker("ryan"))} />
+				</div>
+				{/* 4. the takes and the clone form, under it (nothing there when there is nothing to show) */}
+				<div className="scrollbar-hidden -mx-2 max-h-48 min-h-0 shrink overflow-y-auto px-2">
+					<div className="flex flex-col gap-2">
+						<AddYourVoice inputRef={addRef} onAdded={pick} />
+						<LastResult kind="voice" />
+					</div>
+				</div>
 			</div>
-			{cloned && !cloneNeedsFal && apiOf(picked) !== "fal" && (
-				<p className="text-muted-foreground text-[11px] leading-snug" data-generate-clone-note>
-					{t("A cloned voice speaks on fal.ai with {model} ({price}/1k): kie.ai has no voice clones.", { model: tts.title, price: usd(price(tts, 1000)) })}
-				</p>
-			)}
-			<RunButton
-				kind="voice"
-				disabled={!text.trim()}
-				needsFal={cloned && cloneNeedsFal}
-				onRun={() => void generate("voice", trend ? { text, trend } : { text, speaker, style }, { place: true })}
-				label={label}
-			/>
-			<VoicePicker
-				label="tts"
-				cards={cards}
-				value={trend ? `trend:${trend}` : speaker}
-				onPick={pick}
-				onAdd={() => addRef.current?.click()}
-				onRemove={(id) => void removeSavedVoice(id, t).then((gone) => gone && speaker === id && setSpeaker("ryan"))}
-			/>
-			<AddYourVoice inputRef={addRef} onAdded={pick} />
+			{/* 5. Create: the foot of the panel, always */}
+			<div className="bg-background flex shrink-0 flex-col gap-1.5 border-t px-2 pt-1.5 pb-2" data-voice-create>
+				<RunButton
+					kind="voice"
+					disabled={!text.trim()}
+					needsFal={cloned && cloneNeedsFal}
+					ownKey={ownKey}
+					onRun={() => void generate("voice", trend ? { text, trend } : { text, speaker, style }, { place: true })}
+					label={label}
+				/>
+			</div>
 		</div>
 	);
 }
 
-/** Text to speech on its own (CapCut's place: Audio → Text to speech), on fal.ai with the user's key. */
+/** Text to speech on its own (CapCut's place: Audio → Text to speech; also a card in the AI tab), on fal.ai with the user's key. */
 export function LocalGenerator({ kind }: { kind: "voice"; onPoint?: () => void }) {
 	const t = useT();
 	const missing = useApiKey("tts") === false;
@@ -184,13 +209,16 @@ export function LocalGenerator({ kind }: { kind: "voice"; onPoint?: () => void }
 		void useFal.getState().refresh();
 	}, []);
 	return (
-		<div className="flex flex-col gap-3 px-3 py-3" data-local-generator={kind}>
-			<div className="flex items-center justify-between gap-2">
-				<span className="text-sm font-medium">{t("Text to speech")}</span>
+		<div className="flex h-full min-h-0 flex-col" data-local-generator={kind}>
+			<div className="flex shrink-0 items-center justify-between gap-2 px-2 pt-2 pb-1.5">
+				<span className="flex items-center gap-1.5">
+					<HugeiconsIcon icon={VoiceIcon} className="text-primary size-4" />
+					<span className="text-sm font-medium">{t("Text to speech")}</span>
+				</span>
 				<VoiceModelSelect className="h-7 w-auto max-w-[62%]" />
 			</div>
 			{(missing || cloneNeedsFal) && (
-				<div className="text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-1 text-xs" data-generate-unsupported={kind}>
+				<div className="mx-2 mb-2 flex shrink-0 flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2.5 py-2 text-[11px] leading-snug" data-generate-unsupported={kind}>
 					<span>{t(cloneNeedsFal ? "Cloning a voice runs on fal.ai: add a fal.ai key, or pick a ready voice." : ai === "kie" ? "Add your kie.ai key to voice text." : "Add your fal.ai key to voice text.")}</span>
 					<button type="button" className="text-foreground underline underline-offset-2" onClick={openFalSettings}>
 						{t("Settings")}

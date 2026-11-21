@@ -100,11 +100,8 @@ export function PointView({ kind, title = "AI" }: { kind?: Kind; title?: string 
 			title={title}
 			// the video form is as tall as the panel (its form scrolls inside, Generate stays under it); Results lie below
 			contentClassName={kind === "video" ? "flex h-full flex-col" : undefined}
-			actions={
-				<button type="button" className="text-muted-foreground hover:text-foreground text-[11px]" onClick={openFalSettings} title="Models and API keys" data-ai-open-settings>
-					Models
-				</button>
-			}
+			// No header row of its own: it held one small word («Models»), and it stood as an empty band above the form
+			hideHeader
 		>
 			{/* Video: the results live inside the form's scroller (one scroller under the pinned Generate bar). */}
 			{kind === "video" ? (
@@ -280,7 +277,7 @@ function Composer({ onStart, kind: fixed }: { onStart: ReturnType<typeof usePoin
 	const placeholder = KINDS.find((k) => k.id === kind)?.placeholder;
 
 	return (
-		<div className="flex flex-col gap-2.5 px-3 pb-3">
+		<div className="flex flex-col gap-2 px-2 pb-2.5">
 			{!fixed && <div className="bg-accent/60 grid grid-cols-2 gap-1 rounded-lg p-1">
 				{KINDS.map((k) => (
 					<button
@@ -293,8 +290,9 @@ function Composer({ onStart, kind: fixed }: { onStart: ReturnType<typeof usePoin
 					</button>
 				))}
 			</div>}
+			<div className="flex items-center gap-1.5">
 			<Select value={modelId} onValueChange={setModelId}>
-				<SelectTrigger className="h-8 text-xs" data-point-field="model">
+				<SelectTrigger className="h-8 min-w-0 flex-1 text-xs" data-point-field="model">
 					<SelectValue placeholder={models.length ? "Model" : "Loading models…"} />
 				</SelectTrigger>
 				<SelectContent>
@@ -306,6 +304,18 @@ function Composer({ onStart, kind: fixed }: { onStart: ReturnType<typeof usePoin
 					))}
 				</SelectContent>
 			</Select>
+				{/* where the models and the keys live, on the model's own row: a header band of its own stood empty above the form */}
+				<button
+					type="button"
+					onClick={openFalSettings}
+					title={t("Models and API keys")}
+					aria-label={t("Models and API keys")}
+					data-ai-open-settings
+					className="text-muted-foreground hover:bg-accent hover:text-foreground grid size-8 shrink-0 place-items-center rounded-md border transition-colors"
+				>
+					<HugeiconsIcon icon={Settings01Icon} className="size-3.5" />
+				</button>
+			</div>
 			{kind === "video" && <MediaPick field="start-frame" type="image" value={startFrame} onChange={setStartFrame} placeholder={model?.needsImage ? "Start frame (needed)" : "Start frame: none (from text)"} />}
 			{kind === "image" && maxPictures > 0 && (
 				<div className="flex flex-col gap-1.5">

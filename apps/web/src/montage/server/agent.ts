@@ -4,7 +4,8 @@
 //            fonts, sounds, web images) → write its own TSX → compile + render still frames with the export engine →
 //            art-director look at the frames → fix → present.
 // Everything a run sees comes from its own request: no state is shared between runs, projects or compositions.
-import { agentReady, NOT_SET_UP } from "@/studio/server/agent-keys";
+import { BRAIN_OFF, brainReadyNow } from "@/studio/server/brain";
+import { agentReady } from "@/studio/server/agent-keys";
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
@@ -150,7 +151,7 @@ function validate(r: PlanRequest) {
 		Array.isArray(r.clips) &&
 		Array.isArray(r.words) &&
 		Array.isArray(r.layers);
-	if (!ok) throw new StudioError("Gaziyav AI couldn't read the request. Reload the window (⌘⇧P) and try again.");
+	if (!ok) throw new StudioError("Gaziyav AI couldn't read the request: reload the window (⌘⇧P).");
 	if (r.request.length > 2000) throw new StudioError("The request is too long. Keep it under 2000 characters.");
 	r.duration = Math.max(0.5, Math.min(600, r.duration));
 	r.fps = Math.max(1, Math.min(120, r.fps));
@@ -163,9 +164,19 @@ function validate(r: PlanRequest) {
 const STRONG_FULL =
 	/(карт[аеуоыи](?![а-яё])|\bmap\b|mind ?map|схем|diagram|диаграм|инфограф|infograph|chart|график|сцен[аеуы](?![а-яё])|\bscene\b|интро|\bintro\b|заставк|outro|аутро|концовк|полноэкран|на весь (экран|кадр)|full[- ]?(frame|screen)|сложн|complex|моушн|motion design|explainer|объясн|визуализ|visuali[sz]|иконк|\bicons?\b|иллюстрац|illustrat|lottie|лотти|фото|photo|картинк|изображен|\bimages?\b|picture|маршрут|\broute\b|глобус|globe|таймлайн|сравнен|compar|список|\blist\b|по шагам|step by step|своими компонент|own component|tsx|remotion)/;
 
+/** What the motion kit draws as it is (a title, a plate, a lower third, a badge, a counter, a CTA). */
+const KIT_ONLY = /(заголов|титр|плашк|подпис|lower ?third|нижн(яя|юю) треть|бейдж|badge|счётчик|счетчик|counter|\bcta\b|призыв|кнопк|title|plate|caption|hook|хук)/;
+
 export function classify(r: PlanRequest): { mode: "quick" | "full"; why: string } {
 	if (r.force === "quick") return { mode: "quick", why: "you chose Quick" };
 	if (r.force === "full") return { mode: "full", why: "you chose Full" };
+	// A library element from a few words: the kit when the kit draws it as it is (seconds), its own animation otherwise.
+	// The user's words decide, not the preset's own boilerplate (its «no full-frame scene» read as «scene» → always full).
+	if (r.preset && typeof r.brief === "string") {
+		const q = r.brief.toLowerCase();
+		if (!STRONG_FULL.test(q) && !/анимац|animat|motion|рисун|draw|дерев|tree/.test(q) && KIT_ONLY.test(q)) return { mode: "quick", why: "the kit draws it as it is" };
+		return { mode: "full", why: "designed from scratch for this request" };
+	}
 	if (r.layers.some((l) => l.kind === "Custom")) return { mode: "full", why: "refining its own components" };
 	const q = r.request.toLowerCase();
 	// The user wants it to CREATE by default: ready kit blocks only when asked to be quick or to use templates.
@@ -207,7 +218,7 @@ const BUDGET = { plan: { tokens: 16000, timeout: 240 }, write: { tokens: 64000, 
 async function runFull(r: PlanRequest, face: Box | null, ctx: FullCtx): Promise<PlanResult> {
 	const { log, signal } = ctx;
 	const s = loadSettings();
-	if (!agentReady()) throw new StudioError(NOT_SET_UP);
+	if (!brainReadyNow() && !agentReady()) throw new StudioError(BRAIN_OFF);
 	let calls = 0;
 	/** One reasoner call → JSON; an unreadable answer gets one "valid JSON only" repair call before giving up. */
 	const thinkJson = async (messages: Message[], budget: { tokens: number; timeout: number }): Promise<{ text: string; json: any }> => {
@@ -249,6 +260,12 @@ async function runFull(r: PlanRequest, face: Box | null, ctx: FullCtx): Promise<
 		planLine = `keep everything, change only what the request names — "${request.slice(0, 120)}"`;
 		log(`Plan: ${planLine}`);
 		plan = { understanding: request, components: r.layers.filter((l) => l.kind === "Custom").map((l) => String(l.props.component ?? "")).filter(Boolean) };
+	} else if (r.preset) {
+		// One library element (Templates → «Create with Gaziyav AI»): no separate planning call — the writer plans it in
+		// its one answer (the step that cost a whole extra round trip on 21.11: 135 s for «дерево с текстом»).
+		planLine = `one element: ${(r.brief ?? request).slice(0, 160)}`;
+		log(`Plan: ${planLine}`);
+		plan = { understanding: request, elements: r.brief ? [r.brief.slice(0, 80)] : [] };
 	} else {
 		log("Planning…");
 		plan = (
@@ -329,7 +346,7 @@ ${assetList}
 Local fonts:
 ${fonts || "none"}`;
 	const messages: Message[] = [
-		{ role: "system", content: `${WRITE_SYSTEM}\n\n${skillsFor(`${request} ${plan.understanding ?? ""} ${(plan as { plan?: string }).plan ?? ""}`)}` },
+		{ role: "system", content: `${WRITE_SYSTEM}\n\n${skillsFor(`${request} ${plan.understanding ?? ""} ${(plan as { plan?: string }).plan ?? ""}`)}${r.uiLang === "ru" ? "\n\nThe user's interface is in Russian: every schema \"label\" is a short Russian label (Заголовок, Ветка 1, Цвет плашки…), never English." : "\n\nEvery schema \"label\" is a short English label."}` },
 		{ role: "user", content: writeUser },
 	];
 	let answer = await thinkJson(messages, BUDGET.write);
@@ -339,7 +356,9 @@ ${fonts || "none"}`;
 	fs.mkdirSync(runDir, { recursive: true });
 	let reviewed = false;
 	let built: Built | null = null;
-	for (let attempt = 0; attempt < 3; attempt++) {
+	// A library element gets one fix at most (each fix is a whole rewrite); a composition two.
+	const tries = r.preset ? 2 : 3;
+	for (let attempt = 0; attempt < tries; attempt++) {
 		if (signal.aborted) throw new CancelledError();
 		// A fix that comes back broken never costs the user the version that already works.
 		const previous = built;
@@ -365,7 +384,7 @@ ${fonts || "none"}`;
 				problems = [];
 			}
 		}
-		if (!problems.length || attempt === 2) break;
+		if (!problems.length || attempt === tries - 1) break;
 		log(`Fixing: ${problems[0].slice(0, 160)}${problems.length > 1 ? ` (+${problems.length - 1})` : ""}`);
 		messages.push({ role: "assistant", content: answer.text }, { role: "user", content: `Problems found when rendering your frames:\n- ${problems.join("\n- ")}\n${FIX_NOTE}` });
 		try {
@@ -376,11 +395,11 @@ ${fonts || "none"}`;
 			break;
 		}
 	}
-	if (!built) throw new StudioError("Gaziyav AI couldn't make any usable layers. Rephrase the request and try again.");
+	if (!built) throw new StudioError("Gaziyav AI couldn't make usable layers from these words: nothing was changed. Say it a little differently.");
 	// Whatever still fails after the fixes never reaches the editor.
 	const layers = built.layers.filter((l) => !built!.broken.has(l));
 	const keep = untouched(r, layers);
-	if (!layers.length && !keep.length) throw new StudioError(`Gaziyav AI couldn't make the animation render: ${built.problems[0] ?? "unknown problem"}. Rephrase the request and try again.`);
+	if (!layers.length && !keep.length) throw new StudioError("Gaziyav AI couldn't make the animation play: nothing was changed. Say it a little differently.");
 	// A layer that still shows a picture nobody found is not shipped as an empty placeholder: ask for the picture.
 	const unresolved = built.problems.find((p) => /uses p\.assets\..* but no such asset was found/.test(p));
 	if (unresolved && !found.some((c) => c.type === "image")) {
@@ -417,7 +436,7 @@ async function build(
 	beats: { at: number; what: string }[] = [],
 ): Promise<Built> {
 	const { log, signal } = ctx;
-	if (!raw || typeof raw !== "object") throw new StudioError("Gaziyav AI returned an unreadable answer.");
+	if (!raw || typeof raw !== "object") throw new StudioError("Gaziyav AI didn't manage this one: nothing was changed. Press the button once more.");
 	const problems: string[] = [];
 
 	// Components (a refinement may leave a component it did not change out of "components": its current code stays).

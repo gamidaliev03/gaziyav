@@ -118,10 +118,10 @@ export function captionStyleFromAnswer({
 export function parseModelJson(answer: string): unknown {
 	const start = answer.indexOf("{");
 	const end = answer.lastIndexOf("}");
-	if (start < 0 || end <= start) throw new Error("Gaziyav AI sent an unreadable answer. Try again.");
+	if (start < 0 || end <= start) throw new Error("Gaziyav AI didn't manage this one: nothing was changed. Press the button once more.");
 	try {
 		return JSON.parse(answer.slice(start, end + 1));
 	} catch {
-		throw new Error("Gaziyav AI sent an unreadable answer. Try again.");
+		throw new Error("Gaziyav AI didn't manage this one: nothing was changed. Press the button once more.");
 	}
 }

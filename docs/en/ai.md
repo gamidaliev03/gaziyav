@@ -2,7 +2,7 @@
 
 **English** · [Русский](../ru/ai.md)
 
-Gaziyav sells no AI. The editing AI (captions, pause removal, voice clean-up and the rest) runs [free on your Mac](manual/ondevice-ai.md), and [Claude](manual/claude.md) works through the Claude app you already use. This page is about the **optional paid models**. They run on **your own account** with a provider, at **the provider's list price**, and you see the price before you press. Without a key the editor works fully; only the paid buttons wait for one.
+Gaziyav sells no AI. The editing AI (captions, pause removal, voice clean-up and the rest) runs [free on your Mac](manual/ondevice-ai.md), and [Claude](manual/claude.md) works on your own Claude plan: in the chat inside the editor (through Claude Code) or in the Claude app. This page is about the **optional paid models**. They run on **your own account** with a provider, at **the provider's list price**, and you see the price before you press. Without a key the editor works fully; only the paid buttons wait for one.
 
 ## Set up your key (2 minutes)
 
@@ -67,13 +67,11 @@ List prices in US dollars as each API publishes them, read on 6 November 2026.  
 
 Picture-to-video versions of each family are next to them in **Media → Generate → AI video**.
 
-### Face swap and the agent
+### Face swap
 
 | Task | Model | Price |
 |---|---|---|
 | Face swap in a clip | PixVerse Swap | $0.20 per clip up to 5 s; longer clips cost double (up to 30 s) |
-| Agent, AI scripts, the dub's translation | Gemini 2.5 Flash (default) | by tokens, ≈ $0.30 per 1M input tokens |
-| | Claude Sonnet 4.5 · GPT-5 mini · DeepSeek V3 | by tokens · or type any OpenRouter model id |
 
 ## What runs where
 
@@ -82,6 +80,9 @@ Picture-to-video versions of each family are next to them in **Media → Generat
 | Editing, playback, effects, titles, export | your computer |
 | Captions (speech recognition) | your Mac (Whisper), model downloaded on first use |
 | Voice clean-up, separating voice and music, object clean-up | your Mac, models downloaded on first use |
-| Lipsync, voice, clone, pictures, video, face swap, the agent | your provider (fal.ai, or kie.ai / ArgoLink with their keys) |
+| Lipsync, voice, clone, pictures, video, face swap | your provider (fal.ai, or kie.ai / ArgoLink with their keys, or the service picked in Settings → Services) |
+| Gaziyav AI (titles, captions, scripts, the Post sheet's text) and the chat | the Claude you connected, through Claude Code on your Mac |
+
+**Text jobs are not on this list.** In the Mac app, Gaziyav AI — titles, caption styling and translation, scripts, **Create with Gaziyav AI** and **Write with Gaziyav AI** — runs on the Claude you connected in the chat, on your Claude plan, with no text model to choose or pay for ([Claude inside Gaziyav](manual/claude.md)). The browser edition has no Claude chat; its AI tab keeps the text-model choice (Gemini 2.5 Flash by default, on your fal.ai key).
 
 What exactly is sent: [Privacy](privacy.md).

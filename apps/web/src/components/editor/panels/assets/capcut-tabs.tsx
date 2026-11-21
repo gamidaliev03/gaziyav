@@ -13,6 +13,8 @@ import { LipsyncView } from "@/studio/components/lipsync-view";
 import { PhotoAvatar } from "@/studio/components/photo-avatar";
 import { VideoTranslator } from "@/generate/components/video-translator";
 import { DownloadsView, useWithDownloads } from "@/platform/desktop-sections";
+import { ToolHub, ToolRow, type Tool } from "./ai-hub";
+import { AudioWave01Icon, Folder01Icon, Image01Icon, Mic01Icon, MusicNote01Icon, TranslateIcon, Video01Icon, VoiceIcon } from "@hugeicons/core-free-icons";
 
 // over them (polish3 D, 13.11): with one place there is no section column at all (MaterialsLayout).
 const MEDIA_NAV: NavItem[] = [{ key: "media", label: "Media" }];
@@ -27,12 +29,19 @@ const ALL_AUDIO_NAV: NavItem[] = [
 // the voice generator needs the Mac app)
 const AUDIO_NAV: NavItem[] = ALL_AUDIO_NAV.filter((item) => !DEMO || item.key !== "tts");
 
-// AI: the generators in one place — a picture, a video, a talking avatar, a translated video.
-const AVATAR_NAV: NavItem[] = [
-	{ key: "ai-image", label: "AI image" },
-	{ key: "ai-video", label: "AI video" },
-	{ key: "photo", label: "Lipsync" },
-	{ key: "translator", label: "Translator" },
+// Audio and AI as tools, not as a tree: one row of names (Audio), one shelf of cards (AI). The keys are the store's
+// sections, so a place is remembered as before; the icons show only on the AI shelf.
+const AUDIO_TOOLS: Tool[] = AUDIO_NAV.map((item): Tool => {
+	const icon = item.key === "music" ? MusicNote01Icon : item.key === "sfx" ? AudioWave01Icon : item.key === "tts" ? VoiceIcon : Folder01Icon;
+	return { key: item.key, label: item.label, icon, ...(item.badge ? { badge: item.badge } : {}) };
+});
+
+const AI_TOOLS: Tool[] = [
+	{ key: "ai-image", label: "AI image", line: "A picture from a description", icon: Image01Icon },
+	{ key: "ai-video", label: "AI video", line: "A short clip from a description", icon: Video01Icon },
+	{ key: "photo", label: "Lipsync", line: "Make a face say new words", icon: Mic01Icon },
+	{ key: "translator", label: "Translator", line: "Dub a clip into another language", icon: TranslateIcon },
+	{ key: "voice", label: "Voice-over", line: "Text to a voice, 10 languages", icon: VoiceIcon, badge: "AI" },
 ];
 
 export function MediaTab() {
@@ -50,12 +59,12 @@ export function MediaTab() {
 
 export function AudioTab() {
 	return (
-		<MaterialsLayout
+		<ToolRow
 			tab="sounds"
-			items={AUDIO_NAV}
+			tools={AUDIO_TOOLS}
 			render={(section) =>
 				section === "tts" ? (
-					<div className="min-h-0 flex-1 overflow-y-auto">
+					<div className="min-h-0 flex-1" data-tts>
 						<LocalGenerator kind="voice" />
 					</div>
 				) : (
@@ -68,9 +77,9 @@ export function AudioTab() {
 
 export function AvatarTab() {
 	return (
-		<MaterialsLayout
+		<ToolHub
 			tab="avatar"
-			items={AVATAR_NAV}
+			tools={AI_TOOLS}
 			render={(section) =>
 				section === "ai-image" ? (
 					<PointView key="image" kind="image" title="AI image" />
@@ -79,6 +88,10 @@ export function AvatarTab() {
 				) : section === "translator" ? (
 					<div className="min-h-0 flex-1 overflow-y-auto" data-avatar-section="translator">
 						<VideoTranslator />
+					</div>
+				) : section === "voice" ? (
+					<div className="min-h-0 flex-1" data-avatar-section="voice" data-tts>
+						<LocalGenerator kind="voice" />
 					</div>
 				) : (
 					<div className="min-h-0 flex-1 overflow-y-auto" data-avatar-section={section}>

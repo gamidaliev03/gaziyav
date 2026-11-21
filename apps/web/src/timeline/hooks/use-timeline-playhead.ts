@@ -53,8 +53,12 @@ export function useTimelinePlayhead({
 		getSceneTracks: () => editor.scenes.getActiveScene().tracks,
 		getSceneBookmarks: () => editor.scenes.getActiveScene()?.bookmarks ?? [],
 		seek: (time) => editor.playback.seek({ time }),
-		setScrubbing: (scrubbing) =>
-			editor.playback.setScrubbing({ isScrubbing: scrubbing }),
+		setScrubbing: (scrubbing) => {
+			// The owner, 17.11: a dragged playhead plays nothing until it is let go — the picture follows the pointer as
+			// still frames (the preview already draws those), never as playback.
+			if (scrubbing && editor.playback.getIsPlaying()) editor.playback.pause();
+			editor.playback.setScrubbing({ isScrubbing: scrubbing });
+		},
 		setTimelineViewState: ({ zoomLevel, scrollLeft, playheadTime }) =>
 			editor.project.setTimelineViewState({
 				viewState: {

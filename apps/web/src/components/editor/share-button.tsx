@@ -96,7 +96,7 @@ export function ShareButton() {
 				<Button
 					variant="secondary"
 					size="sm"
-					className="relative h-[22px] w-[18px] rounded-[5px] px-0 after:absolute after:-inset-y-px after:-right-1.5 after:left-0 after:content-['']"
+					className="relative h-[22px] w-[18px] rounded-[5px] px-0 after:absolute after:-inset-y-px after:-right-1.5 after:left-0 after:content-['']" data-allow-small=""
 					data-share-button
 					aria-label={t("Share")}
 					title={t("Share")}

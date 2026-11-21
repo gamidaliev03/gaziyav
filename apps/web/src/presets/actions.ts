@@ -14,6 +14,7 @@ import type { TextPreset } from "@/text/presets";
 import type { CreateGraphicElement, TextElement, TimelineElement, TScene } from "@/timeline/types";
 import { generateUUID } from "@/utils/id";
 import { mediaTime, TICKS_PER_SECOND } from "@/wasm";
+import { useLang } from "@/i18n";
 import { type LayersPreset, type PresetLayer, type TextStylePreset, USER_PREFIX, type UserCaptionStyle, type UserTextPreset } from "./user-presets";
 
 const sec = (ticks: number) => ticks / TICKS_PER_SECOND;
@@ -80,6 +81,18 @@ export function presetName({ layers, description }: { layers: PresetLayer[]; des
 	return words.slice(0, 22) || "My preset";
 }
 
+/** What the run is doing, as the tile says it (RU in i18n/ru-services.ts); null: keep the line it shows. */
+export function stepOf(log: string): string | null {
+	if (/^Quick/.test(log)) return "Putting the plate together…";
+	if (/^(Full|Planning|Plan:)/.test(log)) return "Thinking it over…";
+	if (/^(Searching|Picking|Your media|Using your picture)/.test(log)) return "Looking for pictures…";
+	if (/^Writing/.test(log)) return "Writing the animation…";
+	if (/^(Looking at the frames|Art director)/.test(log)) return "Checking the frames…";
+	if (/^Fixing/.test(log)) return "Fixing a detail…";
+	if (/^Done/.test(log)) return "Almost done…";
+	return null;
+}
+
 /** Gaziyav AI designs a title or plate (the AI Composition agent, in Remotion) and it becomes a preset. */
 export async function designLayerPreset({
 	editor,
@@ -98,6 +111,9 @@ export async function designLayerPreset({
 	const plan = await runAgent(
 		{
 			request: presetRequest(description),
+			preset: true,
+			brief: description.trim().slice(0, 300),
+			uiLang: useLang.getState().lang,
 			mode: "variation",
 			force: "auto",
 			style: style.id,
@@ -118,8 +134,9 @@ export async function designLayerPreset({
 		},
 		signal,
 		(lines) => {
-			const last = lines[lines.length - 1];
-			if (last) onStep(last.replace(/…$/, "").trim().slice(0, 60));
+			// One short line per step, in the interface's words (the run's own log is English and technical).
+			const step = stepOf(lines[lines.length - 1] ?? "");
+			if (step) onStep(step);
 		},
 	);
 	if (plan.question) throw new Error(plan.question.text);

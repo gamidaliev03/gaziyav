@@ -32,6 +32,9 @@ export type ElementKind = "video" | "image" | "sticker" | "shape" | "ai" | "text
 export function elementKind(element: TimelineElement): ElementKind {
 	switch (element.type) {
 		case "graphic":
+			// A compound clip stands on the timeline as a clip of its own (CapCut ⌥G): nothing of the AI composition's
+			// panel belongs to it — the user sees Video/Audio/Speed/Color/Effects, like any other clip.
+			if (isCompositionElement(element) && element.params?.compound === true) return "video";
 			return isAiDefinition(element.definitionId) ? "ai" : "shape";
 		default:
 			return element.type;

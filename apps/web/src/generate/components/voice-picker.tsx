@@ -1,40 +1,34 @@
 "use client";
 
-// One voice picker wherever a voice is chosen (Text to speech, Voice changer, Video translator, the Lipsync voice),
-// as CapCut's Text to speech: category chips on top, then ONE grid of the same square cards. A click picks the voice
-// and plays its sample (a click on the card that is playing stops it); ▶ only plays or stops; one sample at a time.
-import { PlayIcon, StopIcon } from "@hugeicons/core-free-icons";
+// One voice picker wherever a voice is chosen (Text to speech, Voice changer, Video translator, the Lipsync voice), and
+// it is the editor's own list: a labelled field with the voices grouped (My voices · Trending · Ready voices · Voice
+// effects) and, beside it, ▶ for the chosen voice's sample and × to remove one of «My voices» (the owner, 17.11:
+// «убрать плиточки голосов и оставить вызывающийся список» — one system, one style, as the Lipsync panel has).
+import { Cancel01Icon, PlayIcon, StopIcon, VoiceIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@/components/ui/icon";
-import { useEffect, useMemo, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useEffect, useMemo } from "react";
 import { create } from "zustand";
 import { useLang, useT } from "@/i18n";
 import { trendSampleUrl, trendVoicesFor } from "@/trending/voices";
-import { cn } from "@/utils/ui";
 import { VOICES } from "../voices";
+import { EditorCore } from "@/core";
+import { registerAudioPreview } from "@/preview/audio-focus";
 
-export type VoiceGroup = "trending" | "narration" | "character" | "female" | "male" | "mine" | "filters";
+export type VoiceGroup = "trending" | "narration" | "character" | "female" | "male" | "mine" | "filters" | "service";
 
 export interface VoiceCard {
 	id: string;
 	name: string;
-	/** What it sounds like (on hover). */
+	/** What it sounds like (one line under the name in the list). */
 	hint?: string;
 	/** Its sample (a URL), or null when there is none yet. */
 	sample: string | null;
 	groups: VoiceGroup[];
+	/** A service's voice (Settings → Services): its service's name, and whether its key is in. */
+	service?: { id: string; name: string; ready: boolean };
 }
-
-// CapCut's chip names (Text to speech: Trending, Narration, Character, Female); All first, then ours.
-const CHIPS: Array<{ key: "all" | VoiceGroup; label: string }> = [
-	{ key: "all", label: "All" },
-	{ key: "filters", label: "Voice effects" },
-	{ key: "trending", label: "Trending" },
-	{ key: "narration", label: "Narration" },
-	{ key: "character", label: "Character" },
-	{ key: "female", label: "Female" },
-	{ key: "male", label: "Male" },
-	{ key: "mine", label: "My voices" },
-];
 
 const FEMALE = new Set(["vivian", "serena", "ono_anna", "sohee"]);
 const NARRATION = new Set(["ryan", "eric", "uncle_fu", "serena", "narrator", "trailer", "news"]);
@@ -56,12 +50,14 @@ export function trendCards(ui: "en" | "ru", sample: "en" | "ru" = ui): VoiceCard
 	return trendVoicesFor(ui).map((v) => ({ id: `trend:${v.id}`, name: v.label, hint: v.line, sample: trendSampleUrl(v.id, sample), groups: groupsOf(v.id, v.speaker, ["trending"]) }));
 }
 
-/** «My voices» (cloned on this Mac), `local:<id>`. */
+/** «My voices» (cloned on this Mac), `local:<key>`: the key is what a voice-over speaks with. */
 export const myCards = (voices: Array<{ id: string; name: string; seconds?: number }>): VoiceCard[] =>
 	voices.map((v) => ({ id: v.id, name: v.name, hint: "My voice", sample: `/api/voice-sample/${encodeURIComponent(v.id)}`, groups: ["mine"] }));
 
 // ── one sample at a time, shared by every picker ──
 const usePlaying = create<{ id: string | null }>(() => ({ id: null }));
+// The timeline starting to play stops this sample (preview/audio-focus.ts).
+registerAudioPreview(stopSample);
 let player: HTMLAudioElement | null = null;
 
 export function stopSample() {
@@ -70,10 +66,15 @@ export function stopSample() {
 	usePlaying.setState({ id: null });
 }
 
-function playSample(card: VoiceCard) {
+function playSample(card: VoiceCard | undefined) {
 	const was = usePlaying.getState().id;
+	// One sound at a time: the timeline stops for a voice sample, and the sample stops when the timeline starts.
+	try {
+		const playback = EditorCore.getInstance().playback;
+		if (playback.getIsPlaying()) playback.pause();
+	} catch {}
 	stopSample();
-	if (was === card.id || !card.sample) return;
+	if (!card || was === card.id || !card.sample) return;
 	const audio = new Audio(card.sample);
 	player = audio;
 	// The tests listen to it (currentTime grows while it plays).
@@ -87,116 +88,132 @@ function playSample(card: VoiceCard) {
 	void audio.play().catch(end);
 }
 
+/** The list's groups, in the order a person means them: their own voices first, then the looks, then the plain ones. */
+const ADD = "__your_voice__";
+
 export function VoicePicker({
 	cards,
 	value,
 	onPick,
 	onAdd,
 	onRemove,
-	first = "all",
 	label,
+	title = "Voice",
 }: {
 	cards: VoiceCard[];
 	value: string;
 	onPick: (id: string) => void;
-	/** «＋ Your voice»: shown in All and My voices. */
+	/** «＋ Your voice»: the last line of the list. */
 	onAdd?: () => void;
 	onRemove?: (id: string) => void;
-	/** The chip picked at first. */
-	first?: "all" | VoiceGroup;
+	/** The data attribute tests and the panel's own styling look for. */
 	label?: string;
+	/** The field's name (Voice, Sound…); hidden with an empty string. */
+	title?: string;
 }) {
 	const t = useT();
 	const playing = usePlaying((s) => s.id);
-	const [chip, setChip] = useState<"all" | VoiceGroup>(first);
 	useEffect(() => () => stopSample(), []);
-	const chips = useMemo(() => CHIPS.filter((c) => c.key === "all" || cards.some((v) => v.groups.includes(c.key as VoiceGroup)) || (c.key === "mine" && onAdd)), [cards, onAdd]);
-	const shown = chip === "all" ? cards : cards.filter((v) => v.groups.includes(chip));
-	const tile = "relative aspect-square min-w-0";
+	const picked = cards.find((c) => c.id === value);
+	// A card belongs to one group of the list: its own kind, not the four «what it sounds like» chips of the old grid.
+	const groups = useMemo(() => {
+		const of = (key: VoiceGroup) => cards.filter((c) => c.groups.includes(key));
+		const mine = of("mine");
+		const trend = of("trending");
+		const effects = of("filters");
+		const ready = cards.filter((c) => !c.groups.includes("mine") && !c.groups.includes("trending") && !c.groups.includes("filters") && !c.groups.includes("service"));
+		// The services' voices after Gaziyav's own, one group per service (the ones with a key first).
+		const services = new Map<string, { name: string; ready: boolean; items: VoiceCard[] }>();
+		for (const c of cards) {
+			if (!c.service) continue;
+			const g = services.get(c.service.id) ?? { name: c.service.name, ready: c.service.ready, items: [] };
+			g.items.push(c);
+			services.set(c.service.id, g);
+		}
+		const serviceGroups = [...services.entries()]
+			.sort((a, b) => Number(b[1].ready) - Number(a[1].ready))
+			.map(([id, g]) => ({ key: `service:${id}`, label: g.ready ? g.name : t("{name} · needs a key", { name: g.name }), items: g.items, raw: true }));
+		return [
+			{ key: "mine", label: "My voices", items: mine },
+			{ key: "trending", label: "Trending", items: trend },
+			{ key: "ready", label: "Ready voices", items: ready },
+			{ key: "filters", label: "Voice effects", items: effects },
+			...serviceGroups,
+		].filter((g) => g.items.length > 0);
+	}, [cards, t]);
+	const removable = !!onRemove && !!picked?.groups.includes("mine");
 	return (
-		<div className="flex flex-col gap-2" data-voice-picker={label ?? ""}>
-			{/* One kind of card only (the Voice changer's effects): no chips, «All» would say the same */}
-			{chips.length > 2 && (
-			<fieldset className="m-0 flex flex-wrap gap-1 border-0 p-0" aria-label={t("Voice categories")}>
-				{chips.map((c) => (
-					<button
-						key={c.key}
-						type="button"
-						data-voice-filter={c.key}
-						aria-pressed={chip === c.key}
-						onClick={() => setChip(c.key)}
-						className={cn("h-6 rounded-full px-2.5 text-[11px] font-medium transition-colors", chip === c.key ? "bg-foreground text-background" : "bg-muted text-muted-foreground hover:text-foreground")}
-					>
-						{t(c.label)}
-					</button>
-				))}
-			</fieldset>
-			)}
-			<div className="grid gap-1.5" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(72px, 1fr))" }} data-voice-grid>
-				{shown.map((v) => {
-					const picked = value === v.id;
-					const sounding = playing === v.id;
-					return (
-						<div key={v.id} className={cn(tile, "group")}>
-							<button
-								type="button"
-								data-voice-card={v.id}
-								aria-pressed={picked}
-								data-playing={sounding || undefined}
-								title={v.hint ? `${v.name} — ${t(v.hint)}` : v.name}
-								onClick={() => {
-									onPick(v.id);
-									playSample(v);
-								}}
-								className={cn(
-									"absolute inset-0 flex items-center justify-center rounded-md border-2 bg-muted/50 px-1.5 text-center transition-colors",
-									picked ? "border-primary bg-primary/10" : "border-transparent hover:bg-accent",
-								)}
-							>
-								<span className="line-clamp-2 text-xs leading-tight font-medium" data-no-translate>
-									{v.name}
+		<div className="grid grid-cols-[4.25rem_minmax(0,1fr)] items-center gap-2" data-voice-picker={label ?? ""}>
+			{title ? <span className="text-muted-foreground text-[11px]">{t(title)}</span> : <span />}
+			<div className="flex min-w-0 items-center gap-1">
+				<Select
+					value={picked ? value : undefined}
+					onValueChange={(v) => {
+						if (v === ADD) return onAdd?.();
+						onPick(v);
+					}}
+				>
+					<SelectTrigger className="h-8 min-w-0 flex-1 text-xs" data-voice-trigger aria-label={t(title || "Voice")}>
+						<SelectValue placeholder={t("Choose a voice")}>
+							{picked && (
+								<span className="flex min-w-0 items-center gap-1.5">
+									<HugeiconsIcon icon={VoiceIcon} className="text-primary size-3.5 shrink-0" />
+									<span className="truncate font-medium" data-no-translate>
+										{picked.name}
+									</span>
 								</span>
-							</button>
-							<button
-								type="button"
-								data-voice-play={v.id}
-								aria-label={sounding ? t("Stop") : t("Play")}
-								disabled={!v.sample}
-								onClick={() => playSample(v)}
-								className={cn(
-									"absolute bottom-1 left-1 grid size-5 place-items-center rounded-full transition-colors disabled:opacity-30",
-									sounding ? "bg-primary text-primary-foreground" : "bg-background/80 text-muted-foreground hover:text-foreground",
-								)}
-							>
-								<HugeiconsIcon icon={sounding ? StopIcon : PlayIcon} className="size-2.5" />
-							</button>
-							{onRemove && v.groups.includes("mine") && (
-								<button
-									type="button"
-									data-voice-remove={v.id}
-									title={t("Remove this voice")}
-									aria-label={t("Remove this voice")}
-									onClick={() => onRemove(v.id)}
-									className={cn("text-muted-foreground hover:text-foreground absolute top-0.5 right-1 text-xs", picked ? "block" : "hidden group-hover:block")}
-								>
-									×
-								</button>
 							)}
-						</div>
-					);
-				})}
-				{onAdd && (chip === "all" || chip === "mine") && (
-					<div className={tile}>
-						<button
-							type="button"
-							data-testid="my-voices-add"
-							onClick={onAdd}
-							className="border-border hover:bg-accent absolute inset-0 flex flex-col items-center justify-center gap-0.5 rounded-md border border-dashed px-1.5 text-center"
-						>
-							<span className="text-base leading-none">＋</span>
-							<span className="text-xs leading-tight font-medium">{t("Your voice")}</span>
-						</button>
-					</div>
+						</SelectValue>
+					</SelectTrigger>
+					<SelectContent data-voice-list>
+						{groups.map((g) => (
+							<SelectGroup key={g.key}>
+								<SelectLabel data-voice-filter={g.key}>{"raw" in g ? g.label : t(g.label)}</SelectLabel>
+								{g.items.map((c) => (
+									<SelectItem key={c.id} value={c.id} className="text-xs" note={c.hint ? t(c.hint) : undefined} data-voice-card={c.id}>
+										<span data-no-translate>{c.name}</span>
+									</SelectItem>
+								))}
+							</SelectGroup>
+						))}
+						{onAdd && (
+							<>
+								<SelectSeparator />
+								<SelectItem value={ADD} className="text-xs" data-testid="my-voices-add">
+									＋ {t("Your voice")}
+								</SelectItem>
+							</>
+						)}
+					</SelectContent>
+				</Select>
+				{/* ▶ the chosen voice's own recording (one sample at a time, shared by every picker) */}
+				<Button
+					type="button"
+					size="icon"
+					variant="ghost"
+					className="size-8 shrink-0"
+					data-voice-play={picked?.id}
+					disabled={!picked?.sample}
+					aria-label={playing === picked?.id ? t("Stop") : t("Listen to this voice")}
+					title={playing === picked?.id ? t("Stop") : t("Listen to this voice")}
+					onClick={() => playSample(picked)}
+				>
+					<HugeiconsIcon icon={playing === picked?.id ? StopIcon : PlayIcon} className="size-3.5" />
+				</Button>
+				{/* × one of «My voices» — its own button, so the tick of a picked voice never covers it (the owner, 17.11) */}
+				{removable && (
+					<Button
+						type="button"
+						size="icon"
+						variant="ghost"
+						className="text-muted-foreground hover:text-foreground size-8 shrink-0"
+						data-voice-remove={picked?.id}
+						aria-label={t("Remove this voice")}
+						title={t("Remove this voice")}
+						onClick={() => picked && onRemove?.(picked.id)}
+					>
+						<HugeiconsIcon icon={Cancel01Icon} className="size-3.5" />
+					</Button>
 				)}
 			</div>
 		</div>
@@ -208,3 +225,4 @@ export function useVoiceLang(text = ""): { ui: "en" | "ru"; sample: "en" | "ru" 
 	const ui = useLang((s) => s.lang);
 	return { ui, sample: text.trim() ? (/[а-яё]/i.test(text) ? "ru" : "en") : ui };
 }
+

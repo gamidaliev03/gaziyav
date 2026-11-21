@@ -15,7 +15,7 @@ import { splitTargets } from "@/timeline/split-targets";
 import { lockedTrackIds } from "@/timeline/track-lock";
 import { useTrimUi } from "@/timeline/trim/store";
 import type { ElementRef, SceneTracks } from "@/timeline/types";
-import { useSelectedCut } from "@/transitions/commands";
+import { canJoinCut, findNearestCut, useSelectedCut } from "@/transitions/commands";
 import type { TAction } from "./definitions";
 import { setActionGuard } from "./registry";
 
@@ -93,11 +93,17 @@ const hasMarks = (editor: EditorCore): Why => {
 	return resolveInOutRange({ inPoint, outPoint, duration: editor.timeline.getTotalDuration() }) ? null : WHY.marks;
 };
 
-/** ⌫ also takes a clicked transition, selected keys or mask points off. */
+/** ⌫ also takes a clicked transition, selected keys or mask points off — and cancels a split when the playhead is
+ *  parked exactly on the cut between its two halves (nothing else selected). */
 const canDelete = (editor: EditorCore): Why => {
 	if (useSelectedCut.getState().cut) return null;
 	const kind = editor.selection.getActiveSelectionKind();
 	if (kind === "keyframes" || kind === "mask-points") return null;
+	if (kind === null) {
+		const at = editor.playback.getCurrentTime();
+		const near = findNearestCut(at);
+		if (near && Math.abs(near.time - at) <= 6000 && canJoinCut(near)) return null;
+	}
 	return needClips(editor);
 };
 

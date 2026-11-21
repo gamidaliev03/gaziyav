@@ -15,7 +15,7 @@ import { useTimelineStore } from "@/timeline/timeline-store";
 import { TICKS_PER_SECOND } from "@/wasm";
 import { cn } from "@/utils/ui";
 import { TRIM_CURSOR_CSS } from "../cursors";
-import { formatDeltaTimecode, formatFrames, pickedLabel, TRIM_LIMIT_LABEL, TRIM_READOUT } from "../format";
+import { formatDeltaTimecode, formatFrames, TRIM_LIMIT_LABEL, TRIM_READOUT } from "../format";
 import { editTime } from "../keys";
 import { TrimPointer, twoUpTarget } from "../pointer";
 import { useTrimUi } from "../store";
@@ -187,15 +187,12 @@ function PickedEdge({ pps }: { pps: number }) {
 					style={side === "out" ? { right: selection.kind === "roll" ? 1 : 0 } : { left: selection.kind === "roll" ? 1 : 0 }}
 				/>
 			))}
-			<span
-				className={cn(
-					"absolute top-0.5 rounded-[3px] bg-[#ffc53d] px-1 text-[10px] leading-[14px] font-semibold whitespace-nowrap text-black",
-					selection.kind === "roll" ? "left-1/2 -translate-x-1/2" : selection.side === "right" ? "right-2.5" : "left-2.5",
-				)}
-			>
-				{t(pickedLabel(selection))}
-				{looping ? ` · ${t("plays")}` : ""}
-			</span>
+			{looping && (
+				// Only the looping note is worth a word over the cut («Roll: both sides» named nothing a person needed).
+				<span className="absolute top-0.5 left-1/2 -translate-x-1/2 rounded-[3px] bg-[#ffc53d] px-1 text-[10px] leading-[14px] font-semibold whitespace-nowrap text-black">
+					{t("plays")}
+				</span>
+			)}
 		</div>
 	);
 }

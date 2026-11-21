@@ -1,0 +1,10 @@
+{
+	"name": "gaziyav-agent",
+	"private": true,
+	"description": "The Claude chat beside the editor: its agent host (from OpenFilm, MIT — see LICENSE-OpenFilm). `npm install` here before build.sh; node_modules/openfilm is part of this source tree.",
+	"dependencies": {
+		"@agentclientprotocol/sdk": "1.5.0",
+		"@agentclientprotocol/claude-agent-acp": "0.81.2",
+		"diff": "9.0.0"
+	}
+}

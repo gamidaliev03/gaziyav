@@ -33,10 +33,10 @@ export function parseAiTitles(answer: string): AiTitles {
 		const end = answer.lastIndexOf("}");
 		data = JSON.parse(answer.slice(start, end + 1));
 	} catch {
-		throw new Error("Gaziyav AI sent an unreadable answer. Try again.");
+		throw new Error("Gaziyav AI didn't manage this one: nothing was changed. Press the button once more.");
 	}
 	const titles = { hook: clean(data.hook, 9), cta: clean(data.cta, 6) };
-	if (!titles.hook || !titles.cta) throw new Error("Gaziyav AI sent empty titles. Try again.");
+	if (!titles.hook || !titles.cta) throw new Error("Gaziyav AI didn't manage this one: nothing was changed. Press the button once more.");
 	return titles;
 }
 

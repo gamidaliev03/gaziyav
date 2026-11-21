@@ -2,6 +2,8 @@
 // speaker embedding), the app's ready voices are its own. MiniMax: its voices, or a clone at $1.50 each. A clone is
 // made once per sample and kept in fal-voices.json (made again after six days: fal's files and MiniMax's unused
 // clones don't last for ever).
+import { chosen } from "@/studio/server/providers/services";
+import { isServiceVoice, speakService, stand_in } from "@/studio/server/providers/voices";
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
@@ -135,6 +137,15 @@ export interface SpeakInput {
 
 /** Text → speech file. Returns its length and the price. */
 export async function speak(s: SpeakInput, o: RunOptions = {}): Promise<{ seconds: number; cost: number }> {
+	// Settings → Services: a service's voice speaks on its service (billed there, to its key); with another service chosen
+	// for Voice-over, a Gaziyav voice speaks as that service's featured voice of the same sex. Not cloned voices.
+	if (!s.cloned) {
+		const pick = isServiceVoice(s.voiceId) ? s.voiceId : chosen("tts").provider ? await stand_in(chosen("tts").provider as string, /vivian|serena|anna|sohee/i.test(s.voiceId)) : null;
+		if (pick) {
+			const { seconds } = await speakService(pick, s.text.trim().slice(0, 5000), s.out, { signal: o.signal, onStatus: o.onStatus, language: s.language });
+			return { seconds, cost: 0 };
+		}
+	}
 	// A cloned voice is fal's (kie.ai has no clones): it speaks through fal's speech model whichever API is on.
 	const model = s.cloned ? chosenTts() : modelFor("tts");
 	const text = s.text.trim().slice(0, 5000);

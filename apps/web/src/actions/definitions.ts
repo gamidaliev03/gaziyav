@@ -407,10 +407,6 @@ export const ACTIONS = {
 		description: "Loop Playback",
 		category: "playback",
 	},
-	"open-assemble": {
-		description: "Assemble a First Cut",
-		category: "editing",
-	},
 	"toggle-follow-select": {
 		description: "Selection Follows Playhead",
 		category: "timeline",

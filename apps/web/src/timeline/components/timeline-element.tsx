@@ -270,6 +270,8 @@ interface TimelineElementProps {
 	/** Vertical drag offset in px while this element is being dragged. */
 	dragOffsetY?: number;
 	isDropTarget?: boolean;
+	/** The stretches of this clip that another clip shows too, and their colour (timeline/duplicate-sources.ts). */
+	duplicate?: { color: string; segments: Array<{ from: number; to: number }> };
 }
 
 /** Narrower than this a video clip shows its colour only (the filmstrip's MIN_STRIP_WIDTH_PX: `data-narrow`). */
@@ -379,7 +381,8 @@ function areTimelineElementPropsEqual(
 		prev.mediaAsset === next.mediaAsset &&
 		prev.dragStartTime === next.dragStartTime &&
 		prev.dragOffsetY === next.dragOffsetY &&
-		prev.isDropTarget === next.isDropTarget
+		prev.isDropTarget === next.isDropTarget &&
+		prev.duplicate === next.duplicate
 	);
 }
 
@@ -412,6 +415,7 @@ function TimelineElementImpl({
 	dragStartTime,
 	dragOffsetY = 0,
 	isDropTarget = false,
+	duplicate,
 }: TimelineElementProps) {
 	const renderElement =
 		useElementPreviewOverride<TimelineElementType>({
@@ -538,6 +542,7 @@ function TimelineElementImpl({
 						onElementClick={onElementClick}
 						mediaAsset={mediaAsset}
 						isDropTarget={isDropTarget}
+						duplicate={duplicate}
 					/>
 					{/* Beat marks (⌘J), as CapCut's yellow dots along the bottom of the clip. */}
 					{element.beats && element.beats.length > 0 && element.duration > 0
@@ -583,6 +588,8 @@ interface LiteClipProps {
 	dragStartTime?: MediaTime;
 	dragOffsetY?: number;
 	isDropTarget?: boolean;
+	/** The stretches of this clip that another clip shows too (timeline/duplicate-sources.ts). */
+	duplicate?: { color: string; segments: Array<{ from: number; to: number }> };
 }
 
 /**
@@ -605,6 +612,7 @@ export const LiteClip = memo(function LiteClip({
 	dragStartTime,
 	dragOffsetY = 0,
 	isDropTarget = false,
+	duplicate,
 }: LiteClipProps) {
 	const shown = useElementPreviewOverride<TimelineElementType>({ trackId, elementId: element.id }) ?? element;
 	const isBeingDragged = dragStartTime !== undefined;
@@ -648,6 +656,7 @@ export const LiteClip = memo(function LiteClip({
 					onClick={(event) => onElementClick({ event, element })}
 					onMouseDown={(event) => onElementMouseDown({ event, element })}
 				/>
+				{duplicate && <span aria-hidden data-duplicate-line={duplicate.color} className="pointer-events-none absolute inset-x-0 bottom-0 z-[3]" style={{ height: 2, backgroundColor: duplicate.color, opacity: 0.95 }} />}
 			</div>
 			{linked && <span aria-hidden data-linked-mark="" className={LINKED_MARK_CLASS} />}
 			{track && onResizeStart && (
@@ -696,6 +705,7 @@ interface TimelineElementBodyProps {
 	onElementClick: TimelineElementProps["onElementClick"];
 	mediaAsset: MediaAsset | null;
 	isDropTarget: boolean;
+	duplicate?: { color: string; segments: Array<{ from: number; to: number }> };
 }
 
 function areBodyPropsEqual(
@@ -732,7 +742,8 @@ function areBodyPropsEqual(
 		prev.onElementMouseDown === next.onElementMouseDown &&
 		prev.onElementClick === next.onElementClick &&
 		prev.mediaAsset === next.mediaAsset &&
-		prev.isDropTarget === next.isDropTarget
+		prev.isDropTarget === next.isDropTarget &&
+		prev.duplicate === next.duplicate
 	);
 }
 
@@ -754,6 +765,7 @@ function TimelineElementBodyImpl({
 	onElementClick,
 	mediaAsset,
 	isDropTarget,
+	duplicate,
 }: TimelineElementBodyProps) {
 	const elementWidth = timelineTimeToPixels({
 		time: displayedDuration,
@@ -833,6 +845,19 @@ function TimelineElementBodyImpl({
 
 	return (
 		<>
+			{/* The reuse mark: a hairline along the clip's bottom edge, ONLY over the stretch another clip shows too. */}
+			{duplicate && duplicate.segments.length > 0 && (
+				<span aria-hidden data-duplicate-line={duplicate.color} className="pointer-events-none absolute inset-x-0 bottom-0 z-[3] block" style={{ height: 2 }}>
+					{duplicate.segments.map((segment, index) => (
+						<span
+							key={`${segment.from}:${index}`}
+							data-duplicate-segment={`${segment.from.toFixed(4)}:${segment.to.toFixed(4)}`}
+							className="absolute top-0 bottom-0 rounded-[1px]"
+							style={{ left: `${segment.from * 100}%`, width: `${Math.max(0.4, (segment.to - segment.from) * 100)}%`, backgroundColor: duplicate.color, opacity: 0.95 }}
+						/>
+					))}
+				</span>
+			)}
 			<ElementInner
 				element={element}
 				displayElement={renderElement}

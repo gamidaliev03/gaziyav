@@ -49,6 +49,7 @@ import type {
 	DropTarget,
 	TimelineElement as TimelineElementType,
 } from "@/timeline";
+import { duplicateMarks as duplicateMarksOf } from "@/timeline/duplicate-sources";
 import {
 	TimelineTrackContent,
 	type TimelineRenderWindow,
@@ -1350,6 +1351,8 @@ const TimelineTrackRows = memo(function TimelineTrackRows({
 		return byTrack;
 	}, [selectedElements]);
 	const mediaAssets = useEditor((e) => e.media.getAssets(), ["media"]);
+	// A media used twice on the timeline: every use gets the same thin line, another media another colour (Adobe's mark).
+	const duplicateMarks = useMemo(() => duplicateMarksOf(tracks), [tracks]);
 	const mediaById = useMemo(
 		() => new Map<string, MediaAsset>(mediaAssets.map((a) => [a.id, a])),
 		[mediaAssets],
@@ -1435,6 +1438,7 @@ const TimelineTrackRows = memo(function TimelineTrackRows({
 							selectedIdsByTrack.get(track.id) ?? EMPTY_ID_SET
 						}
 						mediaById={mediaById}
+						duplicateMarks={duplicateMarks}
 						renderWindow={renderWindow}
 						isMain={track.id === scene?.tracks.main.id}
 					/>

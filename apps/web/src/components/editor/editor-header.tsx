@@ -17,7 +17,6 @@ import { Dialog, DialogContent, DialogTitle } from "../ui/dialog";
 import { TrashProjectDialog } from "@/project/components/trash-project-dialog";
 import { useRouter } from "next/navigation";
 import { ExportButton } from "./export-button";
-import { AssembleMount } from "@/assemble/components/assemble";
 import { toast } from "sonner";
 import { useEditor } from "@/editor/use-editor";
 import {
@@ -32,10 +31,8 @@ import {
 	Settings01Icon,
 	SlidersHorizontalIcon,
 	Clock01Icon,
-	AiMagicIcon,
 	FolderAddIcon,
 } from "@hugeicons/core-free-icons";
-import { invokeAction } from "@/actions";
 import { EditorVersionsDialog } from "@/project/components/editor-versions-dialog";
 import { HugeiconsIcon } from "@/components/ui/icon";
 import { ShortcutsDialog } from "@/actions/components/shortcuts-dialog";
@@ -93,7 +90,7 @@ export function EditorHeader() {
 		>
 			{/*
 			    saved), the project name centred, then one activity icon · search · Export (Share in its ▾). Undo and Redo
-			    sit in the timeline's toolbar; home, Layout, Shortcuts and Assemble are in the project menu. */}
+			    sit in the timeline's toolbar; home, Layout and Shortcuts are in the project menu. */}
 			<div className="flex min-w-0 items-center gap-3 pl-[73px]">
 				<SectionSwitch />
 				{/* (no room next to the centred project name in a small window) */}
@@ -109,13 +106,12 @@ export function EditorHeader() {
 			</div>
 			<nav className="flex shrink-0 items-center gap-2">
 				{/*
-				    Assemble are in the project menu (and ⌘K, ⌘/); Claude shows in the activity icon. */}
+				    are in the project menu (and ⌘K, ⌘/); Claude shows in the activity icon. */}
 				<JobsChip />
 				<ToolSearchButton />
 				<AgentPill />
-				<AssembleMount />
 				{/* Share folds into Export: its ▾ right of the button (the owner, 12.11) */}
-				<span className="flex items-center gap-px">
+				<span className="flex items-center gap-1">
 					<ExportButton />
 					<ShareButton />
 				</span>
@@ -278,9 +274,6 @@ function ProjectMenu() {
 					title={t("Copy into the project the files it uses from their places on this Mac: then it needs none of them")}
 				>
 					{t("Collect files into the project")}
-				</DropdownMenuItem>
-				<DropdownMenuItem onClick={() => invokeAction("open-assemble")} icon={<HugeiconsIcon icon={AiMagicIcon} />} data-assemble-button>
-					{t("Assemble")}
 				</DropdownMenuItem>
 				<LayoutSubmenu />
 				<DropdownMenuSeparator />

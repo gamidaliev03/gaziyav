@@ -21,7 +21,7 @@ import * as posts from "@/share/server/posts";
 import { writeCaption } from "@/share/server/caption-writer";
 import { isRenderedFile, renderedStream } from "@/export/server/rendered-file";
 import { saveVideo } from "@/share/server/store";
-import { NOT_SET_UP } from "@/studio/server/agent-keys";
+import { BRAIN_OFF } from "@/studio/server/brain";
 import { SITES } from "@/share/sites";
 import * as late from "@/share/server/late";
 import { createLate } from "@/share/server/late-posts";
@@ -119,8 +119,8 @@ export async function POST(req: Request, ctx: Ctx) {
 				try {
 					return json(await writeCaption({ material: String(body.material ?? ""), platforms: Array.isArray(body.platforms) ? (body.platforms as never[]) : [], lang: body.lang === "ru" ? "ru" : "en", signal: req.signal }));
 				} catch (error) {
-					const message = error instanceof Error ? error.message : "Gaziyav AI couldn't write it. Try again.";
-					return json({ error: message, setup: message === NOT_SET_UP });
+					const message = error instanceof Error ? error.message : "Gaziyav AI didn't manage this one: nothing was changed. Press the button once more.";
+					return json({ error: message, setup: message === BRAIN_OFF });
 				}
 			}
 			case "claim":

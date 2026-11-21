@@ -5,6 +5,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { supportDir } from "@/platform/paths";
 import { activeAgent, getKey } from "./agent-keys";
+import { brainReadyNow } from "./brain";
 
 export interface StudioSettings {
 	speechSpeed: number;
@@ -112,8 +113,9 @@ export function saveSettings(patch: Partial<StudioSettings>): StudioSettings {
 /** What the panel may see: the preferences, and whether Gaziyav AI can answer (keys never leave here). */
 export function publicSettings(s: StudioSettings) {
 	const { deepseekKey, ...rest } = s;
-	const a = activeAgent();
-	return { ...rest, agent: !!a, brain: a ? { provider: a.provider, name: a.name, model: a.model } : null };
+	// One brain (brain.ts): Gaziyav AI is the connected Claude; no model name is shown outside the chat's picker.
+	const ready = brainReadyNow() || !!activeAgent();
+	return { ...rest, agent: ready, brain: ready ? { provider: "claude", name: "Gaziyav AI", model: "" } : null };
 }
 
 export type PublicSettings = ReturnType<typeof publicSettings>;

@@ -17,6 +17,7 @@ import { CancelledError, StudioError } from "@/studio/server/errors";
 import { probe } from "@/studio/server/media";
 import { studioHome } from "@/studio/server/settings";
 import { findTool, reason, run } from "@/studio/server/tools";
+import { chosenProvider, runService } from "@/studio/server/providers/services";
 
 export type Kind = "video" | "image" | "audio";
 
@@ -173,6 +174,7 @@ function modelOf(g: GenerateInput): FalModel {
 }
 
 export async function check(g: GenerateInput): Promise<void> {
+	if (serviceRoute(g)) return;
 	if (g.kind === "audio") throw new StudioError("Music generation isn't part of this app.");
 	if (g.kind === "video") {
 		const { model, options, have } = videoRequest(g);
@@ -253,6 +255,8 @@ async function videoUrls(g: GenerateInput, m: VideoModel, linkOf: LinkOf) {
 
 /** The price in US dollars before anything is spent (fal's list price). */
 export async function estimate(g: GenerateInput): Promise<{ cost: number }> {
+	// A service chosen in Settings → Services bills its own key: no price is known here.
+	if (serviceRoute(g)) return { cost: 0 };
 	await check(g);
 	if (g.kind === "video") {
 		const { model, options } = videoRequest(g);
@@ -447,6 +451,8 @@ export interface Started {
  * twice (C2: 9 paid re-runs, $1.35, on 10.11). `again` makes a new take.
  */
 export async function generate(g: GenerateInput, allowed?: number, o: GenerateOptions = {}): Promise<Started> {
+	const svc = serviceRoute(g);
+	if (svc) return startService(g, svc);
 	// The model decides, not the switch: a form opened before a flip still runs what it shows.
 	const api = provider(g.kind === "video" ? videoModel(g.model)?.api : falModel(g.model)?.api);
 	if (!api.hasKey()) throw new StudioError(api.id === "kie" ? "Add your kie.ai key first: Settings → AI." : api.id === "argo" ? "Add your ArgoLink key first: Settings → AI." : "Add your fal.ai key first: Settings → AI (fal.ai).");
@@ -472,6 +478,48 @@ export async function generate(g: GenerateInput, allowed?: number, o: GenerateOp
 	starting_.set(key, started);
 	void started.finally(() => starting_.get(key) === started && starting_.delete(key)).catch(() => {});
 	return started;
+}
+
+/**
+ * Settings → Services → Image / Video generation set to another service (with its key): every picture or clip of the
+ * panels and of Claude is made there, with the model chosen in that row; null = Gaziyav's own way (fal / kie / Argo).
+ */
+function serviceRoute(g: GenerateInput) {
+	if (g.kind !== "image" && g.kind !== "video") return null;
+	return chosenProvider(g.kind);
+}
+
+function startService(g: GenerateInput, svc: NonNullable<ReturnType<typeof serviceRoute>>): Started {
+	const id = `gen-${Date.now().toString(36)}-${crypto.randomBytes(3).toString("hex")}`;
+	const title = svc.option.en;
+	const view: JobView = { id, kind: g.kind, model: title, state: "running", progress: 5, cost: 0, error: null, files: [] };
+	const abort = new AbortController();
+	jobs.set(id, { view, abort });
+	// The first picture (a picture's reference, a clip's first frame) goes with it, under its own extension.
+	const first = pictures(g)[0];
+	const ref = first ? refs_.get(first)?.file : undefined;
+	const inputs: Record<string, string> = ref ? { [`ref/first${path.extname(ref) || ".png"}`]: ref } : {};
+	const refPath = Object.keys(inputs)[0];
+	const args: Record<string, unknown> =
+		g.kind === "image"
+			? { prompt: g.prompt, out: "gen", ...(g.aspect_ratio ? { ratio: g.aspect_ratio } : {}), ...(refPath ? { ref: [refPath] } : {}) }
+			: { prompt: g.prompt, out: "gen", ...(g.duration_seconds ? { duration: g.duration_seconds } : {}), ...(g.aspect_ratio ? { "aspect-ratio": g.aspect_ratio } : {}), ...(refPath ? { "first-frame": refPath } : {}) };
+	void (async () => {
+		try {
+			const r = await runService(svc.provider.id, g.kind, args, { model: svc.option.model, into: resultsDir(), signal: abort.signal, inputs });
+			for (const [i, file] of r.files.entries()) {
+				const ext = path.extname(file).slice(1).toLowerCase() || (g.kind === "video" ? "mp4" : "png");
+				view.files.push({ path: file, name: resultName(g.prompt, title, id, i, ext), kind: g.kind });
+			}
+			if (!view.files.length) throw new StudioError("The service didn't make it: try again, or pick another service.");
+			view.state = "succeeded";
+			view.progress = 100;
+		} catch (error) {
+			view.state = "failed";
+			view.error = error instanceof CancelledError ? "Cancelled" : (error as Error).message;
+		}
+	})();
+	return { jobId: id, cost: 0 };
 }
 
 /** Claude's calls being started (uploads under way): «key» → the start. */

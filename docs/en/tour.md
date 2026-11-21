@@ -40,7 +40,7 @@ Fifteen slides, two minutes. One idea per slide.
 
 <img src="../../assets/loops/claude-en.gif" width="100%" alt="The request «remove the pauses» appears over the editor; through the connector the two silent pieces are cut out of the clip and the rest closes up on the timeline (12 s → 8.8 s); one ⌘Z would bring them back">
 
-- Write to Claude what you want, for example «remove the pauses». Claude does it in your open project.
+- Write to Claude in the chat at the right of the editor, for example «remove the pauses». Claude does it in your open project.
 - It uses the editor's own operations: cut by words, remove pauses, captions, titles, music levels, export.
 - Every step appears on your timeline, and <kbd>⌘Z</kbd> undoes it.
 
@@ -48,11 +48,11 @@ Fifteen slides, two minutes. One idea per slide.
 
 ### 5 · No credits, no API key
 
-<img src="../../assets/screens/en/t-settings-claude.jpg" width="100%" alt="Settings → AI → Claude: one Connect button and its status">
+<img src="../../assets/screens/en/chat.png" width="100%" alt="The Claude chat at the right of the editor">
 
-- Gaziyav sells no credits for Claude and asks for no key: the connector is part of the app.
-- It works with the Claude app you already use: Claude for Mac (extensions are open to all Claude Desktop users) or Claude Code.
-- **Settings → AI → Claude → Connect Claude**: one press.
+- Gaziyav sells no credits for Claude and asks for no key: the chat runs on your own Claude subscription through Claude Code on your Mac.
+- Install Claude Code from [claude.com/download](https://claude.com/download) and sign in, then press **Connect** in the chat (**View → Claude Chat**, <kbd>⌃⌘K</kbd>).
+- The **Skills** button lists 10 skills, each with an on/off switch. Prefer the Claude app? **Settings → AI → Claude → Connect Claude**.
 
 ---
 
@@ -91,7 +91,7 @@ Fifteen slides, two minutes. One idea per slide.
 <img src="../../assets/screens/en/t-tab-text.jpg" width="100%" alt="The Text tab with title designs">
 
 - Title designs, effects, transitions and colour filters: drag onto the timeline or double-click.
-- 311 music tracks and 2,514 sound effects; each downloads the first time you use it.
+- 1,515 music tracks and 7,765 sound effects in the Mac app (311 and 2,514 in the browser); each downloads the first time you use it.
 - Keyframes with easing (<kbd>⌥⇧K</kbd>, <kbd>F9</kbd> for easy ease), speed and speed curves, freeze frame <kbd>⌥F</kbd>, reverse.
 
 ---
@@ -130,8 +130,8 @@ Fifteen slides, two minutes. One idea per slide.
 
 <img src="../../assets/screens/en/t-post.jpg" width="100%" alt="The Post sheet">
 
-- The arrow beside Export → **Post to Shorts, Reels, TikTok…**: YouTube, Instagram or TikTok.
-- The platform's own upload page opens inside the app, and you sign in there.
+- The arrow beside Export → **Post to Shorts, Reels, TikTok…**: YouTube, Instagram or TikTok, through Zernio on your own key or on the platform's own upload page inside the app.
+- Or ask in the chat: one message edits, exports and posts, with a title, description and hashtags Claude writes for each site.
 - Gaziyav never sees your password. Mac app.
 
 ---
@@ -142,7 +142,7 @@ Fifteen slides, two minutes. One idea per slide.
 
 - For Windows, Linux, a Chromebook, a phone or a tablet. No install, no account; works offline after the first open; on a phone, a layout for a finger.
 - Timeline, titles, effects, transitions, generators, the music and sound library, looks, import and export. Captions from speech and pause removal, with the model running in the page. AI image, AI video and lipsync (beta) on your own key.
-- Only in the Mac app: Claude, the other on-device AI tools, a clip by link, posting, voice, motion graphics.
+- Only in the Mac app: the Claude chat and skills, the other on-device AI tools, a clip by link, posting, voice, motion graphics.
 
 ---
 

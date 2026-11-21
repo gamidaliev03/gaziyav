@@ -6,6 +6,8 @@
 // model with its price, the settings it takes, the price of this run live, one Generate button.
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { HugeiconsIcon } from "@/components/ui/icon";
+import { Settings01Icon } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -373,7 +375,7 @@ export function VideoComposer({ onStart, results }: { onStart: ReturnType<typeof
 		// space it has: the form scrolls inside it and the problem + Generate sit under the form, always in view and never
 		// over a control (a sticky footer covered the fields the browser had just scrolled to).
 		<div className="@container/vc flex h-full min-h-0 shrink-0 flex-col" data-video-composer data-video-mode-now={mode} data-video-model-now={model.id}>
-			<div ref={form} className="scrollbar-hidden flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-3 pb-2" data-video-form>
+			<div ref={form} className="scrollbar-hidden flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-2 pb-2" data-video-form>
 			<div className="hidden @max-[17rem]/vc:flex">
 				<Select value={mode} onValueChange={(v) => setMode(v as VideoMode)}>
 					<SelectTrigger className="h-8 w-full text-xs" aria-label={t("Video mode")} data-video-mode-trigger>
@@ -448,8 +450,9 @@ export function VideoComposer({ onStart, results }: { onStart: ReturnType<typeof
 				</>
 			)}
 
+			<div className="flex items-center gap-1.5">
 			<Select value={model.id} onValueChange={setModel}>
-				<SelectTrigger className="h-8 text-xs" data-video-field="model" data-point-field="model">
+				<SelectTrigger className="h-8 min-w-0 flex-1 text-xs" data-video-field="model" data-point-field="model">
 					<SelectValue />
 				</SelectTrigger>
 				<SelectContent>
@@ -461,6 +464,18 @@ export function VideoComposer({ onStart, results }: { onStart: ReturnType<typeof
 					))}
 				</SelectContent>
 			</Select>
+				{/* the models and the keys, on the model's own row (see point-view: the header band that held «Models» stood empty) */}
+				<button
+					type="button"
+					onClick={openFalSettings}
+					title={t("Models and API keys")}
+					aria-label={t("Models and API keys")}
+					data-ai-open-settings
+					className="text-muted-foreground hover:bg-accent hover:text-foreground grid size-8 shrink-0 place-items-center rounded-md border transition-colors"
+				>
+					<HugeiconsIcon icon={Settings01Icon} className="size-3.5" />
+				</button>
+			</div>
 			<p className="text-muted-foreground -mt-1 truncate text-[11px]" title={t(model.note)}>
 				{t(model.note)}
 			</p>
@@ -521,7 +536,7 @@ export function VideoComposer({ onStart, results }: { onStart: ReturnType<typeof
 			)}
 			{(model.seed || model.negative) && (
 				<>
-					<button type="button" className="text-muted-foreground hover:text-foreground self-start text-[11px]" onClick={() => setMore((v) => !v)} data-video-more>
+					<button type="button" className="text-muted-foreground hover:text-foreground -my-1 self-start rounded px-1 py-1 text-[11px]" onClick={() => setMore((v) => !v)} data-video-more>
 						{t(more ? "Fewer settings" : "More settings")}
 					</button>
 					{more && (
@@ -548,7 +563,7 @@ export function VideoComposer({ onStart, results }: { onStart: ReturnType<typeof
 			{results && <div className="-mx-3 mt-1">{results}</div>}
 			</div>
 			{/* The problem and Generate stay under the form: the button is always in reach. */}
-			<div className="flex shrink-0 flex-col gap-2 border-t px-3 pt-2 pb-3" data-video-footer>
+			<div className="flex shrink-0 flex-col gap-2 border-t px-2 pt-2 pb-2.5" data-video-footer>
 			{problem && ((withPrompt && prompt.trim()) || mode !== "text") && (
 				<p className="text-[11px] text-amber-500" data-video-problem>
 					{t(problem.text, problem.vars)}

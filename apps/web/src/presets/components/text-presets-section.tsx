@@ -44,7 +44,7 @@ export function MyTemplates() {
 			<div className="grid grid-cols-2 gap-2">
 				<CreatePresetTile
 					runKey="templates"
-					label="Create with AI"
+					label="Create with Gaziyav AI"
 					placeholder="A neon lower third with a glowing line…"
 					previewClassName="h-16"
 					create={async ({ description, signal, onStep }) => {

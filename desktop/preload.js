@@ -1,6 +1,15 @@
 // Lets the editor know it runs inside the Mac app, and gives it a few native abilities.
 const { contextBridge, ipcRenderer, webUtils } = require("electron");
 
+// Gaziyav AI's one-shot text jobs (titles, descriptions, captions…): one answer from the person's connected Claude,
+// over the same connection as the chat, with no tools (modules/agent-host.js oneShot; gz1-oneshot-api.md).
+contextBridge.exposeInMainWorld("gaziyavAI", {
+	/** ({ task, prompt, system?, json?, model? }) → { ok: true, text, json? } | { ok: false, error (one plain line), code } */
+	text: (args) => ipcRenderer.invoke("gaziyav-ai:text", args && typeof args === "object" ? { task: String(args.task ?? "text"), prompt: String(args.prompt ?? ""), system: String(args.system ?? ""), json: args.json === true, model: String(args.model ?? "") } : {}),
+	/** → { ready, state: "ready" | "sign-in" | "missing" | "checking", line } — line: how to connect, in the UI's language */
+	status: () => ipcRenderer.invoke("gaziyav-ai:status"),
+});
+
 contextBridge.exposeInMainWorld("studioApp", {
 	/** macOS says memory is short: cb("warning" | "critical" | "normal"); returns an unsubscribe function. */
 	onMemoryPressure: (cb) => {
@@ -119,6 +128,11 @@ contextBridge.exposeInMainWorld("studioApp", {
 	originalsPlace: (paths) => ipcRenderer.invoke("studio:originals-place", Array.isArray(paths) ? paths.map(String) : []),
 	/** A project opens: its originals put into the file input `selector` as files; per one asked { status, path? }. */
 	attachOriginals: (selector, files) => ipcRenderer.invoke("studio:originals-attach", { selector: String(selector ?? ""), files: Array.isArray(files) ? files : [] }),
+	/** The Claude chat column at the right of the editor (modules/agent-host.js): shown or not → whether it is shown now. */
+	chat: {
+		toggle: (open) => ipcRenderer.invoke("gz-chat:toggle", typeof open === "boolean" ? open : null),
+		state: () => ipcRenderer.invoke("gz-chat:state"),
+	},
 	/** Self-tests only (main.js answers in test mode alone): the menu bar's items, a click on one, the clipboard kept. */
 	testMenu: (op, id) => ipcRenderer.invoke("gaziyav:test-menu", String(op ?? ""), String(id ?? "")),
 });

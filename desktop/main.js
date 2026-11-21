@@ -32,6 +32,7 @@ const stepLimit = (ms) => (TEST ? Math.min(ms, 30000) : ms);
 const DEV = process.env.STUDIO_DEV === "1" || TEST;
 const IS_MAC = process.platform === "darwin";
 const { EDITION, FAMILY, WORKSPACE, EDITOR_PORT, DATA_NAME } = require("./modules/edition");
+const sealed = require("./modules/seal").make({ userData: () => app.getPath("userData"), test: TEST, safeStorage });
 const PORT = TEST ? Number(process.env.STUDIO_PORT || 3590) : EDITOR_PORT;
 const ORIGIN = `http://127.0.0.1:${PORT}`;
 const START_TIMEOUT_MS = 30_000;
@@ -42,6 +43,8 @@ const vpn = workspace.network;
 const reaper = require("./modules/reaper");
 const exportIpc = require("./modules/export-ipc");
 const jobsJournal = require("./modules/jobs-journal");
+// The Claude chat column beside the editor (OpenFilm's chat and agent host, MIT): its own page and view, loaded lazily.
+const agentHost = require("./modules/agent-host");
 
 // Everything the app keeps lives in ~/Library/Application Support/Gaziyav: the browser profile (projects in
 // IndexedDB/OPFS of http://127.0.0.1:47831 — the port never changes), settings, working files and models.
@@ -66,6 +69,8 @@ if (space.mode !== "locked") vpn.boot();
 app.commandLine.appendSwitch("blink-settings", "dnsPrefetchingEnabled=false");
 // A test copy only ever sees Chromium's fake camera and microphone (voice-over, the family's calls): never the real ones.
 if (TEST) for (const s of ["use-fake-device-for-media-stream", "use-fake-ui-for-media-stream"]) app.commandLine.appendSwitch(s);
+// A test copy never touches the Mac's keychain (its own seal is off in tests too): no password window, ever.
+if (TEST) app.commandLine.appendSwitch("use-mock-keychain");
 // Local crash dumps only (nothing is uploaded): lets us diagnose renderer/GPU crashes. A dump is a copy of the crashed
 // process's memory (open projects, pages, keys): it is written inside the space only — the locked shell (whose memory
 // holds the password being typed, the volume key while it opens) writes none.
@@ -329,6 +334,20 @@ async function startServer() {
 	});
 	vpn.attachServer?.(server);
 	require("./modules/provider-keys").attachServer(server, { fromApp, test: TEST });
+	// One brain: the server's text jobs go to the chat's one-shot Claude call (modules/providers-ai-text.js)
+	try {
+		require("./modules/providers-ai-text").attachServer(server, {
+			// oneShot answers { ok, text, json?, error, code }: the server wants the text itself. A failed answer is asked
+			// once more by the app; only a missing connection is said to the person.
+			text: async (req) => {
+				let r = await agentHost.oneShot(req);
+				if (!r?.ok && !["not-installed", "sign-in", "not-ready", "empty"].includes(r?.code)) r = await agentHost.oneShot(req);
+				if (!r?.ok) throw new Error(r?.error || "");
+				return req?.json && r.json !== undefined ? JSON.stringify(r.json) : String(r.text ?? "");
+			},
+			status: () => agentHost.oneShotStatus(),
+		});
+	} catch {}
 	// The fal.ai key goes to the server as a message (never in its environment, never in a file in clear).
 	server.on("message", (m) => {
 		if (m?.type === "fal-key-request") sendFalKey();
@@ -546,6 +565,7 @@ function createWindow() {
 	const win = mainWindow;
 	const wc = win.webContents;
 	watchFreezes(win);
+	agentHost.attach(win); // the chat column follows this window (its project, its size)
 	let shown = false;
 	// Tests run hidden; STUDIO_TEST_SHOW=1 shows the window without focus (real frames for performance runs).
 	const showInTest = TEST && process.env.STUDIO_TEST_SHOW === "1";
@@ -763,12 +783,19 @@ async function command(name, event) {
 	if (TEST) testState.menuResults.push({ name, viaKey, handled });
 	if (!handled) NATIVE_FALLBACK[name]?.(wc);
 }
+// the chat column has the keyboard: the edit commands are its own (its composer), never the editor's
+const CHAT_EDIT = new Set(["undo", "redo", "cut", "copy", "paste", "selectAll"]);
+async function commandOrChat(name, event) {
+	const chat = CHAT_EDIT.has(name) ? agentHost.focusedChat() : null;
+	if (chat) return NATIVE_FALLBACK[name](chat);
+	return command(name, event);
+}
 
 const item = (id, label, accelerator, extra = {}) => ({
 	id,
 	label,
 	accelerator,
-	click: (_menuItem, _window, event) => command(id, event),
+	click: (_menuItem, _window, event) => commandOrChat(id, event),
 	...extra,
 });
 
@@ -781,7 +808,7 @@ const MENU_RU = {
 	Undo: "Отменить", Redo: "Повторить", Cut: "Вырезать", Copy: "Копировать", Paste: "Вставить", "Select All": "Выделить всё", View: "Вид",
 	Appearance: "Оформление", Dark: "Тёмное", Light: "Светлое", System: "Как в системе", "Enter Full Screen": "Перейти в полноэкранный режим", Window: "Окно",
 	Minimize: "Свернуть", Zoom: "Изменить масштаб", "Bring All to Front": "Все окна — на передний план", Help: "Справка",
-	"Keyboard Shortcuts": "Сочетания клавиш", "Lock Gaziyav": "Заблокировать Gaziyav", "Lock When the Mac Locks or Sleeps": "Блокировать вместе с Mac (экран, сон)", "Reload (development)": "Перезагрузить (разработка)", "Developer Tools": "Инструменты разработчика",
+	"Keyboard Shortcuts": "Сочетания клавиш", "Claude Chat": "Чат с Claude", "Lock Gaziyav": "Заблокировать Gaziyav", "Lock When the Mac Locks or Sleeps": "Блокировать вместе с Mac (экран, сон)", "Reload (development)": "Перезагрузить (разработка)", "Developer Tools": "Инструменты разработчика",
 };
 // The language the page shows (any of src/i18n/languages.ts with words in modules/i18n/<code>.json); the older
 // code reads menuLang(): "ru" for every language but English (Russian is the fallback).
@@ -857,6 +884,9 @@ function buildMenu() {
 			submenu: [
 				// (light / dark lives in one place: Settings → Themes)
 				{ role: "togglefullscreen", label: L("Enter Full Screen") },
+				{ type: "separator" },
+				// the Claude chat column at the right of the editor (modules/agent-host.js)
+				{ id: "chat", label: L("Claude Chat"), type: "checkbox", checked: agentHost.isOpen(), accelerator: "Control+Command+K", click: () => agentHost.toggle() },
 			],
 		},
 		{
@@ -916,16 +946,8 @@ function fromApp(event) {
 // Self-tests keep a stand-in key in their own profile (the Keychain of the Mac is never touched by a test copy).
 const falKeyFile = () => path.join(app.getPath("userData"), TEST ? "fal-key.test.txt" : "fal-key.bin");
 
-function readFalKey() {
-	try {
-		const raw = fs.readFileSync(falKeyFile());
-		if (TEST) return raw.toString("utf8").trim() || null;
-		if (!safeStorage.isEncryptionAvailable()) return null;
-		return safeStorage.decryptString(raw).trim() || null;
-	} catch {
-		return null;
-	}
-}
+// Sealed with modules/seal.js, not the Keychain: see that file for why (the Mac's password on every launch).
+const readFalKey = () => sealed.read(falKeyFile());
 
 function sendFalKey() {
 	try {
@@ -938,12 +960,7 @@ ipcMain.handle("gaziyav:fal-key-set", (event, value) => {
 	const key = String(value ?? "").trim().replace(/^(Key|Bearer)\s+/i, "");
 	if (!key || /\s/.test(key) || key.length < 16 || key.length > 400) return { ok: false, error: "That doesn't look like a whole fal.ai key. Copy it again." };
 	try {
-		if (TEST) fs.writeFileSync(falKeyFile(), key, { mode: 0o600 });
-		else {
-			if (!safeStorage.isEncryptionAvailable()) return { ok: false, error: "The Mac's Keychain isn't available. Unlock it and try again." };
-			fs.writeFileSync(falKeyFile(), safeStorage.encryptString(key), { mode: 0o600 });
-		}
-		fs.chmodSync(falKeyFile(), 0o600);
+		sealed.write(falKeyFile(), key);
 	} catch (error) {
 		return { ok: false, error: `The key couldn't be saved: ${String(error?.message ?? error)}` };
 	}
@@ -961,16 +978,7 @@ ipcMain.handle("gaziyav:fal-key-clear", (event) => {
 // ---------- The Late key (Share → Post through Late's API): kept like the fal.ai key, handed to the server ----------
 const lateKeyFile = () => path.join(app.getPath("userData"), TEST ? "late-key.test.txt" : "late-key.bin");
 
-function readLateKey() {
-	try {
-		const raw = fs.readFileSync(lateKeyFile());
-		if (TEST) return raw.toString("utf8").trim() || null;
-		if (!safeStorage.isEncryptionAvailable()) return null;
-		return safeStorage.decryptString(raw).trim() || null;
-	} catch {
-		return null;
-	}
-}
+const readLateKey = () => sealed.read(lateKeyFile());
 
 function sendLateKey() {
 	try {
@@ -1007,12 +1015,7 @@ ipcMain.handle("gaziyav:late-key-set", async (event, value) => {
 	const check = await checkLateKey(key);
 	if (!check.ok) return check;
 	try {
-		if (TEST) fs.writeFileSync(lateKeyFile(), key, { mode: 0o600 });
-		else {
-			if (!safeStorage.isEncryptionAvailable()) return { ok: false, error: "The Mac's Keychain isn't available. Unlock it and try again." };
-			fs.writeFileSync(lateKeyFile(), safeStorage.encryptString(key), { mode: 0o600 });
-		}
-		fs.chmodSync(lateKeyFile(), 0o600);
+		sealed.write(lateKeyFile(), key);
 	} catch (error) {
 		return { ok: false, error: `The key couldn't be saved: ${String(error?.message ?? error)}` };
 	}
@@ -1095,6 +1098,7 @@ ipcMain.on("studio:language", (event, value) => {
 	prefs.language = value;
 	savePrefs();
 	buildMenu();
+	agentHost.languageChanged(); // the chat column speaks the editor's language
 });
 
 // Settings → General → Appearance (same as View → Appearance).
@@ -1637,6 +1641,9 @@ app.on("before-quit", () => {
 });
 
 app.on("will-quit", () => {
+	try {
+		agentHost.closeAll(); // the chat's agents (their process groups) end with the app
+	} catch {}
 	vpn.stop();
 	server?.kill();
 	reaper.stop();
@@ -1912,6 +1919,16 @@ app.whenReady().then(async () => {
 	await vpn.applyToSession(session.defaultSession);
 	// The window (and its renderer) warms up while the server starts.
 	createWindow();
+	// the Claude chat column (modules/agent-host.js): nothing of it starts before the column is first shown
+	try {
+		agentHost.register({ getWindow: () => mainWindow, origin: ORIGIN, test: TEST, log: studioLog, language: menuCode });
+		agentHost.onOpen((open) => {
+			const it = Menu.getApplicationMenu()?.getMenuItemById("chat");
+			if (it) it.checked = open;
+		});
+	} catch (error) {
+		studioLog(`[chat] not started: ${error?.message ?? error}`);
+	}
 	// the user's media used where they are, handed to the window as files when a project opens (modules/originals.js)
 	require("./modules/originals").register({ log: studioLog, own: [app.getPath("userData")] });
 	// «ТВ и кино»: a channel's official page in Safari when it can't play inside Gaziyav (modules/tv.js)

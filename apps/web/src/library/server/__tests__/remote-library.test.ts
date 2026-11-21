@@ -54,7 +54,7 @@ const ctx = (...p: string[]) => ({ params: Promise.resolve({ path: p }) });
 describe("media library from the network", () => {
 	test("the catalog is there without the network: every item, marked as not downloaded", async () => {
 		const { getLibraryIndex } = await import("@/library/server/index-store");
-		const items = getLibraryIndex().items.filter((i) => i.src === "kadr");
+		const items = getLibraryIndex().items.filter((i) => i.src === "kadr" && !i.id.startsWith("xa-"));
 		expect(items.map((i) => i.id).sort()).toEqual(["ks-1", "ks-2", "ks-3"]);
 		expect(items.every((i) => i.remote)).toBe(true);
 		expect(Object.values(hits).reduce((a, b) => a + b, 0)).toBe(0);

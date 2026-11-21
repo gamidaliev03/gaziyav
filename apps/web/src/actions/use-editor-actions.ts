@@ -38,7 +38,7 @@ import {
 	deleteLiveSelection,
 } from "./delete-selection";
 import type { EditorCore } from "@/core";
-import { findCut, removeTransition, useSelectedCut } from "@/transitions/commands";
+import { canJoinCut, findCut, findNearestCut, joinCut, removeTransition, useSelectedCut } from "@/transitions/commands";
 
 function notifyBulkDelete({ editor, count, linked = 0 }: { editor: EditorCore; count: number; linked?: number }) {
 	// Linkage took sound, captions or layers along: said, with Undo (it went silently before — check-edit).
@@ -269,10 +269,25 @@ export function useEditorActions() {
 	useActionHandler(
 		"delete-selected",
 		() => {
+			// The playhead parked exactly between two halves of one clip (nothing selected): ⌫ cancels the split — the way a
+			// person means it («ставлю плейхед на середину и жму Delete»), without having to pick the cut first.
+			if (editor.selection.getActiveSelectionKind() === null) {
+				// 0.05 s: snapping lands the playhead exactly on a cut; this much grace covers a hand-placed one.
+				const near = findNearestCut(editor.playback.getCurrentTime());
+				if (near && Math.abs(near.time - editor.playback.getCurrentTime()) <= 6000 && canJoinCut(near)) {
+					joinCut(near);
+					useSelectedCut.getState().setCut(null);
+					return;
+				}
+			}
 			// A clicked transition (it let go of the clips): ⌫ / Delete take it off the cut, as the inspector's button does.
 			const cut = useSelectedCut.getState().cut;
 			if (cut && editor.selection.getActiveSelectionKind() === null) {
-				if (findCut(cut)?.transition) removeTransition(cut);
+				const info = findCut(cut);
+				// A transition: it comes off. Two halves of one clip: the cut goes (the clip is whole again). Either way ⌫
+				// takes back the cut and nothing else — the clips stay where they are.
+				if (info?.transition) removeTransition(cut);
+				else if (info) joinCut(cut);
 				useSelectedCut.getState().setCut(null);
 				return;
 			}

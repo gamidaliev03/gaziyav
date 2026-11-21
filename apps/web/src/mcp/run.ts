@@ -466,7 +466,7 @@ async function importStock(item: string): Promise<string> {
 	const blob = await res.blob();
 	const { processMediaAssets } = await import("@/media/processing");
 	const commons = item.startsWith("File:");
-	const name = commons ? item.replace(/^File:/, "") : `${item.replace(":", " ")}.${blob.type.includes("webm") ? "webm" : "mp4"}`;
+	const name = commons ? item.replace(/^File:/, "") : `${item.replace(":", " ").replace(/[/\\]+/g, " ").replace(/\.mp4$/i, "")}.${blob.type.includes("webm") ? "webm" : "mp4"}`;
 	const [processed] = await processMediaAssets({ files: [new File([blob], name, { type: blob.type || "video/mp4" })] });
 	if (!processed) throw new Error("The editor couldn't read this stock clip. Try another one.");
 	const license = res.headers.get("x-license") ?? "free licence";

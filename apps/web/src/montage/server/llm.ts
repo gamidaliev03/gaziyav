@@ -1,7 +1,8 @@
-// DeepSeek for the AI Composition agent: multi-turn messages, the thinking model ("deepseek-reasoner") for full
+// Gaziyav AI (the connected Claude, one brain) for the AI Composition agent: multi-turn messages, the thinking model ("deepseek-reasoner") for full
 // motion design, images for the art-director check of rendered frames. Never logs the key.
 import { StudioError } from "@/studio/server/errors";
-import { activeAgent, NOT_SET_UP } from "@/studio/server/agent-keys";
+import { activeAgent } from "@/studio/server/agent-keys";
+import { BRAIN_OFF, brainChat } from "@/studio/server/brain";
 import { claudeComplete } from "@/studio/server/claude";
 import { compatChat } from "@/studio/server/openai-compat";
 
@@ -28,26 +29,34 @@ export interface ChatOptions {
 }
 
 export async function chat(o: ChatOptions): Promise<string> {
-	const a = activeAgent();
-	if (!a) throw new StudioError(NOT_SET_UP);
+	// Frames to look at (the art director's check): the one-shot call takes words only, so a look at pictures goes to an
+	// earlier AI that sees them (1.0.58's), else it is skipped by its caller — never a blind look.
+	if (o.messages.some((m) => Array.isArray(m.content) && m.content.some((p) => p.type === "image_url"))) {
+		const a = activeAgent();
+		if (a) return legacyChat(a, o);
+		throw new StudioError("The frames weren't looked at.");
+	}
+	// One brain (studio/server/brain.ts): the connected Claude answers, whatever model the step would have picked.
+	try {
+		return await brainChat("plan", o.messages, { json: o.json, signal: o.signal, timeout: o.timeout });
+	} catch (error) {
+		// Claude not connected and an earlier AI set up (1.0.58's keys): that one, as before.
+		const a = (error as Error)?.message === BRAIN_OFF ? activeAgent() : null;
+		if (!a) throw error;
+		return legacyChat(a, o);
+	}
+}
+
+async function legacyChat(a: NonNullable<ReturnType<typeof activeAgent>>, o: ChatOptions): Promise<string> {
 	if (a.provider === "anthropic") {
 		const system = o.messages.filter((m) => m.role === "system").map((m) => (typeof m.content === "string" ? m.content : "")).join("\n\n");
 		const rest = o.messages.filter((m) => m.role !== "system") as Array<{ role: "user" | "assistant"; content: Message["content"] }>;
 		return claudeComplete({ system, messages: rest, json: o.json, maxTokens: o.maxTokens ?? 8000, signal: o.signal, timeout: o.timeout });
 	}
-	// The model the user chose for this AI (Settings → AI → API keys), whatever the step would have picked.
-	const r = await compatChat(a, {
-		messages: o.messages,
-		json: o.json,
-		maxTokens: o.maxTokens ?? 8000,
-		temperature: o.temperature,
-		thinking: o.model === REASONER ? undefined : o.thinking,
-		timeout: o.timeout,
-		signal: o.signal,
-	});
+	const r = await compatChat(a, { messages: o.messages, json: o.json, maxTokens: o.maxTokens ?? 8000, temperature: o.temperature, thinking: o.model === REASONER ? undefined : o.thinking, timeout: o.timeout, signal: o.signal });
 	if (!r.content.trim()) {
-		if (r.finish === "length") throw new StudioError("Gaziyav AI ran out of answer length. Try again or ask for something simpler.");
-		throw new StudioError("Gaziyav AI returned an empty answer. Try again.");
+		if (r.finish === "length") throw new StudioError("Gaziyav AI didn't manage this one: nothing was changed. Press the button once more.");
+		throw new StudioError("Gaziyav AI didn't manage this one: nothing was changed. Press the button once more.");
 	}
 	return r.content;
 }
@@ -64,6 +73,6 @@ export function parseJson(text: string): any {
 				return JSON.parse(candidate);
 			} catch {}
 		}
-		throw new StudioError("Gaziyav AI returned an unreadable answer. Try again.");
+		throw new StudioError("Gaziyav AI didn't manage this one: nothing was changed. Press the button once more.");
 	}
 }

@@ -14,8 +14,9 @@ describe("AI titles parsing", () => {
 		expect(titles.cta).toBe("купи");
 	});
 	test("unusable answers give a readable error", () => {
-		expect(() => parseAiTitles("нет")).toThrow("unreadable");
-		expect(() => parseAiTitles('{"hook": "", "cta": "x"}')).toThrow("empty");
+		// one plain line, never «unreadable» or «try again» (one brain, 21.11)
+		expect(() => parseAiTitles("нет")).toThrow("nothing was changed");
+		expect(() => parseAiTitles('{"hook": "", "cta": "x"}')).toThrow("nothing was changed");
 	});
 	test("long speech keeps its start and end", () => {
 		const long = `${"а ".repeat(2000)}финал`;

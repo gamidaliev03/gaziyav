@@ -3,7 +3,7 @@
 // still open the AI section: every «set it up in Settings» link in the app lands there.
 import { create } from "zustand";
 
-export type SettingsSection = "projects" | "edit" | "performance" | "ondevice" | "pointagent" | "claude" | "ai" | "general" | "appearance" | "share" | "calls";
+export type SettingsSection = "projects" | "edit" | "performance" | "ondevice" | "pointagent" | "claude" | "ai" | "general" | "appearance" | "share" | "calls" | "services";
 
 interface SettingsState {
 	open: boolean;

@@ -13,6 +13,7 @@ import { myVoice } from "./my-voices";
 import { speechText } from "./speech-text";
 import { applyTrendVoice } from "./voice-fx";
 import { trendVoice } from "@/trending/voices";
+import { isServiceVoice } from "./providers/voices";
 
 const clean = (text: unknown, max: number) => String(text ?? "").replace(/\s+/g, " ").trim().slice(0, max);
 
@@ -29,7 +30,7 @@ export function startGenerateVoice(body: { text?: string; speaker?: string; styl
 	if (trend) body = { ...body, speaker: trend.speaker, style: trend.style };
 	const mine = trend ? null : myVoice(body.speaker);
 	if (!mine && String(body.speaker).startsWith("local:")) throw new StudioError("This voice is no longer on this computer — clone it again in My voices.");
-	const ready = mine ? null : (systemVoice(String(body.speaker)) ?? systemVoice("ryan"));
+	const ready = mine ? null : isServiceVoice(String(body.speaker)) ? String(body.speaker) : (systemVoice(String(body.speaker)) ?? systemVoice("ryan"));
 	const lang = /[а-яё]/i.test(text) ? "ru" : clean(body.lang, 20) || "en";
 	// The text as a person says it: no emoji or link mumble, «3,5 млн» and «50%» as words.
 	const say = speechText(text, lang === "ru" ? "russian" : "english");

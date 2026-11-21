@@ -2,6 +2,7 @@
 // in the query's language, the top pages with their opening paragraphs. No key, nothing about the user is sent.
 import { CancelledError, StudioError } from "./errors";
 import { routed } from "./http";
+import { webSearchByChoice } from "./providers/search";
 
 export interface WebFact {
 	title: string;
@@ -22,6 +23,9 @@ async function getJson(url: string, signal?: AbortSignal) {
 export async function webSearch(query: string, lang?: string, signal?: AbortSignal): Promise<WebFact[]> {
 	const q = query.trim().slice(0, 200);
 	if (!q) throw new StudioError("Give the words to search.");
+	// Settings → Services → Web search: Brave, Tavily or Keenable when chosen (Wikipedia below stays the default).
+	const by = await webSearchByChoice(q, signal);
+	if (by) return by;
 	const wiki = lang && /^[a-z]{2}$/.test(lang) ? lang : /[а-яё]/i.test(q) ? "ru" : "en";
 	const base = `https://${wiki}.wikipedia.org`;
 	let hits: { title: string }[] = [];

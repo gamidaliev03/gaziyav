@@ -18,6 +18,8 @@ import { PanelHeader } from "@/components/ui/panel-header";
 import { Segmented, type SegmentedItem } from "@/components/ui/segmented";
 import { Spinner } from "@/components/ui/spinner";
 import { useEditor } from "@/editor/use-editor";
+import { EditorCore } from "@/core";
+import { registerAudioPreview } from "@/preview/audio-focus";
 import {
 	buildLibraryClip,
 	isFavourite,
@@ -216,6 +218,11 @@ const preview = {
 		for (const fn of this.listeners) fn();
 	},
 	start(entry: LibraryEntry & { gain?: number }, from: number) {
+		// One sound at a time: the timeline stops for a preview, the preview stops when the timeline starts.
+		try {
+			const playback = EditorCore.getInstance().playback;
+			if (playback.getIsPlaying()) playback.pause();
+		} catch {}
 		this.audio?.pause();
 		const a = new Audio();
 		// the browser edition's files come from other sites (Hugging Face, Mixkit): asked with CORS, so the gain below still sounds
@@ -270,6 +277,9 @@ const preview = {
 		for (const fn of this.listeners) fn();
 	},
 };
+
+// The timeline starting to play stops this preview (preview/audio-focus.ts): one sound at a time.
+registerAudioPreview(() => preview.stop());
 
 const mediaDuration = (a: HTMLMediaElement) => (Number.isFinite(a.duration) && a.duration > 0 ? a.duration : null);
 

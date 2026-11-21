@@ -22,7 +22,6 @@ import {
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon, type IconSvgElement } from "@/components/ui/icon";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { useActionHandler } from "@/actions/use-action-handler";
 import { useAssetsPanelStore } from "@/components/editor/panels/assets/assets-panel-store";
 import { Button } from "@/components/ui/button";
 import { chipClass } from "@/components/ui/chips";
@@ -96,15 +95,9 @@ function useThrottled(value: number, ms = 250) {
 	return shown;
 }
 
-/** «✦ Assemble» left of Share: secondary, one width whatever it says. */
-/** Assemble without a header button (the owner, 12.11: the bar holds the name, activity, search and Export): its
- *  window and the «open-assemble» action (⌘K, the project menu, Home). */
+/** The Assemble window. Kept for the module's own history only: the owner retired the feature (17.11), so nothing
+ *  mounts this and no action, menu item or button opens it. */
 export function AssembleMount() {
-	useActionHandler("open-assemble", () => {
-		const { running, result, ended, stripOpen } = useAssembleStore.getState();
-		if (running || ended || result) return useAssembleStore.setState({ stripOpen: !stripOpen, seen: true, ...(running || ended ? {} : { open: true }) });
-		useAssembleStore.setState({ open: true });
-	}, undefined);
 	return <AssembleHost />;
 }
 
@@ -122,7 +115,6 @@ export function AssembleButton() {
 		if (running || mine || ended) return useAssembleStore.setState({ stripOpen: !stripOpen, seen: true });
 		useAssembleStore.setState({ open: true });
 	};
-	useActionHandler("open-assemble", () => useAssembleStore.setState({ open: true }), undefined);
 	return (
 		<>
 			<Button

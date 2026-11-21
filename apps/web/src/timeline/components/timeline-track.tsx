@@ -18,7 +18,6 @@ import { addMediaTime, type MediaTime } from "@/wasm";
 import { timelineTimeToPixels } from "@/timeline/pixel-utils";
 import { TransitionCutMarkers } from "@/transitions/components/cut-markers";
 import { cn } from "@/utils/ui";
-import { AssembleEmptyHint } from "@/assemble/components/assemble";
 import { RAMP_CLIPS_PER_FRAME, reportWaitingClips, useZoomRamp } from "@/timeline/zoom-ramp";
 import { getLiveTimelineViewport } from "@/timeline/live-pps";
 import { speedOff } from "@/timeline/speed-flags";
@@ -58,6 +57,8 @@ interface TimelineTrackContentProps {
 	targetElementId?: string | null;
 	selectedElementIds: ReadonlySet<string>;
 	mediaById: ReadonlyMap<string, MediaAsset>;
+	/** The repeated stretches of each clip (timeline/duplicate-sources.ts). */
+	duplicateMarks: ReadonlyMap<string, { color: string; segments: Array<{ from: number; to: number }> }>;
 	renderWindow: TimelineRenderWindow | null;
 	/** The main track: its lane is a shade lighter, as in CapCut. */
 	isMain?: boolean;
@@ -95,6 +96,7 @@ function TimelineTrackContentImpl({
 	targetElementId = null,
 	selectedElementIds,
 	mediaById,
+	duplicateMarks,
 	renderWindow,
 	isMain = false,
 }: TimelineTrackContentProps) {
@@ -238,7 +240,6 @@ function TimelineTrackContentImpl({
 					<div className="text-muted-foreground border-muted/40 pointer-events-none flex size-full items-center gap-2.5 rounded-sm border border-dashed px-7 text-xs">
 						{/* the dashed box and its film icon say it (the owner, 12.11: nothing said twice — Media says «Drop files») */}
 						<HugeiconsIcon icon={Film01Icon} className="size-4 shrink-0" aria-hidden />
-						{isMain && <AssembleEmptyHint />}
 					</div>
 				) : (
 					shown.map(({ element, isSelected, dragTimeOffset, dragStartTime }) => {
@@ -260,6 +261,7 @@ function TimelineTrackContentImpl({
 									dragStartTime={dragStartTime}
 									dragOffsetY={dragOffsetY}
 									isDropTarget={element.id === targetElementId}
+									duplicate={duplicateMarks.get(element.id)}
 								/>
 							);
 						}
@@ -280,6 +282,7 @@ function TimelineTrackContentImpl({
 										? (mediaById.get(element.mediaId) ?? null)
 										: null
 								}
+								duplicate={duplicateMarks.get(element.id)}
 								dragStartTime={dragStartTime}
 								dragOffsetY={dragOffsetY}
 								isDropTarget={element.id === targetElementId}

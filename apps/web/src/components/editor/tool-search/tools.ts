@@ -107,7 +107,7 @@ export const PLACES: Tool[] = [
 	// Shapes and motion graphics are Text's categories now; Stickers and Templates are gone (the owner, 12.11)
 	place("text.shapes", "Shapes", "Text", ["rectangle", "rounded", "ellipse", "circle", "line", "triangle", "star", "фигуры", "прямоугольник", "круг", "эллипс", "линия", "треугольник", "звезда"], "text", "shapes"),
 	place("text.motion", "Motion graphics", "Text", ["motion", "lower third", "counter", "intro", "моушн", "моушн-графика", "анимированные титры", "плашка", "счётчик"], "text", "motion"),
-	place("text.ai", "Create with AI: plate or template", "Text · Yours", ["ai template", "ai plate", "generate template", "создать с ии", "создать шаблон", "плашка ии", "ии шаблон", "my templates", "мои шаблоны"], "text", "yours"),
+	place("text.ai", "Create with Gaziyav AI: plate or template", "Text · Yours", ["ai template", "ai plate", "generate template", "создать с ии", "создать шаблон", "плашка ии", "ии шаблон", "my templates", "мои шаблоны"], "text", "yours"),
 	place("effects.library", "Effects library", "Effects", ["effects", "fx", "эффекты", "библиотека эффектов"], "effects"),
 	place("effects.transitions", "Transitions", "Effects", ["transition", "переходы", "переход"], "transitions"),
 	place("effects.filters", "Filters and LUTs", "Effects", ["filter", "lut", "look", "adjustment layer", "фильтры", "фильтр", "лут", "корректирующий слой"], "filters"),

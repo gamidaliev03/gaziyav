@@ -179,7 +179,7 @@ export function VideoTranslator() {
 
 	return (
 		<PanelView title={t("Video translator")}>
-			<div className="flex flex-col gap-3 px-3 pt-1 pb-4" data-video-translator>
+			<div className="flex flex-col gap-2 px-2 pt-1 pb-3" data-video-translator>
 				{/* no paragraph about how it works (the owner, 12.11): the price is on its button */}
 				<div className="bg-accent/50 rounded-md px-2.5 py-2 text-xs" data-translator-clip>
 					{clip ? (

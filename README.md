@@ -7,7 +7,7 @@
 <p align="center"><b>English</b> · <a href="README.ru.md">Русский</a></p>
 
 <p align="center">
-Gaziyav is a free, open-source alternative to CapCut for the Mac and the browser, made for Reels, TikToks and Shorts shot on a phone. Claude can edit your project inside it. No account, no watermark, no subscription.
+Gaziyav is a free, open-source video editor for the Mac and the browser, with Claude in a chat beside your timeline. Tell it what you want, and Claude edits your open project with Gaziyav's own tools, on your own Claude subscription. Made for Reels, TikToks and Shorts shot on a phone. No account, no watermark, no API key for Claude.
 </p>
 
 <p align="center">
@@ -25,7 +25,7 @@ Gaziyav is a free, open-source alternative to CapCut for the Mac and the browser
 </p>
 
 <p align="center">
-<img src="assets/loops/claude-en.gif" width="100%" alt="The request «remove the pauses» appears over the editor; through the connector the two silent pieces are cut out of the clip and the rest closes up on the timeline (12 s → 8.8 s); one ⌘Z would bring them back">
+<img src="assets/loops/claude-en.gif" width="100%" alt="The request «remove the pauses» appears over the editor; the two silent pieces are cut out of the clip and the rest closes up on the timeline (12 s → 8.8 s); one ⌘Z would bring them back">
 </p>
 
 <p align="center"><a href="docs/en/tour.md"><b>The two-minute tour →</b></a> · <a href="https://gamidaliev03.github.io/gaziyav/tour/">the same tour as slides</a></p>
@@ -45,17 +45,71 @@ Three music videos for LINDA 4EVER, a band that does not exist. An AI made them 
 ## Why Gaziyav
 
 - **One set of rules for every clip.** Video, titles, sound and captions move, trim and copy the same way. Every edit is one undo step. Speech on the timeline is words you can cut. The export matches the preview frame for frame.
-- **Claude edits inside the app, for free.** Connect the Claude app you already use and type what you want: «remove the pauses», «bold captions», «cut it to 30 seconds for Reels». Claude uses the editor's own commands, each step appears on your timeline, and <kbd>⌘Z</kbd> undoes it. Gaziyav sells no credits and needs no API key for this.
+- **Claude in the editor, on your own subscription.** A chat column at the right of the editor. Write «remove the pauses», «bold captions» or «cut it to 30 seconds for Reels», and Claude does it in your open project with the editor's own tools. Each step appears on your timeline, and <kbd>⌘Z</kbd> undoes it. It runs through Claude Code on your Mac: no API key, and Gaziyav sells no credits.
+- **Skills you can see and switch.** Ten skills teach Claude editing, scripts and packaging for social media, each with an on/off switch. Add your own from a GitHub link or a folder.
+- **One message, from edit to post.** Ask for it, and the same message can edit the video, export it and post it to YouTube Shorts, TikTok and Reels, with a title, description and hashtags Claude writes for each site.
 - **Free.** No account, no watermark, export up to 8K at 60 fps. Captions, voice clean-up, pause removal, scene detection, auto colour and reframing run on your Mac at no cost.
-- **Music and sounds included.** 311 tracks and 2,514 sound effects, in the Mac app and in the browser.
-- **Open source.** Built on OpenCut; the editor's own code is MIT. Paid AI (lipsync, voice, generation) is [optional, on your own key](#paid-ai-on-your-own-key); you never need it to edit.
+- **Music and sounds included.** 1,515 tracks and 7,765 sound effects in the Mac app.
+- **Open source.** Built on OpenCut; the editor's own code is MIT. Paid AI (lipsync, voices, generation) is [optional, on your own key](#paid-ai-on-your-own-key); you never need it to edit.
 
 Two more things in the Mac app:
 
 - **A clip by link.** Paste a YouTube, TikTok or Instagram link, mark the piece with <kbd>I</kbd> / <kbd>O</kbd>, and only that piece comes into your project. Use it for material you have the right to use.
-- **Posting.** **Post to Shorts, Reels, TikTok…** next to Export opens the platform's own upload page inside the app. You sign in there; Gaziyav never sees your password.
+- **Posting.** **Post to Shorts, Reels, TikTok…** next to Export: post through Zernio with your own key, or open the platform's own upload page inside the app and sign in there yourself. Gaziyav never sees your password.
+
+## Screenshots
+
+<table>
+<tr>
+<td width="50%"><img src="assets/screens/en/chat.png" width="100%" alt="The Claude chat at the right of the editor, with the open project on the timeline"><br><b>The Claude chat</b> beside the timeline</td>
+<td width="50%"><img src="assets/screens/en/skills.png" width="100%" alt="The Skills screen: ten skills in three groups, each with an on/off switch"><br><b>Skills</b>, each with a switch</td>
+</tr>
+<tr>
+<td width="50%"><img src="assets/screens/en/services.png" width="100%" alt="Settings → Services: one row per ability with a service picker and a Check button"><br><b>Settings → Services</b></td>
+<td width="50%"><img src="assets/screens/en/editor.png" width="100%" alt="The editor: Media, the player, the inspector and the timeline"><br><b>The editor</b></td>
+</tr>
+</table>
 
 ## What it does
+
+### Claude in the editor
+
+The chat sits at the right of the editor window. Open or hide it with **View → Claude Chat** (<kbd>⌃⌘K</kbd>) or the collapse button on the column; with the chat hidden, the editor looks exactly as before.
+
+- **Claude edits the open project** with Gaziyav's own tools: cut, trim, captions, titles, music, effects, export. Claude's work is an ordinary edit in your project: you watch it happen, change any part by hand and undo it step by step.
+- **Conversations are kept per project**: open a project, and its chats are there.
+- **Pick the model and the effort** for each conversation.
+- **Attach files**, and type <kbd>@</kbd> to point Claude at a file or a skill.
+- **Starter cards** on an empty chat give you a first request in one click.
+- **Posting from the chat.** One message can edit, export and post to YouTube Shorts, TikTok and Reels through Zernio (your own Zernio key, formerly Late). Claude writes the packaging for each site and puts the links in the chat. It posts only when you ask for posting.
+
+**Things to type**
+
+- «Remove the pauses and the ums in the first clip.»
+- «Captions in a bold style, and a title "Day one" at 0:02.»
+- «Make it vertical for Reels and keep it under 30 seconds.»
+- «Lower my music under the voice and fade it out at the end.»
+- «Cut a 30-second Reel from this video, export it and post it to TikTok and Shorts.»
+
+**What it costs.** Gaziyav charges nothing for the chat and needs no API key. Your messages count toward your Claude plan, like any chat in Claude Code. Paid generation (a voice, a picture, lipsync) runs only if you ask for it, on your own key: see [Paid AI](#paid-ai-on-your-own-key).
+
+[How to connect Claude →](#connect-claude) · [Claude inside Gaziyav: what to ask, how to undo →](docs/en/manual/claude.md)
+
+### Skills
+
+The **Skills** button on the chat's top bar opens the list of everything Claude knows how to do in Gaziyav. Each skill has one plain line and an on/off switch; a skill switched off is not offered to Claude. The base editing skill always stays on.
+
+| Group | Skills |
+|---|---|
+| Editing | Editing in Gaziyav · Editing craft · Media · Replicate a video |
+| Script & ideas | Storyboard and characters · Idea and angle · Script · Formats, series and persona |
+| SMM & packaging | Post packaging · SMM and channel growth |
+
+Add your own skill from a GitHub link or a folder on your Mac.
+
+### Gaziyav AI
+
+Every text job in the app goes through the Claude you connected: titles, caption styling and translation, scripts, and **Write with Gaziyav AI** in the Post sheet (a title, description and hashtags for each site). There is no separate text model to choose or pay for in Settings.
 
 ### The timeline
 
@@ -69,30 +123,6 @@ Video, titles, audio, captions, shapes and compound clips follow the same rules:
 - Two keymaps, CapCut's and Final Cut Pro's: 136 commands with keys, all rebindable. <kbd>⌘K</kbd> finds any command by name, in English or Russian.
 
 [The timeline, page by page →](docs/en/manual/timeline.md)
-
-### Claude inside Gaziyav
-
-<img src="assets/screens/en/t-claude-after.jpg" width="100%" alt="The editor after «remove the pauses»: the two silent pieces are cut out, the three remaining pieces of the clip have closed up, a note says one ⌘Z undoes it">
-
-The connector gives Claude the same operations as the editor's buttons. Claude's work is an ordinary edit in your project: you watch it happen, change any part by hand and undo it step by step.
-
-**Connect in three steps**
-
-1. Install Gaziyav and the Claude app for Mac (or Claude Code). Anthropic's help says desktop extensions are available to all Claude Desktop users.
-2. In Gaziyav: **Settings → AI → Claude → Connect Claude**. Claude for Mac opens the Gaziyav extension and installs it; for Claude Code, the editing skill and the server are added.
-3. Open a project in Gaziyav and write to Claude in Claude's window.
-
-**Things to type**
-
-- «Remove the pauses and the ums in the first clip.»
-- «Captions in a bold style, and a title "Day one" at 0:02.»
-- «Make it vertical for Reels and keep it under 30 seconds.»
-- «Lower my music under the voice and fade it out at the end.»
-- «Find the scenes of this film and give me YouTube chapters.»
-
-**What it costs.** Gaziyav charges nothing for the connector and needs no API key. Your messages count toward your Claude plan, like any chat. Paid generation (a voice, a picture, lipsync) runs only if you ask for it, on your own key, with the price shown first: see [Paid AI](#paid-ai-on-your-own-key).
-
-[Claude inside Gaziyav: connect, what to ask, how to undo, what it cannot do →](docs/en/manual/claude.md)
 
 ### Free AI on your Mac
 
@@ -109,7 +139,7 @@ These run on your Mac (Apple silicon) and need no key, no account and no payment
 
 ### Music and sounds
 
-311 music tracks and 2,514 sound effects, in **Audio → Music** and **Audio → Sound effects**, in the Mac app and in the browser. They are not inside the download. Each file downloads in the background the first time you use it, from the author's Hugging Face (Mixkit items from Mixkit's own site), is checked by SHA-256 and then stays in a cache. The on-device AI models download the same way.
+1,515 music tracks and 7,765 sound effects in **Audio → Music** and **Audio → Sound effects** of the Mac app; 1,204 of the tracks and 5,251 of the sounds are new in 1.0.61 (CC0), sorted into the same categories. The browser edition has 311 tracks and 2,514 sound effects. Most of them are not inside the download: such a file downloads in the background the first time you use it and then stays in a cache. The on-device AI models download the same way.
 
 ### Frame-exact export
 
@@ -152,7 +182,7 @@ CapCut's column is taken from CapCut's own pages.
 | Price | Free; the editor's own code is MIT | Free plan; paid Pro and Ultra subscriptions[^1] |
 | 4K and 60 fps export (desktop) | Free, up to 8K and 60 fps | Requires Pro[^2] |
 | Watermark | None | Exporting without a watermark requires Pro when Pro materials or settings are used[^2][^3] |
-| AI pricing | Editing AI on your Mac for free; Claude through your own Claude app; paid models on your own key at the provider's list price, shown before you press | AI features with Pro; a monthly allowance of AI credits (650 on Pro)[^1] |
+| AI pricing | Editing AI on your Mac for free; Claude through your own Claude subscription; paid models on your own key at the provider's list price | AI features with Pro; a monthly allowance of AI credits (650 on Pro)[^1] |
 | Where projects live | On your disk | Pro includes 1 TB of cloud storage[^1] |
 
 [^1]: [capcut.com/pricing](https://www.capcut.com/pricing), checked 14 Nov 2026. Prices are shown per region; the page also offers a 7-day Pro trial.
@@ -165,10 +195,10 @@ CapCut's column is taken from CapCut's own pages.
 
 On Windows, Linux, a Chromebook, a phone or a tablet, use the browser edition: [open the editor](https://gamidaliev03.github.io/gaziyav/editor/). Nothing to install, no account. After the first open it also works offline, and it picks up new versions by itself.
 
-It has the timeline, titles, effects, transitions, filters, generators, the whole music and sound library, looks, import and export, and **captions from speech with pause removal** (the speech model runs inside the page and downloads once). [The tour as slides](https://gamidaliev03.github.io/gaziyav/tour/) is on the same site.
+It has the timeline, titles, effects, transitions, filters, generators, the music and sound library, looks, import and export, and **captions from speech with pause removal** (the speech model runs inside the page and downloads once). [The tour as slides](https://gamidaliev03.github.io/gaziyav/tour/) is on the same site.
 - **Lipsync (beta), AI image and AI video** on your own fal.ai key, with the price shown before anything runs.
 - **On a phone or a tablet** the layout is made for a finger: the player, full-width tracks, a bottom bar (Add · Edit · Text · Audio · Filters · Format) and quick actions for the selected clip.
-- **Only in the Mac app:** Claude inside Gaziyav, the other on-device AI tools (background removal, voice clean-up, retouch and more), a clip by link, posting, a voice from text, motion graphics, and long, heavy exports. [What the browser edition has →](docs/en/manual/browser.md)
+- **Only in the Mac app:** the Claude chat and its skills, the other on-device AI tools (background removal, voice clean-up, retouch and more), a clip by link, posting, a voice from text, motion graphics, and long, heavy exports. [What the browser edition has →](docs/en/manual/browser.md)
 
 ## Install
 
@@ -178,9 +208,27 @@ It has the timeline, titles, effects, transitions, filters, generators, the whol
 
 [The full install guide, every warning explained →](docs/en/install.md)
 
+## Connect Claude
+
+The chat uses your own Claude subscription through Claude Code on your Mac. Gaziyav asks for no API key.
+
+1. Install Claude Code from [claude.com/download](https://claude.com/download) and sign in to your Claude account there.
+2. Open Gaziyav. If the chat is hidden, choose **View → Claude Chat** (<kbd>⌃⌘K</kbd>).
+3. Press **Connect** in the chat. Then open a project and write what you want.
+
+Until Claude is connected, the editor, export and posting work as before, and the AI text buttons say in one line how to connect.
+
+Prefer to talk to Claude in the Claude app instead? The connector for Claude for Mac and Claude Code is still there: **Settings → AI → Claude → Connect Claude**.
+
 ## Paid AI on your own key
 
-You don't need it to edit. With your own [fal.ai](https://fal.ai) key (Settings → AI), Gaziyav can run lipsync, a voice from text or a cloned voice, pictures and video from text, face swap, and the in-app agent on a paid model. The key is stored encrypted in the macOS Keychain, and the app shows only its last four characters. fal bills you at its own price; Gaziyav adds nothing. The button shows the price before the run; above your limit (default $1) it asks once.
+You don't need it to edit. Each paid service bills you at its own price; Gaziyav adds nothing.
+
+**Settings → Services.** One row per ability: voice-over, image generation, video generation, image search, video search, web search, background removal and more, 11 in all. Each row has a picker of services; under it, the key each service needs, and a **Check** button that says in one line whether it works. Picture search works with no key at all (Openverse, NASA and Wikimedia Commons), and so does video search (Internet Archive). Music and sound generation, transcription and translation through these services are shown as «coming soon».
+
+**More voices.** About 2,300 more voices in the voice picker, from ElevenLabs, Cartesia, Inworld, OpenAI, Google, Groq and Xiaomi MiMo. Each needs that service's key in Settings → Services; a voice whose service has no key shows the service it needs.
+
+**fal.ai** (Settings → AI). With your own [fal.ai](https://fal.ai) key, Gaziyav runs lipsync, a voice from text or a cloned voice, pictures and video from text, and face swap. The key is stored encrypted in the macOS Keychain, and the app shows only its last four characters. The button shows the price before the run; above your limit (default $1) it asks once.
 
 **Lipsync.** Select the clip → <kbd>⌥L</kbd> → type the words → <kbd>⌘</kbd><kbd>↵</kbd>. The voice is cloned from the clip, and the same face says the new line. Gaziyav sends **only the parts where someone speaks** and puts back only the face, on top of your original frames. Lipsync is also in the clip's menu and in <kbd>⌘K</kbd>.
 
@@ -198,7 +246,6 @@ You don't need it to edit. With your own [fal.ai](https://fal.ai) key (Settings 
 | Picture | Seedream 4.0 | $0.03 per picture | FLUX.1 schnell $0.003 · Nano Banana $0.0398 |
 | Video | Seedance 1.0 Pro Fast | $0.0216/s at 720p | Kling 3.0, Veo 3.1 Fast, Wan 2.6, Seedance 2.0 and more, each priced per second |
 | Face swap | PixVerse Swap | $0.20 per clip up to 5 s | — |
-| In-app agent, scripts, translation | Gemini 2.5 Flash | by tokens ($0.30 per 1M input) | Claude Sonnet 4.5 · GPT-5 mini · DeepSeek V3 · any OpenRouter model |
 
 [Paid AI on your own key: setup, every model, lipsync step by step →](docs/en/manual/extras.md)
 
@@ -208,11 +255,13 @@ Nothing leaves your computer unless you use one of these:
 
 | When | What is sent | Where |
 |---|---|---|
-| You talk to Claude | Your messages and what Claude reads from the project through the connector | Anthropic, through your own Claude app |
-| You run a paid AI feature | Only the piece it needs; for lipsync, the speech parts of the trimmed clip and the sound | fal.ai, or kie.ai / ArgoLink if you add their key and pick one of their models |
+| You write in the Claude chat, or use a Gaziyav AI button | Your messages, your attachments and what Claude reads from the project | Anthropic, through Claude Code on your Mac, under your own Claude account |
+| You talk to Claude in the Claude app | Your messages and what Claude reads from the project through the connector | Anthropic, through your own Claude app |
+| You run a paid AI feature | Only the piece it needs; for lipsync, the speech parts of the trimmed clip and the sound | fal.ai, or kie.ai / ArgoLink if you add their key and pick one of their models; or the service you picked in Settings → Services |
+| You search for pictures or video | Your search words | the service picked in Settings → Services (with no key: Openverse, NASA, Wikimedia Commons, Internet Archive) |
 | You import by link | The link | the site itself, through yt-dlp |
-| You first use a library track or sound, or an on-device AI feature | A download request | the author's Hugging Face (mirror hf-mirror.com; a few models from their own publisher), Mixkit items from mixkit.co; every file checked by SHA-256 |
-| You post | Your video | the platform's own page, signed in by you |
+| You first use a library track or sound, or an on-device AI feature | A download request | the file's host (see [Licence](#licence)) |
+| You post | Your video and its title, description and hashtags | Zernio with your key, or the platform's own page, signed in by you |
 
 No account, no analytics, no crash reports. In the browser edition your files stay in the tab, and a fal.ai key you paste goes only to fal.ai. [The full privacy note →](docs/en/privacy.md)
 
@@ -236,13 +285,14 @@ The editor alone, in a browser: `cd apps/web && bun run dev` (http://localhost:3
 
 Gaziyav grew from **[OpenCut](https://github.com/opencut-app/opencut)**, «the open-source CapCut alternative», and specifically from its earlier codebase, now kept at **[opencut-app/opencut-classic](https://github.com/opencut-app/opencut-classic)** while OpenCut is rewritten from scratch. Thanks to the OpenCut team and contributors: Gaziyav stands on their editor core, timeline model, renderer and Next.js app.
 
-Gaziyav added the Mac app and its native helpers, the timeline rules and their automated checks, the Claude connector, the on-device AI, frame-exact export, the looks, paid AI on your own key with exact prices, and the Russian interface.
+Gaziyav added the Mac app and its native helpers, the timeline rules and their automated checks, the Claude chat and connector, the skills, the on-device AI, frame-exact export, the looks, paid AI on your own key with exact prices, and the Russian interface.
 
 ## Roadmap
 
 Planned, in this order:
 
 - **macOS:** notarisation.
+- **Services:** music and sound generation, transcription and caption translation through the services in Settings → Services.
 - **Editing:** overwrite and append keys from Media, a default-transition key.
 - **Paid AI:** choosing the face when there are several in the frame; several speakers, each with their own voice.
 
@@ -256,4 +306,8 @@ Gaziyav is free and will stay free. To help: star the repository, show it to som
 
 ## Licence
 
-The editor's own code: [MIT](LICENSE), © the OpenCut contributors and the Gaziyav contributors. OpenCut's licence and copyright notice are kept in [LICENSE](LICENSE). Bundled third-party parts keep their own licences: see [THIRD-PARTY-NOTICES](THIRD-PARTY-NOTICES.md). Motion-graphics layers are rendered with [Remotion](https://www.remotion.dev/license), which has its own licence: free for individuals, organisations of up to three people and non-profits; larger companies need Remotion's company licence.
+The editor's own code: [MIT](LICENSE), © the OpenCut contributors and the Gaziyav contributors. OpenCut's licence and copyright notice are kept in [LICENSE](LICENSE). Bundled third-party parts keep their own licences: see [THIRD-PARTY-NOTICES](THIRD-PARTY-NOTICES.md).
+
+- The Claude chat, its connection to Claude Code, the skills screen and the service providers' code are adapted from [OpenFilm](https://github.com/openfilm/openfilm) (MIT); its licence and notices are kept in THIRD-PARTY-NOTICES.
+- The extra 1,204 music tracks and 5,251 sound effects are CC0. They are not inside the download: each one downloads the first time you use it, from the original author's asset host. The other library files download from their authors' Hugging Face, and Mixkit items from mixkit.co.
+- Motion-graphics layers are rendered with [Remotion](https://www.remotion.dev/license), which has its own licence: free for individuals, organisations of up to three people and non-profits; larger companies need Remotion's company licence.

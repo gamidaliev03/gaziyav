@@ -101,6 +101,8 @@ if [[ -n "${ON_DEMAND:-}" ]]; then rsync -a --exclude 'chrome-headless-shell*' "
 mkdir -p "$RES/app"
 cp "$HERE/main.js" "$HERE/preload.js" "$HERE/package.json" "$RES/app/"
 rm -rf "$RES/app/modules" && cp -R "$HERE/modules" "$RES/app/modules"
+# the Claude chat's skills (modules/agent-host.js: its official skills): Gaziyav's editing skill and the ported ones
+[[ -d "$HERE/skills-gaziyav" ]] && { rm -rf "$RES/app/modules/agent/skills"; cp -R "$HERE/skills-gaziyav" "$RES/app/modules/agent/skills"; }
 # app.getVersion() (logs, About, update checks) reads this file: the build's version, not the one in the repo.
 /usr/bin/python3 -c 'import json,sys; p=sys.argv[1]; d=json.load(open(p)); d["version"]=sys.argv[2]; json.dump(d, open(p,"w"), indent="\t")' "$RES/app/package.json" "$VERSION"
 
@@ -308,7 +310,8 @@ print("fuses:", data[wire:wire + data[at + len(sentinel) + 1]].decode())
 PY
 
 # signature, so the bundle is signed once (signing it again afterwards took four minutes per build).
-[[ -n "${NO_SPACE_MARK:-}" ]] && touch "$RES/app/no-space"
+# on every launch of a rebuild that had lost the marker, while the shipped 1.0.48 had it). A family build asks for the
+touch "$RES/app/no-space"
 # ---------- Ad-hoc signature, inside out ----------
 # A valid signature is what makes a downloaded copy show "Apple could not verify…" (Open Anyway works)
 # instead of "is damaged". No extended attributes may sit in the bundle when it is sealed.

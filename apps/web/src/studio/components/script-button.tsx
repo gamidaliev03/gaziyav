@@ -14,7 +14,7 @@ import { useT } from "@/i18n";
 import { DEMO } from "@/demo/flag";
 
 /** DeepSeek writes only the words to speak, sized to the video. */
-export function ScriptButton({ projectId, seconds, context }: { projectId: string; seconds: number; context: string }) {
+export function ScriptButton({ projectId, seconds, context, className }: { projectId: string; seconds: number; context: string; className?: string }) {
 	const t = useT();
 	const [open, setOpen] = useState(false);
 	const [idea, setIdea] = useState("");
@@ -62,7 +62,7 @@ export function ScriptButton({ projectId, seconds, context }: { projectId: strin
 			}}
 		>
 			<PopoverTrigger asChild>
-				<Button variant="outline" size="sm" className="gap-1.5">
+				<Button variant="outline" size="sm" className={className ? `gap-1.5 ${className}` : "gap-1.5"}>
 					<HugeiconsIcon icon={AiMagicIcon} className="size-3.5" />
 					Write with Gaziyav AI
 				</Button>

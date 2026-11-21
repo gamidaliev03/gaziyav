@@ -2,11 +2,12 @@
 // them in the Keychain and hands them to this process as a message, like the AI keys), Wikimedia Commons (WebM/MP4
 // under free licences, no key) otherwise and as well. Searched and downloaded through the app's own network path.
 import { routed } from "@/studio/server/http";
+import { archiveFileUrl, searchClipsByChoice } from "@/studio/server/providers/search";
 
 const UA = "Gaziyav/1.0 (Mac video editor; stock video search)";
 const MAX_BYTES = 400e6;
 
-export type StockSource = "pexels" | "pixabay" | "commons";
+export type StockSource = "pexels" | "pixabay" | "commons" | "archive";
 
 export interface StockClip {
 	/** The item id place takes: stock:pexels:<id>, stock:pixabay:<id>, stock:File:<title>. */
@@ -98,8 +99,8 @@ async function searchPexels(q: string, key: string, vertical: boolean): Promise<
 	});
 }
 
-async function searchPixabay(q: string, key: string): Promise<StockClip[]> {
-	const j = await getJson<{ hits?: PixabayHit[] }>(`https://pixabay.com/api/videos/?${new URLSearchParams({ key, q, per_page: "8", safesearch: "true" })}`);
+async function searchPixabay(q: string, key: string, type?: string): Promise<StockClip[]> {
+	const j = await getJson<{ hits?: PixabayHit[] }>(`https://pixabay.com/api/videos/?${new URLSearchParams({ key, q, per_page: "8", safesearch: "true", ...(type ? { video_type: type } : {}) })}`);
 	return (j.hits ?? []).map((h) => {
 		const f = pixabayFile(h);
 		return { item: `stock:pixabay:${h.id}`, title: `${(h.tags ?? q).split(",")[0].trim()} · ${h.user ?? "Pixabay"}`, source: "pixabay" as const, seconds: h.duration, width: f?.width, height: f?.height, mb: f?.size ? Math.round(f.size / 1e5) / 10 : undefined, license: "Pixabay license (free)" };
@@ -128,6 +129,9 @@ async function searchCommons(q: string): Promise<StockClip[]> {
 export async function searchStock(query: string, vertical = true): Promise<{ items: StockClip[]; notes: string[] }> {
 	const q = query.trim().slice(0, 100);
 	if (!q) return { items: [], notes: [] };
+	// Settings → Services → Video search: the chosen service alone when one is chosen (below: Gaziyav's own, the default).
+	const by = await searchClipsByChoice(q, vertical, { pexels: searchPexels, pixabay: searchPixabay });
+	if (by) return { items: by.slice(0, 14) as StockClip[], notes: [] };
 	const notes: string[] = [];
 	const tries: Array<[string, Promise<StockClip[]>]> = [];
 	const px = stockKey("pexels");
@@ -177,6 +181,8 @@ export async function stockFile(item: string): Promise<Response> {
 		if (!h || !f?.url) throw new StockError("That Pixabay clip isn't available.");
 		return stream(f.url, "video/mp4", `Pixabay license · ${h.user ?? "Pixabay"}`);
 	}
+	const archive = archiveFileUrl(id);
+	if (archive) return stream(archive, "video/mp4", "Internet Archive (free licence)");
 	if (!/^File:[^/\\]{1,240}\.(webm|mp4)$/i.test(id)) throw new StockError("Not a stock clip: use an item from find_content stock.");
 	const j = await commons({ action: "query", titles: id, prop: "imageinfo", iiprop: "url|size|mime|extmetadata", iiextmetadatafilter: "LicenseShortName" });
 	const info = Object.values(j.query?.pages ?? {})[0]?.imageinfo?.[0];

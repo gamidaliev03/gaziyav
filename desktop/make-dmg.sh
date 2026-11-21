@@ -93,7 +93,7 @@ want=$(cd "$APP" && find . -type f | wc -l | tr -d ' '); got=$(cd "$M/$APPNAME.a
 leaks="$(/usr/bin/python3 - "$M/$APPNAME.app" "$HOME" "$(git config user.email 2>/dev/null)" "${ALLOW_AGENT_KEY:-}" <<'PY'
 import hashlib, os, re, sys
 app, home, email, allow_key = sys.argv[1:5]
-tokens = re.compile(rb"hf_[A-Za-z0-9]{30,}|ghp_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{20,}|sk-(?:proj-|ant-)?[A-Za-z0-9_-]{32,}|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{35}|xox[abp]-[A-Za-z0-9-]{10,}|-----BEGIN [A-Z ]*PRIVATE KEY-----")
+tokens = re.compile(rb"hf_[A-Za-z0-9]{30,}|ghp_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{20,}|sk-(?:proj-|ant-)?[A-Za-z0-9_-]{32,}|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{35}|xox[abp]-[A-Za-z0-9-]{10,}|-----BEGIN [A-Z ]*PRIVATE KEY-----\s*[A-Za-z0-9+/=]{40,}")
 needles = [(n.encode(), what) for n, what in ((home + "/", "a path of this Mac"), (email, "the user's e-mail")) if n]
 mine = set()
 for d in ("Faces", "Voices"):

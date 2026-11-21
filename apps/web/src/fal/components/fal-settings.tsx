@@ -241,7 +241,8 @@ export function FalSettings() {
 			</div>
 
 			<div className="flex flex-col divide-y rounded-lg border" data-fal-models>
-				{FAL_TASKS.map((task) => (
+				{/* One brain (21.11): text is Gaziyav AI's (the connected Claude), so the text model («AI agent») has no row here */}
+				{FAL_TASKS.filter((task) => task.id !== "llm").map((task) => (
 					<TaskRow key={task.id} task={task.id} title={task.title} note={task.note} />
 				))}
 			</div>

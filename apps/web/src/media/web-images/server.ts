@@ -2,6 +2,7 @@
 // are proxied (no CORS issues) and size-checked.
 import { routed } from "@/studio/server/http";
 import type { WebImage, WebImageSearchResult } from "./types";
+import { foundUrl, searchPicturesByChoice } from "@/studio/server/providers/search";
 
 const PAGE = 12;
 const TIMEOUT_MS = 8000;
@@ -103,6 +104,11 @@ function cached(key: string, run: () => Promise<{ items: WebImage[]; hasMore: bo
 export async function searchWebImages(query: string, page: number): Promise<WebImageSearchResult> {
 	const q = query.trim().slice(0, 200);
 	if (!q) return { items: [], hasMore: false, providers: [] };
+	// Settings → Services → Image search: another service when one is chosen (Commons below stays the default).
+	const by = await searchPicturesByChoice(q, page).catch((error: Error) => {
+		throw new WebImageError(error.message);
+	});
+	if (by) return { items: by.items.map((i) => ({ ...i, provider: "commons" as const })), hasMore: by.hasMore, providers: ["commons"] };
 	const jobs = [cached(`commons|${q}|${page}`, () => searchCommons(q, page))];
 	const settled = await Promise.allSettled(jobs);
 	const ok = settled.flatMap((s) => (s.status === "fulfilled" ? [s.value] : []));
@@ -130,7 +136,7 @@ export async function downloadWebImage(url: string): Promise<{ bytes: ArrayBuffe
 	} catch {
 		throw new WebImageError("Not an image link.");
 	}
-	if (parsed.protocol !== "https:" || !ALLOWED_HOSTS.has(parsed.hostname)) throw new WebImageError("Only Wikimedia Commons images can be added.");
+	if (parsed.protocol !== "https:" || !(ALLOWED_HOSTS.has(parsed.hostname) || foundUrl(parsed.href) || foundUrl(url))) throw new WebImageError("Only Wikimedia Commons images can be added.");
 	const res = await fetch(routed(parsed.href), { headers: { "User-Agent": UA }, signal: AbortSignal.timeout(30000) }).catch(() => null);
 	if (!res?.ok) throw new WebImageError("The image could not be downloaded — check the internet connection.");
 	const type = res.headers.get("content-type") ?? "image/jpeg";

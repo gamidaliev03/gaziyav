@@ -176,6 +176,6 @@ describe("a caption style Gaziyav AI designed", () => {
 
 	test("an answer wrapped in prose still reads; garbage says so", () => {
 		expect(style.parseModelJson('Here you go:\n```json\n{"name":"A"}\n```')).toEqual({ name: "A" });
-		expect(() => style.parseModelJson("no json at all")).toThrow("unreadable");
+		expect(() => style.parseModelJson("no json at all")).toThrow("nothing was changed");
 	});
 });

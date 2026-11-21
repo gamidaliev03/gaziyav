@@ -18,6 +18,7 @@ import { type VoiceCard, VoicePicker } from "@/generate/components/voice-picker"
 import { useT } from "@/i18n";
 import { etaSeconds, formatDuration, jobCenter, useJobsStore } from "@/jobs/store";
 import type { TimelineElement } from "@/timeline";
+import { TICKS_PER_SECOND } from "@/wasm";
 import { applyToClip, jobIdsOfClip, restoreOriginal } from "../apply";
 import { type NeuralFamilyId, neuralEffect, TOOL_FAMILIES, VOICE_EFFECTS } from "../catalog";
 import { AiStepSwitch } from "./ai-step-switch";
@@ -159,8 +160,9 @@ export function AutoColor({ element, trackId }: { element: TimelineElement; trac
 	);
 }
 
-/** A picture's or clip's colours as the server's Color match reads them: 256 levels per channel, "r,…;g,…;b,…". */
-export async function histogramOf(file: File, type: string): Promise<string> {
+/** A picture's or clip's colours as the server's Color match reads them: 256 levels per channel, "r,…;g,…;b,…".
+ *  `at` (seconds): one frame of a clip — the frame under the playhead — instead of three from across it. */
+export async function histogramOf(file: File, type: string, at?: number): Promise<string> {
 	const canvas = document.createElement("canvas");
 	const ctx = canvas.getContext("2d", { willReadFrequently: true });
 	if (!ctx) throw new Error("This Mac can't read the reference's colours.");
@@ -192,10 +194,11 @@ export async function histogramOf(file: File, type: string): Promise<string> {
 				video.onerror = () => reject(new Error("This reference clip can't be read. Pick a picture or another clip."));
 				video.src = url;
 			});
-			for (const at of [0.25, 0.5, 0.75]) {
+			const stops = typeof at === "number" && Number.isFinite(at) ? [Math.max(0, Math.min(at, (video.duration || 1) - 0.05))] : [0.25, 0.5, 0.75].map((f) => (video.duration || 1) * f);
+			for (const stop of stops) {
 				await new Promise<void>((resolve) => {
 					video.onseeked = () => resolve();
-					video.currentTime = (video.duration || 1) * at;
+					video.currentTime = stop;
 				});
 				add(video, video.videoWidth, video.videoHeight);
 			}
@@ -206,20 +209,60 @@ export async function histogramOf(file: File, type: string): Promise<string> {
 	return h.map((c) => c.join(",")).join(";");
 }
 
-/** Adjust → Color match: the clip's colours brought to a reference picture or clip from Media (no model). */
+/**
+ * Adjust → Color match: the clip's colours brought to THE FRAME UNDER THE PLAYHEAD — park the playhead on the shot you want
+ * the look of and press Match (the owner, 17.11: «референс нужно брать не из клипов в списке, а выбрать плейхедом нужный
+ * фрейм и с него метчить»). A picture from Media stays as the second way, for a still reference.
+ */
+/** The playhead's time in short form: 1:05. */
+const clockOf = (ticks: number): string => {
+	const seconds = Math.max(0, ticks) / TICKS_PER_SECOND;
+	const m = Math.floor(seconds / 60);
+	const s = Math.floor(seconds % 60);
+	return `${m}:${String(s).padStart(2, "0")}`;
+};
+
 export function ColorMatch({ element, trackId }: { element: TimelineElement; trackId: string }) {
 	const t = useT();
 	const own = "mediaId" in element ? element.mediaId : null;
-	const references = useEditor((e) => e.media.getAssets().filter((a) => (a.type === "image" || a.type === "video") && a.id !== own && !a.ephemeral), ["media"]);
+	const scene = useEditor((e) => e.scenes.getActiveSceneOrNull(), ["scenes"]);
+	const assets = useEditor((e) => e.media.getAssets(), ["media"]);
+	const at = useEditor((e) => e.playback.getCurrentTime(), ["playback"]);
+	const candidates = useMemo(() => {
+		if (!scene) return [] as Array<{ id: string; mediaId: string; start: number; duration: number; trimStart: number }>;
+		const tracks = [scene.tracks.main, ...scene.tracks.overlay.filter((x) => x.type === "video")] as Array<{ elements: TimelineElement[] }>;
+		return tracks.flatMap((track) =>
+			track.elements
+				.filter((el) => (el.type === "video" || el.type === "image") && "mediaId" in el)
+				.map((el) => ({ id: el.id, mediaId: (el as TimelineElement & { mediaId: string }).mediaId, start: el.startTime, duration: el.duration, trimStart: el.trimStart })),
+		);
+	}, [scene]);
+	// The reference is TAKEN once and kept: moving the playhead (or the selection) afterwards must not change or clear it.
+	const [taken, setTaken] = useState<{ assetId: string; name: string; seconds: number } | null>(null);
 	const [refId, setRefId] = useState("");
 	const [strength, setStrength] = useState(0.8);
 	const [measuring, setMeasuring] = useState(false);
+	const under = candidates.find((c) => at >= c.start && at < c.start + c.duration) ?? null;
+	const underAsset = under ? assets.find((a) => a.id === under.mediaId && a.file) : undefined;
+	const take = () => {
+		if (!under || !underAsset) {
+			toast.error(t("Put the playhead over the shot you want to match to first"));
+			return;
+		}
+		setTaken({ assetId: underAsset.id, name: underAsset.name, seconds: (under.trimStart + (at - under.start)) / TICKS_PER_SECOND });
+	};
+	const reference = assets.find((a) => a.id === refId);
+	const ready = !!taken || !!reference?.file;
 	const go = async () => {
-		const reference = references.find((a) => a.id === refId);
-		if (!reference?.file) return;
 		setMeasuring(true);
 		try {
-			run(trackId, element, "colorMatch", { strength, ref: await histogramOf(reference.file, reference.type) });
+			if (taken) {
+				const asset = assets.find((a) => a.id === taken.assetId);
+				if (!asset?.file) throw new Error(t("The reference frame is gone. Take it again."));
+				run(trackId, element, "colorMatch", { strength, ref: await histogramOf(asset.file, asset.type, taken.seconds) });
+			} else if (reference?.file) {
+				run(trackId, element, "colorMatch", { strength, ref: await histogramOf(reference.file, reference.type) });
+			}
 		} catch (error) {
 			toast.error((error as Error).message);
 		} finally {
@@ -228,24 +271,46 @@ export function ColorMatch({ element, trackId }: { element: TimelineElement; tra
 	};
 	return (
 		<div className="flex flex-col gap-2 px-4 pb-3" data-ai-tool="colorMatch">
-			<Select value={refId || "none"} onValueChange={(v) => setRefId(v === "none" ? "" : v)}>
-				<SelectTrigger className="h-7 text-xs" data-color-match-ref title={t("The picture or clip whose colours this clip takes")}>
-					<SelectValue />
-				</SelectTrigger>
-				<SelectContent>
-					<SelectItem value="none" className="text-xs">
-						{references.length ? t("Pick a reference") : t("Add a picture or clip to Media first")}
-					</SelectItem>
-					{references.map((a) => (
-						<SelectItem key={a.id} value={a.id} className="text-xs">
-							{a.name}
-						</SelectItem>
-					))}
-				</SelectContent>
-			</Select>
+			{/* One picture is the reference: take the frame under the playhead, then match to it whenever you like. */}
+			<div className="border-border/70 flex items-center gap-1.5 rounded-md border px-2 py-1.5" data-color-match-playhead>
+				<span className="bg-foreground/10 text-muted-foreground grid size-4 shrink-0 place-items-center rounded-full text-[9px]">⏱</span>
+				<span className="min-w-0 flex-1 truncate text-[11px]" data-no-translate>
+					{taken ? `${taken.name} · ${clockOf(taken.seconds * TICKS_PER_SECOND)}` : t("Take the frame under the playhead as the reference")}
+				</span>
+				<Button size="sm" variant="secondary" className="h-6 shrink-0 px-2 text-[11px]" title={t("Remembers the frame the playhead is on")} onClick={take} data-color-match-take>
+					{taken ? t("Take again") : t("Take frame")}
+				</Button>
+			</div>
+			{taken && (
+				<button type="button" className="text-muted-foreground self-start text-[11px] underline-offset-2 hover:underline" onClick={() => setTaken(null)}>
+					{t("Clear the reference")}
+				</button>
+			)}
+			<details className="text-[11px]">
+				<summary className="text-muted-foreground cursor-pointer select-none">{t("or a picture from Media")}</summary>
+				<div className="pt-1.5">
+					<Select value={refId || "none"} onValueChange={(v) => setRefId(v === "none" ? "" : v)}>
+						<SelectTrigger className="h-7 text-xs" data-color-match-ref title={t("The picture or clip whose colours this clip takes")}>
+							<SelectValue />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value="none" className="text-xs">
+								{assets.filter((a) => (a.type === "image" || a.type === "video") && a.id !== own && !a.ephemeral).length ? t("Pick a reference") : t("Add a picture or clip to Media first")}
+							</SelectItem>
+							{assets
+								.filter((a) => (a.type === "image" || a.type === "video") && a.id !== own && !a.ephemeral)
+								.map((a) => (
+									<SelectItem key={a.id} value={a.id} className="text-xs">
+										{a.name}
+									</SelectItem>
+								))}
+						</SelectContent>
+					</Select>
+				</div>
+			</details>
 			<StrengthRow id="colorMatch" value={strength} onChange={setStrength} />
 			<ToolStatus element={element} trackId={trackId} tools={["colorMatch"]} />
-			<Button size="sm" title={t("The clip's colours brought to a reference picture or clip.")} disabled={!refId || measuring} onClick={() => void go()} data-ai-tool-run="colorMatch">
+			<Button size="sm" title={t("The clip's colours brought to the frame under the playhead.")} disabled={!ready || measuring} onClick={() => void go()} data-ai-tool-run="colorMatch">
 				{t("Match colors")}
 			</Button>
 		</div>
@@ -306,7 +371,7 @@ export function VoiceChanger({ element, trackId }: { element: TimelineElement; t
 	);
 	return (
 		<div className="flex flex-col gap-2 px-4 pb-3" data-ai-tool="voiceChange">
-			<VoicePicker label="voice-changer" cards={cards} value={voice} onPick={setVoice} first="filters" />
+			<VoicePicker label="voice-changer" cards={cards} value={voice} onPick={setVoice} />
 			<ToolStatus element={element} trackId={trackId} tools={["voiceChange"]} />
 			<Button size="sm" onClick={() => run(trackId, element, "voiceChange", { voice })} data-ai-tool-run="voiceChange">
 				{t("Change voice")}

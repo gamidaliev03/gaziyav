@@ -28,7 +28,7 @@ Right-click a clip → **Make vertical** → **9:16**. Gaziyav reframes each cli
 
 ## 5. Sound (1 minute)
 
-Take a track from **Audio → Music** or a sound from **Audio → Sound effects** (311 tracks and 2,514 sounds; each downloads the first time you use it). Or drop your own file on the window, like the clips. Put it on the timeline under your clips. Volume and fades are in the inspector on the right; for a quick fade, drag the small handles at the clip's corners.
+Take a track from **Audio → Music** or a sound from **Audio → Sound effects** (1,515 tracks and 7,765 sounds in the Mac app, 311 and 2,514 in the browser; each downloads the first time you use it). Or drop your own file on the window, like the clips. Put it on the timeline under your clips. Volume and fades are in the inspector on the right; for a quick fade, drag the small handles at the clip's corners.
 
 ## 6. Export (30 seconds)
 
@@ -36,6 +36,6 @@ Press <kbd>⌘E</kbd>. The defaults suit the project (1080 × 1920, H.264, your 
 
 ## Next: let Claude edit
 
-Connect Claude (**Settings → AI → Claude → Connect Claude**) and write «remove the pauses and add bold captions». Claude edits this same project step by step, and <kbd>⌘Z</kbd> undoes each step. See [Claude inside Gaziyav](manual/claude.md).
+In the Mac app, open the chat at the right (**View → Claude Chat**, <kbd>⌃⌘K</kbd>), press **Connect** (you need Claude Code from [claude.com/download](https://claude.com/download), signed in) and write «remove the pauses and add bold captions». Claude edits this same project step by step, and <kbd>⌘Z</kbd> undoes each step. See [Claude inside Gaziyav](manual/claude.md).
 
 Optional, on your own fal.ai key, for cents: to make a face say new words, select the clip and press <kbd>⌥L</kbd>. See [Lipsync](lipsync.md).

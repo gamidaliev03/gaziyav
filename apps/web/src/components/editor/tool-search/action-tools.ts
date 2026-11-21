@@ -95,7 +95,6 @@ const WORDS: Partial<Record<TAction, string[]>> = {
 	"show-shortcuts": ["shortcuts", "keys", "hotkeys", "сочетания", "сочетания клавиш", "горячие клавиши", "клавиши"],
 	"show-captions": ["captions", "subtitles", "субтитры", "титры"],
 	"toggle-loop": ["loop", "repeat", "playback", "цикл", "повтор", "зациклить", "по кругу", "воспроизведение"],
-	"open-assemble": ["assemble", "first cut", "auto edit", "rough cut", "make a video", "собрать", "сборка", "черновой монтаж", "автомонтаж", "смонтировать", "первый монтаж"],
 	// the trim model (src/timeline/trim)
 	"tool-trim": ["trim", "roll", "ripple", "slip", "slide", "trim tool", "подрезка", "тримминг", "трим", "ролл", "рипл", "слип", "слайд", "совмещение", "сдвиг", "прокрутка", "скольжение", "склейка"],
 	"trim-select-roll": ["roll", "cut", "edit point", "both edges", "ролл", "совмещение", "склейка", "оба края", "точка монтажа"],

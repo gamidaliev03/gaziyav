@@ -8,6 +8,7 @@ import type { LibraryIndex, LibraryItem, LibraryKind, LibrarySource } from "@/li
 import { userKadrLibrary, userLibraryRoot } from "@/platform/library";
 import { cachedFile, isCached, type RemoteRow } from "./remote";
 import gainsJson from "@/library/gains.json";
+import extraJson from "@/library/extra-audio.json";
 
 /** The gain of each catalog file, by "<part>/<id>" (scripts/library-gain.ts). */
 const GAINS = gainsJson as Record<string, number>;
@@ -257,11 +258,39 @@ function bundled(out: Entry[]) {
 	}
 }
 
+/** One more library's rows (CC0 music and sounds, 21.11): id, kind, Gaziyav's own category, name, seconds, tags, a file
+ * that ships in public/ (else it downloads on first use from its publisher, like the cloud's other files). */
+type ExtraRow = { id: string; k: LibraryKind; c: string; n: string; d: number; t: string[]; f?: string };
+const EXTRA_HOST = () => (process.env.STUDIO_EXTRA_AUDIO_URL || "https://assets.openfilm.dev/library").replace(/\/+$/, "");
+const plain = (kind: string, name: string) => `${kind}|${name.toLowerCase().replace(/[^a-z0-9а-яё]+/g, "")}`;
+
+/** The extra rows into the existing categories, after Gaziyav's own; one with the name of an item already there is left out. */
+function extra(out: Entry[]) {
+	const have = new Set(out.map((e) => plain(e.item.kind, e.item.name)));
+	const pub = path.join(process.cwd(), "public");
+	for (const r of extraJson as ExtraRow[]) {
+		const key = plain(r.k, r.n);
+		if (have.has(key)) continue;
+		have.add(key);
+		const id = `xa-${shortHash(r.id)}`;
+		const part = r.k === "music" ? "Music" : "Sound Effects";
+		const local = r.f ? path.resolve(pub, r.f) : null;
+		const file = `extra/${path.basename(r.id)}`;
+		const row: RemoteRow = { file, url: `${EXTRA_HOST()}/${r.id.split("/").map(encodeURIComponent).join("/")}` };
+		out.push({
+			file: local && local.startsWith(pub + path.sep) ? local : cachedFile(part, row),
+			...(local ? {} : { remote: { part, row } }),
+			item: { id, kind: r.k, name: r.n, cat: r.c, tags: r.t ?? [], dur: r.d || 0, src: "kadr", license: "CC0 1.0" },
+		});
+	}
+}
+
 function build() {
 	const entries: Entry[] = [];
 	bundled(entries);
 	kadr("sfx", "Sound Effects", "ks-", entries);
 	kadr("music", "Music", "km-", entries);
+	extra(entries);
 	lipsync(entries);
 	userFolder(entries);
 	const map = new Map<string, Entry>();

@@ -18,6 +18,7 @@ import type { MediaTime } from "@/wasm";
 import { AiCustomFields } from "@/montage/components/ai-fields";
 import { MographExtras, mographOf } from "@/montage/components/mograph-fields";
 import { generatorOf } from "@/generators/document";
+import { COMPOSITION_DEF } from "@/montage/flatten";
 import { GeneratorTab } from "@/generators/components/generator-tab";
 
 registerDefaultGraphics();
@@ -25,6 +26,8 @@ registerDefaultGraphics();
 const DEFAULT_STROKE_WIDTH = 2;
 
 export function GraphicTab(props: { element: GraphicElement; trackId: string }) {
+	// A compound clip (⌥G) is the clips inside it, not an AI composition: its «AI Composition / With alpha» fields are
+	if (props.element.definitionId === COMPOSITION_DEF && props.element.params?.compound === true) return null;
 	// Gaziyav AI's own components declare their own fields (texts, colours, sizes, timings, pictures).
 	if (props.element.definitionId === "ai.Custom") return <AiCustomFields {...props} />;
 	if (generatorOf(props.element)) return <GeneratorTab {...props} />;

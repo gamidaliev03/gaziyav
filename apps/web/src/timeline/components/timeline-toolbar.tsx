@@ -240,7 +240,7 @@ function ToolSelector() {
 				<Button
 					variant="text"
 					size="sm"
-					className="h-8 gap-0.5 rounded-sm px-1.5"
+					className="h-7 gap-0.5 rounded-sm px-1.5"
 					aria-label={tool === "trim" ? "Trim tool" : tool === "split" ? "Split tool" : "Select tool"}
 					title={tool === "trim" ? "Trim tool: drag a cut to roll it, an edge to ripple it, a clip to slip it (⌥: slide)" : tool === "split" ? "Split tool: click a clip to cut it" : "Select tool"}
 					data-timeline-tool={tool}

@@ -3,7 +3,8 @@
 // composition's own conversation and its current layers. Quick mode returns kit layers in the composition's style
 // (one fast call); full mode (agent.ts) writes its own components. A fact guard rejects names and numbers nobody said,
 // "do only what is asked" drops extras, the layout guard keeps text off the face.
-import { agentReady, NOT_SET_UP } from "@/studio/server/agent-keys";
+import { BRAIN_OFF, brainReadyNow } from "@/studio/server/brain";
+import { agentReady } from "@/studio/server/agent-keys";
 import { transform } from "sucrase";
 import { StudioError } from "@/studio/server/errors";
 import { loadSettings } from "@/studio/server/settings";
@@ -55,6 +56,11 @@ export interface PlanRequest {
 	media?: { id: string; name: string; from: number; to: number; selected?: boolean; info: import("./assets").MediaInput }[];
 	/** Images the user added for this request (already in the asset store). */
 	provided?: { name: string; title: string; credit?: string; mediaId?: string; w?: number; h?: number }[];
+	/** Templates → «Create with Gaziyav AI»: one element for the user's library, `brief` = the user's own words. */
+	preset?: boolean;
+	brief?: string;
+	/** The interface language: the labels of the layer's fields are written in it. */
+	uiLang?: string;
 }
 
 export interface PlannedLayer {
@@ -390,7 +396,7 @@ export function onlyWhatIsAsked(request: string, result: { layers: PlannedLayer[
 /** Quick mode: kit layers in one DeepSeek call (+ one repair call only when it broke the rules or invented facts). */
 export async function planQuick(r: PlanRequest, face: Box | null, log: Log, signal?: AbortSignal): Promise<PlanResult> {
 	const s = loadSettings();
-	if (!agentReady()) throw new StudioError(NOT_SET_UP);
+	if (!brainReadyNow() && !agentReady()) throw new StudioError(BRAIN_OFF);
 	const user = `${context(r, face)}\n${historyText(r.history)}\nRequest: ${r.request.trim() || DEFAULT_REQUEST}`;
 	const facts = factSource(r);
 	const temperature = r.mode === "variation" ? 0.95 : 0.6;
@@ -442,7 +448,7 @@ export async function planQuick(r: PlanRequest, face: Box | null, log: Log, sign
 	const result: PlanResult = { comment, mode: "quick", layers, sfx, calls, keep };
 	onlyWhatIsAsked(r.request, result);
 	if (keep.length) log(`Kept ${keep.length} layer${keep.length === 1 ? "" : "s"} the request didn't name`);
-	if (!result.layers.length && !keep.length) throw new StudioError("Gaziyav AI couldn't make any usable layers. Rephrase the request and try again.");
+	if (!result.layers.length && !keep.length) throw new StudioError("Gaziyav AI couldn't make usable layers from these words: nothing was changed. Say it a little differently.");
 	const notes = resolveLayout(result.layers, face, r.width / Math.max(1, r.height), pinOf(r.request));
 	if (notes.length) log(`Layout: ${notes.slice(0, 2).join(", ")}`);
 	return result;

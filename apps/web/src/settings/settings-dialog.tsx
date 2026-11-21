@@ -27,6 +27,7 @@ import { LanguageList } from "@/i18n/language-choice";
 import { cn } from "@/utils/ui";
 import { type SettingsSection, useSettingsStore } from "./settings-store";
 import { AiSection } from "./ai-section";
+import { ServicesSection } from "./services-section";
 import { ShareSettings } from "@/share/components/share-settings";
 import { LibraryRow } from "@/ondevice/components/ondevice-dialogs";
 import { THIS_COMPUTER } from "@/utils/platform";
@@ -43,6 +44,7 @@ const SECTIONS: Array<{ id: SettingsSection; label: string }> = [
 	{ id: "general", label: "General" },
 	{ id: "appearance", label: "Themes" },
 	{ id: "ai", label: "AI" },
+	{ id: "services", label: "Services" },
 	{ id: "share", label: "Share" },
 	...(FAMILY_SETTINGS ? [{ id: "calls" as const, label: "Calls" }] : []),
 ];
@@ -136,6 +138,7 @@ export function SettingsDialog() {
 					{current === "general" && <GeneralSection />}
 					{current === "appearance" && <AppearanceSection />}
 					{current === "ai" && <AiSection />}
+					{current === "services" && <ServicesSection />}
 					{current === "share" && <ShareSettings />}
 					{current === "calls" && FAMILY_SETTINGS && <FAMILY_SETTINGS.CallSettings />}
 				</div>
@@ -382,6 +385,8 @@ function Credits() {
 						Qwen3-TTS (Apache 2.0). Face swap: HyperSwap
 						(FaceFusion, ResearchRAIL) with ArcFace face recognition (InsightFace, non-commercial research license), GFPGAN 1.4 (Apache
 						2.0) and the BiSeNet face parser (MIT). ML runtimes: MLX (MIT), PyTorch (BSD), ONNX Runtime (MIT).
+						Settings → Services, its voices and the extra music and sounds: from OpenFilm (MIT license, © OpenFilm contributors; its
+						sounds and music CC0 1.0).
 					</p>
 					<p>
 						Gaziyav AI works in the cloud: what you ask it is sent there to be answered. Web images come from Wikimedia Commons, under its

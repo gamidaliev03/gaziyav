@@ -596,7 +596,7 @@ export function LipsyncView({ embedded = false }: { embedded?: boolean }) {
 					setVoiceFromFile(editor, key, f).catch((err) => toast.error(sayStudio((err as Error).message)));
 				}}
 			/>
-			<div className="scrollbar-thin flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto px-3 py-2.5">
+			<div className="scrollbar-thin flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-2 py-2">
 				{noKey && (
 					<button type="button" onClick={openFalSettings} className="bg-primary/10 ring-primary/25 flex items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs ring-1" data-lipsync-nokey>
 						<HugeiconsIcon icon={Settings01Icon} className="size-3.5 shrink-0" />

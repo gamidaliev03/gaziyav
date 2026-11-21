@@ -2,7 +2,7 @@
 
 [← Manual](README.md)
 
-**You don't need any of this to edit.** Gaziyav can run paid AI models through your own [fal.ai](https://fal.ai) key: lipsync, a voice from text, a cloned voice, dubbing, pictures and video from text or a picture, face swap, and the in-app agent (Gaziyav AI) on a paid model.
+**You don't need any of this to edit.** Gaziyav can run paid AI models through your own [fal.ai](https://fal.ai) key: lipsync, a voice from text, a cloned voice, dubbing, pictures and video from text or a picture, and face swap. More services (voices, pictures, video, search) are in **Settings → Services**, each on its own key. Text jobs (Gaziyav AI) are not paid here: in the Mac app they run on the Claude you connected ([Claude inside Gaziyav](claude.md)).
 
 ## Set up
 
@@ -20,7 +20,6 @@ fal bills every run to you at fal's list price; Gaziyav adds nothing. The price 
 | Picture | Seedream 4.0 | $0.03 per picture |
 | Video | Seedance 1.0 Pro Fast | $0.0216/s at 720p |
 | Face swap | PixVerse Swap | $0.20 per clip up to 5 s |
-| In-app agent, scripts, translation | Gemini 2.5 Flash | by tokens ($0.30 per 1M input) |
 
 The other models for each task, with their prices, are in the model menus and in [AI setup and prices](../ai.md).
 

@@ -2,6 +2,7 @@
 
 // The inspector groups that give the tabs their content (docs/EDITOR-MAP.md): Cutout (remove background, chroma key),
 // Color (the Color section itself), Motion (animation, stabilize) and, for text, Style and Voice.
+import { useServiceCards } from "@/generate/service-voices";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -117,7 +118,8 @@ function TextToSpeech({ element }: { element: TimelineElement }) {
 	// samples in the language of the text (a Russian line plays Russian samples)
 	const lang = useVoiceLang(content);
 	const saved = useSavedVoices();
-	const cards = useMemo(() => [...trendCards(lang.ui, lang.sample), ...readyCards(), ...myCards(saved)], [lang.ui, lang.sample, saved]);
+	const services = useServiceCards();
+	const cards = useMemo(() => [...trendCards(lang.ui, lang.sample), ...readyCards(), ...myCards(saved), ...services], [lang.ui, lang.sample, saved, services]);
 	const read = async () => {
 		setBusy(true);
 		const editor = EditorCore.getInstance();

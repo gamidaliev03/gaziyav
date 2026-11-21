@@ -13,6 +13,7 @@ import { RU_MCP } from "./ru-mcp";
 import { RU_SHARE } from "./ru-share";
 import { RU_STUDIO } from "./ru-studio";
 import { RU_ASSEMBLE } from "./ru-assemble";
+import { RU_VOICEAI } from "./ru-voiceai";
 import { RU_CHAPTERS } from "./ru-chapters";
 import { RU_LONGFORM } from "./ru-longform";
 import { RU_RELIABLE } from "./ru-reliable";
@@ -46,6 +47,7 @@ import { RU_MOBILE } from "./ru-mobile";
 import { RU_INSP } from "./ru-insp";
 import { RU_THEMES } from "./ru-themes";
 import { RU_LOOKS2 } from "./ru-looks2";
+import { RU_SERVICES } from "./ru-services";
 
 /** Strings with a number or a name in them: English pattern → Russian ($1, $2 … are the parts in brackets). */
 type Replace = string | ((match: string, ...groups: string[]) => string);
@@ -146,6 +148,7 @@ export const RU: Record<string, string> = {
 	...RU_LOOKS3,
 	...RU_INSP,
 	...RU_THEMES,
+	...RU_VOICEAI,
 	// Materials panel, 7 tabs (1.0.79)
 	"Styles": "Стили",
 	"Import LUT": "Импорт LUT",
@@ -1652,6 +1655,7 @@ export const RU: Record<string, string> = {
 	...RU_MAP,
 	...RU_PANELS,
 	...RU_LOOKS2,
+	...RU_SERVICES,
 	...RU_LOOKS4,
 	...RU_GEN,
 	...RU_MOBILE,
